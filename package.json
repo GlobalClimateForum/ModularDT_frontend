@@ -11,6 +11,7 @@
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
     "animate.css": "^4.1.1",
+    "axios": "^1.17.0",
     "material-icons": "^1.13.14",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
