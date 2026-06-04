@@ -4,6 +4,7 @@ import Button from 'primevue/button'
 import InputOtp from 'primevue/inputotp'
 
 import { ref } from 'vue'
+import router from '@/router'
 
 const selectedRole = ref<string | null>(null)
 </script>
@@ -49,11 +50,12 @@ const selectedRole = ref<string | null>(null)
 
     <div class="pin_enter animate__animated animate__pulse" v-if="selectedRole !== null">
       <p v-if="selectedRole !== null && selectedRole === 'moderator'">
-        You selected "{{ selectedRole }}". You need to enter a 6-digit PIN to access the {{ selectedRole }} features.
+        You selected "{{ selectedRole }}". You need to enter a 4-digit PIN to access the {{ selectedRole }} features.
       </p>
 
       <div v-if="selectedRole == 'moderator'">
-        <InputOtp :length="6" />
+        <InputOtp :length="4" />
+        <Button label="Submit" @click="router.push('/moderator')" />
       </div>
     </div>
 
