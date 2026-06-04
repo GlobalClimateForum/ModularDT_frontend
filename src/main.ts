@@ -6,6 +6,7 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 import 'material-icons/iconfont/material-icons.css'
+import "primeicons/primeicons.css"; 
 import 'animate.css';
 
 const app = createApp(App)
