@@ -1,50 +1,66 @@
 <script setup lang="ts">
+import Card from 'primevue/card'
+import Button from 'primevue/button'
+import InputOtp from 'primevue/inputotp'
+
 import { ref } from 'vue'
-import FloatLabel from 'primevue/floatlabel';
-import InputOtp from 'primevue/inputotp';
-import Select from 'primevue/select';
 
-const roleValue = ref(null);
-
-const roleOptions
-  = ref([
-    {
-      key: 'moderator',
-      label: 'Moderator'
-    },
-    {
-      key: 'participant',
-      label: 'Participant',
-      partialChecked: false,
-      children: [
-        { key: '1-0', label: 'Group A' },
-        { key: '1-1', label: 'Group B' },
-      ],
-    },
-  ])
+const selectedRole = ref<string | null>(null)
 </script>
 
 <template>
   <div class="welcome">
 
-    <h1 class="animate__animated animate__fadeInUp">Decision Theater</h1>
+    <h1>Decision Theater</h1>
+    <p v-if="selectedRole === null">Select your role to get started.</p>
 
-    <form class="login-form animate__animated animate__fadeInUp">
-      <FloatLabel :variant="'outlined'">
-        <Select id="role" v-model="roleValue" :options="roleOptions" option-label="label" class="role-select" />
-        <label for="role">Select your role</label>
-      </FloatLabel>
+    <div class="role_options" v-if="selectedRole === null">
 
-      <FloatLabel v-if="roleValue && roleValue.key === 'participant'" :variant="'outlined'">
-        <Select id="group" :options="roleValue.children" option-label="label" class="group-select animate__animated animate__fadeInUp" />
-        <label for="group">Select your group</label>
-      </FloatLabel>
+      <Card class="role_option_card " v-if="selectedRole === null || selectedRole === 'moderator'"
+        @click="selectedRole = 'moderator'">
+        <template #title>
+          <h2>Moderator</h2>
+        </template>
+        <template #content>
+          <span class="material-icons big-icon">record_voice_over</span>
+        </template>
+      </Card>
 
-      <InputOtp v-if="roleValue && roleValue.key === 'moderator'" id="pin" class="password-input animate__animated animate__fadeInUp" :length="6" />
-    </form>
+      <Card class="role_option_card" v-if="selectedRole === null || selectedRole === 'participant'"
+        @click="selectedRole = 'participant'">
+        <template #title>
+          <h2>Participant</h2>
+        </template>
+        <template #content>
+          <span class="material-icons big-icon">person</span>
+        </template>
+      </Card>
+
+      <Card class="role_option_card" v-if="selectedRole === null || selectedRole === 'monitor'"
+        @click="selectedRole = 'monitor'">
+        <template #title>
+          <h2>Monitor</h2>
+        </template>
+        <template #content>
+          <span class="material-icons big-icon">monitor</span>
+        </template>
+      </Card>
+    </div>
+
+    <div class="pin_enter animate__animated animate__pulse" v-if="selectedRole !== null">
+      <p v-if="selectedRole !== null && selectedRole === 'moderator'">
+        You selected "{{ selectedRole }}". You need to enter a 6-digit PIN to access the {{ selectedRole }} features.
+      </p>
+
+      <div v-if="selectedRole == 'moderator'">
+        <InputOtp :length="6" />
+      </div>
+    </div>
 
   </div>
+
 </template>
+
 
 <style scoped>
 .welcome {
@@ -55,32 +71,36 @@ const roleOptions
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
-
-  background: #29A4C3;
-  color: white;
 }
 
-.login-form {
+.role_options {
   display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.role_option_card {
+  background-color: var(--color-primary);
+  color: white;
+  width: 20rem;
+  height: 15rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+}
+
+.role_option_card:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.big-icon {
+  font-size: 4rem;
+}
+
+.pin_enter{
+  display:flex; 
   flex-direction: column;
-  gap:2rem;
-  justify-content: center;
+  align-items: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-
-.role-select {
-  width: 20em;
-  text-align: left;
-}
-
-.password-input {
-  width: 20em;
-  align-self: center;
-}
-
-.group-select {
-  width: 20em;
-  text-align: left;
-}
-
-
 </style>
