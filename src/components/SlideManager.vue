@@ -32,14 +32,14 @@ function onRowEditSave(event) {
 
 
 <template>
-    <ScrollPanel style="width: 100%; height: 100%;">
-        <DataTable
+     <DataTable
             :value="slides"
             dataKey="id"
             editMode="row"
             v-model:editingRows="editingRows"
             @row-edit-save="onRowEditSave"
             responsiveLayout="scroll"
+            class="slide-table"
         >
             <Column field="id" header="ID"></Column>
             <Column field="name" header="Title">
@@ -57,7 +57,7 @@ function onRowEditSave(event) {
                 </template>
             </Column>
         </DataTable>
-    </ScrollPanel>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>
