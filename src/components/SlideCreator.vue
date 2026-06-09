@@ -138,14 +138,13 @@ onBeforeUnmount(() => view?.destroy())
     display: flex;
     flex-direction: column;
     border: 1px solid var(--surface-border, #e2e8f0);
-    border-radius: 12px;
-    background-color: var(--surface-card, #fff);
+    border-radius: var(--br-medium);
 }
 
 /* ---- Toolbar ---- */
 .editor-toolbar {
     border: 0;
-    border-radius: 12px 12px 0 0;
+    border-radius: var(--br-medium) var(--br-medium) 0 0;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--surface-border, #e2e8f0);
     flex-shrink: 0;
@@ -210,7 +209,7 @@ onBeforeUnmount(() => view?.destroy())
     flex: 1;
     width: 100%;
     min-height: 0;
-    border-radius: 12px;
+    border-radius: var(--br-medium);
     background: transparent;
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--surface, #f8fafc);

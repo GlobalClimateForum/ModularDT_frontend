@@ -8,10 +8,12 @@ import './assets/main.css'
 import 'material-icons/iconfont/material-icons.css'
 import "primeicons/primeicons.css"; 
 import 'animate.css';
+import ToastService from 'primevue/toastservice';
 
 const app = createApp(App)
 app.use(createPinia())
 app.use(router) 
+app.use(ToastService)
 
 app.use(PrimeVue, {
   theme: { preset: Aura }
