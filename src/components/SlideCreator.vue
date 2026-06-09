@@ -2,58 +2,30 @@
 import { EditorView, basicSetup } from 'codemirror'
 import { markdown } from '@codemirror/lang-markdown'
 import { onMounted, ref, onBeforeUnmount } from 'vue'
-import { Marp } from '@marp-team/marp-core'
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import SplitterPanel from 'primevue/splitterpanel';
-import { saveSlide } from '@/services/slide_service';
+import { renderSlide, saveSlide } from '@/services/slide_service';
 import '@/assets/main.css'
 
 const editor = ref<HTMLElement | null>(null)
-const renderedHtml = ref('')
-const renderedCss = ref('')
 const previewSrcdoc = ref('')
 const initialDoc = '# Title\n Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
 const slideCount = ref(0)
 
-const marp = new Marp()
 const slideName = ref('')
 
 let view: EditorView;
 
 function renderMarp(md: string) {
-    const { html, css } = marp.render(firstSlideOnly(md))
-    renderedHtml.value = html
-    renderedCss.value = css
-
-    // Combine Marp's HTML + its theme CSS into one self-contained document.
-    // The extra CSS makes the single slide fill the iframe width while
-    // keeping its aspect ratio, so it looks like a real Marp slide.
-    previewSrcdoc.value = `<!DOCTYPE html>
-                                <html>
-                                <head>
-                                <meta charset="utf-8">
-                                <style>
-                                ${css}
-                                html, body { margin: 0; padding: 0; }
-                                /* Let Marp's <svg>/<section> keep its own dimensions and just
-                                    scale to fit the iframe width. Don't override height. */
-                                body > svg[data-marpit-svg] {
-                                    width: 100% !important;
-                                    height: auto !important;
-                                    display: block;
-                                }
-                                </style>
-                                </head>
-                                <body>${html}</body>
-                            </html>`
-
-    slideCount.value = (md.match(/^---$/gm)?.length ?? 0) + 1
-    if (slideCount.value > 1) {
-        console.log(`Rendered ${slideCount.value} slides`)
-    }
+    renderSlide(md).then((response) => {
+        const { html, css } = response.data
+        previewSrcdoc.value = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${html}</body></html>`
+    }).catch((error) => {
+        console.error("Error rendering slide:", error)
+    })
 }
 
 function firstSlideOnly(md: string): string {
@@ -80,7 +52,7 @@ function storeSlide() {
             name: slideName.value,
             content: firstSlideOnly(view.state.doc.toString())
         }
-        saveSlide(slideData).then(response => {
+        saveSlide(slideData).then(() => {
         }).catch(error => {
             console.error("Error saving slide:", error)
         })
@@ -126,11 +98,9 @@ onBeforeUnmount(() => view?.destroy())
                         </div>
                     </template>
                 </Toolbar>
-                <div class="status_bar">
-                    <Message v-if="slideCount > 1" severity="warn" size="small" variant="simple" class="slide-warning">
+                <Message v-if="slideCount > 1" severity="warn"  class="slide-warning">
                         Only one slide can be created at a time.
                     </Message>
-                </div>
                 <div ref="editor" class="editor-view"></div>
             </SplitterPanel>
 
@@ -185,7 +155,7 @@ onBeforeUnmount(() => view?.destroy())
 
 .status_bar {
     padding: 0.5rem 1rem;
-    height: 1rem;
+    height: auto;
 }
 
 .toolbar-start {
@@ -201,6 +171,7 @@ onBeforeUnmount(() => view?.destroy())
 
 .slide-warning {
     margin: 0;
+    border-radius: 0;
 }
 
 .toolbar-buttons {

@@ -7,4 +7,13 @@ const api = axios.create({
     },
 })
 
+const marpApi = axios.create({
+    baseURL: import.meta.env.VITE_MARP_API_BASE_URL,
+    headers: {
+        "Content-Type": "text/plain",
+    },
+})
+
 export default api;
+export { api, marpApi };
+

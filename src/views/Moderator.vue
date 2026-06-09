@@ -16,10 +16,20 @@ import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
 import { onMounted, ref } from 'vue';
 
-const currentDashboard = ref<'slides' | 'groups' | 'slidecreate'>('slides');
+const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation'>('slides');
 const groups = ref<any[]>([]);
 
 const items = [
+  {
+    label: 'Presentation',
+    items : [
+      {
+        label: "Live", 
+        materialIcon: 'live_tv',
+        command: () => { currentDashboard.value = 'livePresentation';}
+      }
+    ]
+  },
   {
     label: 'Slides',
     items: [
@@ -61,7 +71,6 @@ onMounted(() => {
         <h2 class="toolbar-title">Moderator Dashboard</h2>
       </template>
       <template #end>
-        <OperationsMenu />
         <Button :icon="PrimeIcons.HOME" label="Home" @click="router.push('/')" />
       </template>
     </Toolbar>

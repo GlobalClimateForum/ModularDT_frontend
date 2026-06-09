@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import ScrollPanel from 'primevue/scrollpanel';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 
-import { getSlides, updateSlide, deleteSlide } from "@/services/slide_service";
+import { getSlides, updateSlide } from "@/services/slide_service";
 import { onMounted, ref } from 'vue';
 
 const slides = ref([]);
-const editingRows = ref([]);
 
 onMounted(() => {
     getSlides().then(response => {
@@ -18,8 +16,7 @@ onMounted(() => {
     });
 });
 
-function onRowEditSave(event) {
-    
+function onRowEditSave(event:any) {
     const updatedSlide = event.data;
     updateSlide(updatedSlide.id, updatedSlide).then(response => {
         console.log("Slide updated successfully:", response.data);
@@ -30,34 +27,20 @@ function onRowEditSave(event) {
 
 </script>
 
-
 <template>
-     <DataTable
-            :value="slides"
-            dataKey="id"
-            editMode="row"
-            v-model:editingRows="editingRows"
-            @row-edit-save="onRowEditSave"
-            responsiveLayout="scroll"
-            class="slide-table"
-        >
-            <Column field="id" header="ID"></Column>
-            <Column field="name" header="Title">
-                <template #editor="slotProps">
-                    <InputText v-model="slotProps.data.name" class="p-inputtext-sm" />
-                </template>
-            </Column>
-            <Column field="created_at" header="Created At"></Column>
-            <Column field="updated_at" header="Updated At"></Column>
+    <DataTable :value="slides" dataKey="id" editMode="row" 
+    @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table">
+        <Column field="id" header="ID"></Column>
+        <Column field="name" header="Title" >
+            <template #editor="slotProps">
+                <InputText v-model="slotProps.data.name"  />
+            </template>
+        </Column>
+        <Column field="created_at" header="Created At"></Column>
+        <Column field="updated_at" header="Updated At"></Column>
 
-            <Column :rowEditor="true" style="width: 8rem; text-align: center" bodyStyle="text-align: center"></Column>
-            <Column header="Actions" style="width: 8rem; text-align: center" bodyStyle="text-align: center">
-                <template #body="slotProps">
-                    <button @click="editingRows = [slotProps.data.id]" class="p-button p-button-text p-button-sm">Edit</button>
-                </template>
-            </Column>
-        </DataTable>
+        <Column :rowEditor="true" style="width: 8rem; text-align: center" bodyStyle="text-align: center"></Column>
+    </DataTable>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
