@@ -7,6 +7,7 @@ import { ref } from 'vue'
 import router from '@/router'
 
 const selectedRole = ref<string | null>(null)
+import '@/assets/main.css'
 </script>
 
 <template>
@@ -48,14 +49,14 @@ const selectedRole = ref<string | null>(null)
       </Card>
     </div>
 
-    <div class="pin_enter animate__animated animate__pulse" v-if="selectedRole !== null">
+    <div class="pin_enter" v-if="selectedRole !== null">
       <p v-if="selectedRole !== null && selectedRole === 'moderator'">
-        You selected "{{ selectedRole }}". You need to enter a 4-digit PIN to access the {{ selectedRole }} features.
+        Enter pin to acces moderator dashboard.
       </p>
 
       <div v-if="selectedRole == 'moderator'">
-        <InputOtp :length="4" />
-        <Button label="Submit" @click="router.push('/moderator')" />
+        <InputOtp :length="6" />
+        <Button style="margin-top: 1rem;" label="Submit" @click="router.push('/moderator')" />
       </div>
     </div>
 
@@ -65,6 +66,7 @@ const selectedRole = ref<string | null>(null)
 
 
 <style scoped>
+
 .welcome {
   display: flex;
   flex-direction: column;
@@ -73,6 +75,7 @@ const selectedRole = ref<string | null>(null)
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
+  background-color: var(--primary);
 }
 
 .role_options {
@@ -82,7 +85,7 @@ const selectedRole = ref<string | null>(null)
 }
 
 .role_option_card {
-  background-color: var(--color-primary);
+  background-color: var(--primary-light);
   color: white;
   width: 20rem;
   height: 15rem;
@@ -103,6 +106,5 @@ const selectedRole = ref<string | null>(null)
   display:flex; 
   flex-direction: column;
   align-items: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 </style>
