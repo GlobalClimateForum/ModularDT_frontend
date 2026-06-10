@@ -212,7 +212,7 @@ onBeforeUnmount(() => view?.destroy())
     border-radius: var(--br-medium);
     background: transparent;
     border: 1px solid var(--surface-border, #e2e8f0);
-    background-color: var(--surface, #f8fafc);
+    background-color: var(--p-primary-50); 
     margin-top: 0.5rem;
 }
 

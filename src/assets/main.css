@@ -24,7 +24,6 @@
 
 body {
   margin: 0;
-  background: white;
   color: white;
   box-sizing: border-box;
 }
@@ -39,5 +38,19 @@ body {
   border: 1px solid var(--surface-border, #e2e8f0);
   border-radius: var(--br-medium);
   background-color: var(--surface-card, #fff);
-  padding: 0.75rem 1rem;
+  overflow: hidden;
+}
+
+.card {
+  background: #ffffff;
+  border: none;             /* important — remove it */
+  border-radius: 16px;      /* a touch larger */
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.04),
+    0 12px 32px rgba(30, 50, 100, 0.10);
+}
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
 }

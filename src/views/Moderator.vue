@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import router from '@/router';
@@ -22,11 +21,11 @@ const groups = ref<any[]>([]);
 const items = [
   {
     label: 'Presentation',
-    items : [
+    items: [
       {
-        label: "Live", 
+        label: "Live",
         materialIcon: 'live_tv',
-        command: () => { currentDashboard.value = 'livePresentation';}
+        command: () => { currentDashboard.value = 'livePresentation'; }
       }
     ]
   },
@@ -65,20 +64,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="dashboard">
-    <Toolbar class="toolbar">
-      <template #start>
-        <h2 class="toolbar-title">Moderator Dashboard</h2>
-      </template>
-      <template #end>
-        <Button :icon="PrimeIcons.HOME" label="Home" @click="router.push('/')" />
-      </template>
-    </Toolbar>
-
+  <div>
     <Splitter class="layout-splitter" :gutterSize="1">
-      <SplitterPanel :size="18" :minSize="15" class="sidebar-panel">
 
+      <SplitterPanel :size="18" :minSize="15" class="menu-panel">
+       
         <Menu :model="items">
+
+          <template #start>
+            <div class="menu-header">
+              <div class="content-title">Moderator Dashboard</div>
+              <Button icon="pi pi-home" @click="router.push('/')" />
+            </div>
+          </template>
+
           <template #item="{ item, props }">
             <a class="p-menu-item-link" v-bind="props.action">
               <span class="material-icons">{{ item.materialIcon }}</span>
@@ -89,12 +88,10 @@ onMounted(() => {
 
       </SplitterPanel>
 
-      <SplitterPanel :size="82" class="content-panel">
-        <div>
+      <SplitterPanel :size="82" class="panel content-panel">
           <SlideManager v-if="currentDashboard === 'slides'" />
           <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />
           <SlideCreator v-if="currentDashboard === 'slidecreate'" />
-        </div>
       </SplitterPanel>
     </Splitter>
   </div>
@@ -102,58 +99,62 @@ onMounted(() => {
 
 <style scoped>
 .content-title {
-  font-size: 1.0em; 
-  margin-top: 0;
-  margin-bottom: 0.5em;
+  font-size: 1.0rem;
   font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-color-secondary, #64748b);
-}
-
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.toolbar {
-  border-radius: 0;
-  z-index: 1;
-  height: 10vh;
-  color: white;
-  box-shadow: var(--shadow-dark);
-  background-color: var(--primary);
-  border: none;
 }
 
 .content-panel {
+  display: flex;
   overflow: hidden;
-  height: 80vh;
-  padding: 1em;
-  background-color: white;
+  padding: 1.0em;
   border-radius: 6px;
 }
 
-.toolbar-title {
-  margin: 0;
-  font-weight: 600;
-}
 
 .layout-splitter {
   flex: 1 1 auto;
   min-height: 0;
   border: none;
   border-radius: 0;
-  padding: 2rem;
+  padding: 1.5rem;
   gap: 1rem;
-  background-color: var(--surface);
+  height: 100vh;
+  min-height: 100vh;
+
+  background-image:
+    linear-gradient(135deg, #eaeff6 0%, #d6dde8 100%);
 }
 
-.sidebar-menu {
-  width: 100%;
-  height: 100%;
-  height: 80vh;
+:deep(.p-menu-item-link) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
 }
+
+:deep(.p-menu-item[data-p-focused="true"] .p-menu-item-content) {
+  background-color: var(--p-primary-600);
+  color: var(--p-primary-50);
+}
+
+:deep(.p-menu){
+  padding: 0.5rem;
+  border: none;
+}
+
+.menu-header {
+  padding: 1rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--surface);
+}
+
+.menu-panel {
+  border: 1px solid var(--surface-border, #e2e8f0);
+  background-color: var(--surface-card, #fff);
+  border-radius: var(--br-medium);
+}
+
 </style>

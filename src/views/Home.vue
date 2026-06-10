@@ -86,7 +86,6 @@ import '@/assets/main.css'
 
 .role_option_card {
   background-color: var(--primary-light);
-  color: white;
   width: 20rem;
   height: 15rem;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
