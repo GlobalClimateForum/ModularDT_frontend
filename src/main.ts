@@ -5,7 +5,7 @@ import Aura from '@primeuix/themes/aura'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
-import 'material-icons/iconfont/material-icons.css'
+import 'material-symbols'
 import "primeicons/primeicons.css"; 
 import 'animate.css';
 import ToastService from 'primevue/toastservice';
