@@ -8,6 +8,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
 import SlideView from '@/components/SlideView.vue';
+import Tag from 'primevue/tag';
 import { FilterMatchMode } from '@primevue/core/api'
 
 import { getSlides, updateSlide, renderSlide } from "@/services/slide_service";
@@ -67,13 +68,14 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-    <Splitter class="panel" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
-        <SplitterPanel class="sub-panel" :panelSizes="[35, 65]">
+    <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
+
+        <SplitterPanel class="sub-panel" :size="30">
 
             <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                 @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
                 v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single"
-                :globalFilterFields="['name', 'content']" v-model:filters="filters">
+                :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
 
                 <Column field="name" header="">
                     <template #editor="slotProps">
@@ -81,15 +83,15 @@ function formatDate(iso: string): string {
                     </template>
                     <template #body="slotProps">
                         <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
-                        <span style="font-size: 0.875rem; color: #64748b;">Updated {{
-                            formatDate(slotProps.data.updated_at)
-                        }}</span>
+                        <span style="font-size: 0.875rem; color: #64748b;">Updated
+                            {{ formatDate(slotProps.data.updated_at) }}</span>
                     </template>
                 </Column>
 
                 <template #header>
                     <InputText class="search-input" v-model="filters.global.value" placeholder="Search" type="text" />
-                    <Button class="button-reset-search" @click="filters.global.value = null" rounded :disabled="!filters.global.value" >
+                    <Button class="button-reset-search" @click="filters.global.value = null" rounded
+                        :disabled="!filters.global.value">
                         <i class="pi pi-times"></i>
                     </Button>
                 </template>
@@ -102,30 +104,15 @@ function formatDate(iso: string): string {
         <SplitterPanel class="sub-panel slide-preview">
             <SlideView :slide="selectedSlide"></SlideView>
             <div class="tag-view-container">
-                
+                <div class="tag-item" v-for="tag in selectedSlide?.tags" :key="tag">
+                   <Tag :value="tag" severity="info" rounded></Tag>
+                </div>
             </div>
         </SplitterPanel>
     </Splitter>
 </template>
 
 <style scoped>
-.panel {
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    box-sizing: border-box;
-}
-
-.sub-panel {
-    padding: 1rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-}
-
 .slide-table {
     flex: 1;
     min-height: 0;
@@ -164,6 +151,16 @@ function formatDate(iso: string): string {
     border-radius: var(--br-medium);
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--p-primary-50, #f8fafc);
+}
+
+.tag-view-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: var(--br-medium);
+    border: 1px solid var(--p-primary-200);
 }
 
 :deep(.p-datatable-header) {
