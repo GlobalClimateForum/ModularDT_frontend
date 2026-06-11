@@ -167,10 +167,6 @@ function onTagAdded(addedTag: string) {
     /* the critical line */
 }
 
-.slide-preview {
-    width: 100%;
-    margin: 1rem auto 0;
-}
 
 .marp-output {
     flex: 1;
