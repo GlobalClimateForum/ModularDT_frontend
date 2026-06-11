@@ -17,6 +17,7 @@
     "axios": "^1.17.0",
     "codemirror": "^6.0.2",
     "material-icons": "^1.13.14",
+    "material-symbols": "^0.45.0",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.5",
