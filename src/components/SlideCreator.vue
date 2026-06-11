@@ -32,7 +32,7 @@ function makeSlide(content: string): Slide {
     return {
         id: 0,
         name: '',
-        content,
+        markdown: content,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         tags: []
@@ -42,7 +42,7 @@ function makeSlide(content: string): Slide {
 function storeSlide() {
     const slideToSave: Slide = {
         name: currentSlide.value.name,
-        content: currentSlide.value.content,
+        markdown: currentSlide.value.markdown,
         tags: currentSlide.value.tags
     }
 
@@ -64,7 +64,7 @@ onMounted(() => {
     view = new EditorView({
         parent: editor.value,
         state: EditorState.create({
-            doc: currentSlide.value.content,
+            doc: currentSlide.value.markdown,
             extensions: [
                 basicSetup,
                 markdown(),
@@ -72,7 +72,7 @@ onMounted(() => {
                     if (update.docChanged) {
                         currentSlide.value = {
                             ...currentSlide.value,
-                            content: update.state.doc.toString(),
+                            markdown: update.state.doc.toString(),
                         }
                     }
                 }),
@@ -90,7 +90,7 @@ watch(() => props.slide, (newSlide) => {
     if (!newSlide || !view) return
     currentSlide.value = newSlide
     view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: newSlide.content },
+        changes: { from: 0, to: view.state.doc.length, insert: newSlide.markdown },
     })
 })
 </script>
@@ -117,6 +117,9 @@ watch(() => props.slide, (newSlide) => {
 
         <SplitterPanel class="sub-panel editor-panel">
             <SlideView :slide="currentSlide" />
+            <div>
+                Test
+            </div>
         </SplitterPanel>
     </Splitter>
 </template>

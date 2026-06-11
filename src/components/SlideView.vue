@@ -17,7 +17,7 @@ watch(
 )
 
 function showSlide(slide: Slide) {
-    renderSlide(slide.content).then((response) => {
+    renderSlide(slide.markdown).then((response) => {
         const { html, css } = response.data
         previewSlide.value = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${html}</body></html>`
     }).catch((error) => {
@@ -42,7 +42,6 @@ function showSlide(slide: Slide) {
 .slide-preview {
     width: 100%;
     aspect-ratio: 16 / 9;
-    border: 1px solid var(--surface-border, #e2e8f0);
     border-radius: var(--br-medium);
     background-color: var(--p-primary-50);
     box-shadow: inset 0 0 10px 5px var(--p-primary-100);
