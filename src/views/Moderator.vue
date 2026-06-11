@@ -25,7 +25,8 @@ const items = [
   {
     label: 'Presentation',
     items: [
-      {
+      { 
+        key: 'live',
         label: "Live",
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'livePresentation'; }
@@ -36,11 +37,13 @@ const items = [
     label: 'Slides',
     items: [
       {
-        label: 'Manage',
-        materialIcon: "slideshow",
+        key: 'slides',
+        label: 'Overview',
+        materialIcon: "filter",
         command: () => { currentDashboard.value = 'slides'; }
       },
       {
+        key: 'slidecreate',
         label: 'Editor',
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
@@ -51,6 +54,7 @@ const items = [
     label: 'Groups',
     items: [
       {
+        key: 'groups',
         label: 'Manage',
         materialIcon: 'group',
         command: () => { currentDashboard.value = 'groups'; }
@@ -88,8 +92,8 @@ function handleEdit(slide: Slide) {
         </template>
 
         <template #item="{ item, props }">
-          <a class="p-menu-item-link" v-bind="props.action">
-            <span class="material-icons">{{ item.materialIcon }}</span>
+          <a :class="{'p-menu-item-link': true, 'active-item': currentDashboard === item.key }" v-bind="props.action">
+            <span class="material-symbols-outlined">{{ item.materialIcon }}</span>
             <span>{{ item.label }}</span>
           </a>
         </template>
@@ -155,6 +159,11 @@ function handleEdit(slide: Slide) {
 :deep(.p-menu) {
   padding: 0.5rem;
   border: none;
+}
+
+.active-item{
+  background-color: var(--p-primary-600);
+  color: var(--p-primary-50);
 }
 
 .menu-header {
