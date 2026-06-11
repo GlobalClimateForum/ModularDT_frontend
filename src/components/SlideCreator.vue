@@ -1,52 +1,79 @@
 <script setup lang="ts">
 import { EditorView, basicSetup } from 'codemirror'
 import { markdown } from '@codemirror/lang-markdown'
-import { onMounted, ref, onBeforeUnmount } from 'vue'
-import Toolbar from 'primevue/toolbar';
-import Button from 'primevue/button';
-import Select from 'primevue/select';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
-import Toast from 'primevue/toast';
-import type { Slide } from '@/services/slide_service';
-import SlideView from '@/components/SlideView.vue';
 import { EditorState } from '@codemirror/state'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import Toolbar from 'primevue/toolbar'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
+import Splitter from 'primevue/splitter'
+import SplitterPanel from 'primevue/splitterpanel'
+import type { Slide } from '@/services/slide_service'
+import SlideView from '@/components/SlideView.vue'
 
 import '@/assets/main.css'
 
-const editor = ref<HTMLElement | null>(null)
-const slide = ref<Slide | null>(null)
+const props = defineProps<{ slide?: Slide | null }>()
 
-let view: EditorView;
+const DEFAULT_CONTENT = `---
+marp: true
+---
 
-function firstSlideOnly(md: string): string {
-    let body = md
-    let frontMatter = ''
+# Untitled
 
-    const frontMatterMatch = body.match(/^---\n([\s\S]*?)\n---\n/)
-    if (frontMatterMatch) {
-        frontMatter = frontMatterMatch[0]
-        body = body.slice(frontMatter.length)
+Start writing your slide...
+`
+
+function makeSlide(content: string): Slide {
+    return {
+        id: 0,
+        name: 'untitled',
+        content,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        tags: []
     }
-
-    const slideSeparatorIndex = body.match(/^---$/m)?.index ?? body.length
-    const firstSlide = body.slice(0, slideSeparatorIndex).trim()
-    return frontMatter + firstSlide
 }
+
+const editor = ref<HTMLElement | null>(null)
+const currentSlide = ref<Slide>(props.slide ?? makeSlide(DEFAULT_CONTENT))
+let view: EditorView | null = null
 
 onMounted(() => {
     if (!editor.value) return
-
     view = new EditorView({
         parent: editor.value,
         state: EditorState.create({
-            doc: '',
-            extensions: [basicSetup, markdown()],
+            doc: currentSlide.value.content,
+            extensions: [
+                basicSetup,
+                markdown(),
+                EditorView.updateListener.of((update) => {
+                    if (update.docChanged) {
+                        currentSlide.value = {
+                            ...currentSlide.value,
+                            content: update.state.doc.toString(),
+                        }
+                    }
+                }),
+            ],
         }),
     })
 })
 
+onBeforeUnmount(() => {
+    view?.destroy()
+    view = null
+})
 
+watch(() => props.slide, (newSlide) => {
+    if (!newSlide || !view) return
+    currentSlide.value = newSlide
+    view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: newSlide.content },
+    })
+})
 </script>
 
 
@@ -65,12 +92,12 @@ onMounted(() => {
             </Toolbar>
 
             <div class="editor-container">
-                <div ref="editor" class="editor-host" :v-model="slide?.content"></div>
+                <div ref="editor" class="editor-host"></div>
             </div>
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel editor-panel">
-            <SlideView :slide="slide ? slide : null" />
+            <SlideView :slide="currentSlide" />
         </SplitterPanel>
     </Splitter>
 </template>
@@ -120,11 +147,11 @@ onMounted(() => {
 }
 
 .editor-host :deep(.cm-lineNumbers .cm-activeLineGutter) {
-  border-left: 3px solid var(--p-primary-400);
+    border-left: 3px solid var(--p-primary-400);
 }
 
 .editor-host :deep(.cm-gutters) {
-  border-right: none;
+    border-right: none;
 }
 
 
@@ -152,5 +179,4 @@ onMounted(() => {
     font-family: "Fira Code", monospace;
     font-variant-ligatures: contextual;
 }
-
 </style>
