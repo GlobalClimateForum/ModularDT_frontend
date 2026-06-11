@@ -8,7 +8,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
 import SlideView from '@/components/SlideView.vue';
-import Tag from 'primevue/tag';
+import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 
 import { getSlides, updateSlide, deleteSlide } from "@/services/slide_service";
@@ -91,6 +91,18 @@ function formatDate(iso: string): string {
     }
 }
 
+function onTagRemoved(removedTag: string) {
+    if (selectedSlide.value) {
+        selectedSlide.value.tags = selectedSlide.value.tags.filter(tag => tag !== removedTag);
+    }
+}
+
+function onTagAdded(addedTag: string) {
+    if (selectedSlide.value) {
+        selectedSlide.value.tags = [...selectedSlide.value.tags, addedTag];
+    }
+}
+
 </script>
 
 <template>
@@ -143,11 +155,7 @@ function formatDate(iso: string): string {
 
         <SplitterPanel class="sub-panel slide-preview">
             <SlideView :slide="selectedSlide"></SlideView>
-            <div class="tag-view-container">
-                <div class="tag-item" v-for="tag in selectedSlide?.tags" :key="tag">
-                    <Tag :value="tag" severity="info" rounded></Tag>
-                </div>
-            </div>
+            <TagView :slide="selectedSlide? selectedSlide : null" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded"></TagView>
         </SplitterPanel>
     </Splitter>
 </template>
@@ -191,16 +199,6 @@ function formatDate(iso: string): string {
     border-radius: var(--br-medium);
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--p-primary-50, #f8fafc);
-}
-
-.tag-view-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding: 0.5rem;
-    border-radius: var(--br-medium);
-    border: 1px solid var(--p-primary-200);
 }
 
 :deep(.p-datatable-header) {
