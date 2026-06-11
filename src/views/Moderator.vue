@@ -34,12 +34,12 @@ const items = [
     items: [
       {
         label: 'Manage',
-        materialIcon: 'slideshow',
+        materialIcon: "slideshow",
         command: () => { currentDashboard.value = 'slides'; }
       },
       {
-        label: 'Add New',
-        materialIcon: 'add',
+        label: 'Editor',
+        materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
       },
     ],
@@ -64,10 +64,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <Splitter class="layout-splitter" :gutterSize="1">
+    <Splitter class="main-panel" :gutterSize="2">
 
-      <SplitterPanel :size="18" :minSize="15" class="menu-panel">
+      <SplitterPanel :size="15" :minSize="15" class="menu-panel">
        
         <Menu :model="items">
 
@@ -87,14 +86,12 @@ onMounted(() => {
         </Menu>
 
       </SplitterPanel>
-
-      <SplitterPanel :size="82" class="panel content-panel">
+      <SplitterPanel :size="85">
           <SlideManager v-if="currentDashboard === 'slides'" />
           <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />
           <SlideCreator v-if="currentDashboard === 'slidecreate'" />
       </SplitterPanel>
     </Splitter>
-  </div>
 </template>
 
 <style scoped>
@@ -103,15 +100,7 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.content-panel {
-  display: flex;
-  overflow: hidden;
-  padding: 1.0em;
-  border-radius: 6px;
-}
-
-
-.layout-splitter {
+.main-panel {
   flex: 1 1 auto;
   min-height: 0;
   border: none;

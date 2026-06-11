@@ -22,6 +22,13 @@
   --shadow-dark: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+@font-face {
+  font-family: 'Fira Code';
+  src: url('/fonts/FiraCode-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   margin: 0;
   color: white;
@@ -41,16 +48,26 @@ body {
   overflow: hidden;
 }
 
-.card {
-  background: #ffffff;
-  border: none;             /* important — remove it */
-  border-radius: 16px;      /* a touch larger */
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.04),
-    0 12px 32px rgba(30, 50, 100, 0.10);
-}
-
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
   margin: 0;
+}
+
+.sub-panel {
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
 }

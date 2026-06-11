@@ -4,8 +4,9 @@ export interface Slide {
     id: number; 
     name: string;
     content: string;
-    created_at: string;
-    updated_at: string;
+    created_at: string | null;
+    updated_at: string | null;
+    tags: string[];
 }
 
 export type SlidePayload = Omit<Slide, "id" | "created_at" | "updated_at">;
