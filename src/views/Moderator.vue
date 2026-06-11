@@ -14,9 +14,12 @@ import '@/assets/main.css'
 import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
 import { onMounted, ref } from 'vue';
+import type { Slide } from "@/services/slide_service"
+import {Transition} from "vue";
 
 const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation'>('slides');
 const groups = ref<any[]>([]);
+const currentSlide = ref<Slide | null>(null);
 
 const items = [
   {
@@ -61,40 +64,63 @@ onMounted(() => {
     .then(response => { groups.value = response.data.groups; })
     .catch(error => { console.error("Error fetching groups:", error); });
 });
+
+function handleEdit(slide: Slide) {
+  currentSlide.value = slide
+  currentDashboard.value = 'slidecreate';
+}
+
+
 </script>
 
 <template>
-    <Splitter class="main-panel" :gutterSize="2">
+  <Splitter class="main-panel" :gutterSize="2">
 
-      <SplitterPanel :size="15" :minSize="15" class="menu-panel">
-       
-        <Menu :model="items">
+    <SplitterPanel :size="15" :minSize="15" class="menu-panel">
 
-          <template #start>
-            <div class="menu-header">
-              <div class="content-title">Moderator Dashboard</div>
-              <Button icon="pi pi-home" @click="router.push('/')" />
-            </div>
-          </template>
+      <Menu :model="items">
 
-          <template #item="{ item, props }">
-            <a class="p-menu-item-link" v-bind="props.action">
-              <span class="material-icons">{{ item.materialIcon }}</span>
-              <span>{{ item.label }}</span>
-            </a>
-          </template>
-        </Menu>
+        <template #start>
+          <div class="menu-header">
+            <div class="content-title">Moderator Dashboard</div>
+            <Button icon="pi pi-home" @click="router.push('/')" />
+          </div>
+        </template>
 
-      </SplitterPanel>
-      <SplitterPanel :size="85">
-          <SlideManager v-if="currentDashboard === 'slides'" />
-          <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />
-          <SlideCreator v-if="currentDashboard === 'slidecreate'" />
-      </SplitterPanel>
-    </Splitter>
+        <template #item="{ item, props }">
+          <a class="p-menu-item-link" v-bind="props.action">
+            <span class="material-icons">{{ item.materialIcon }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        </template>
+      </Menu>
+
+    </SplitterPanel>
+    <SplitterPanel :size="85">
+      <Transition name="fade" mode="out-in">
+        <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleEdit" />
+      </Transition>
+      <Transition name="fade" mode="out-in">
+        <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />
+      </Transition>
+      <Transition name="fade" mode="out-in">
+        <SlideCreator v-if="currentDashboard === 'slidecreate'" :slide="currentSlide" />
+      </Transition>
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 180ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .content-title {
   font-size: 1.0rem;
   font-weight: 600;
@@ -126,7 +152,7 @@ onMounted(() => {
   color: var(--p-primary-50);
 }
 
-:deep(.p-menu){
+:deep(.p-menu) {
   padding: 0.5rem;
   border: none;
 }
@@ -145,5 +171,4 @@ onMounted(() => {
   background-color: var(--surface-card, #fff);
   border-radius: var(--br-medium);
 }
-
 </style>

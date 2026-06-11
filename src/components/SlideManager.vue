@@ -11,8 +11,8 @@ import SlideView from '@/components/SlideView.vue';
 import Tag from 'primevue/tag';
 import { FilterMatchMode } from '@primevue/core/api'
 
-import { getSlides, updateSlide, renderSlide } from "@/services/slide_service";
-import { onMounted, ref, watch } from 'vue';
+import { getSlides, updateSlide, deleteSlide } from "@/services/slide_service";
+import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 
 const slides = ref<Slide[]>([]);
@@ -23,6 +23,7 @@ const toast = useToast();
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
+
 
 onMounted(() => {
     getSlides().then(response => {
@@ -44,6 +45,31 @@ function onRowEditSave(event: any) {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update slide', life: 3000 });
             console.error("Error updating slide:", error)
         })
+    }
+}
+
+const emit = defineEmits<{ 'edit-slide': [slide: Slide] }>()
+
+function onEditSlide(slide: Slide) {
+    emit('edit-slide', slide)
+}
+
+function onDeleteSlide(slide: Slide) {
+    if (slide.id) {
+        deleteSlide(slide.id).then(() => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
+            slides.value = slides.value.filter(s => s.id !== slide.id);
+            if (selectedSlide.value?.id === slide.id) {
+                selectedSlide.value = null;
+            }
+        }).catch(error => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
+            console.error("Error deleting slide:", error);
+        })
+    }
+    else{
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
+        console.error("Error deleting slide: no valid slide.id");
     }
 }
 
@@ -88,6 +114,22 @@ function formatDate(iso: string): string {
                     </template>
                 </Column>
 
+                <Column style="width: 8rem">
+                    <template #body="slotProps">
+                        <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-pencil"
+                            @click="(e) => slotProps.editorInitCallback(e)" />
+                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteSlide(slotProps.data)" />
+                    </template>
+                    <template #editor="slotProps">
+                        <Button size="small" rounded text icon="pi pi-check"
+                            @click="(e) => slotProps.editorSaveCallback(e)" />
+                        <Button size="small" rounded text icon="pi pi-times"
+                            @click="(e) => slotProps.editorCancelCallback(e)" />
+                    </template>
+                </Column>
+
+
                 <template #header>
                     <InputText class="search-input" v-model="filters.global.value" placeholder="Search" type="text" />
                     <Button class="button-reset-search" @click="filters.global.value = null" rounded
@@ -96,8 +138,6 @@ function formatDate(iso: string): string {
                     </Button>
                 </template>
 
-                <Column :rowEditor="true" style="width: 8rem; text-align: center" bodyStyle="text-align: center">
-                </Column>
             </DataTable>
         </SplitterPanel>
 
@@ -105,7 +145,7 @@ function formatDate(iso: string): string {
             <SlideView :slide="selectedSlide"></SlideView>
             <div class="tag-view-container">
                 <div class="tag-item" v-for="tag in selectedSlide?.tags" :key="tag">
-                   <Tag :value="tag" severity="info" rounded></Tag>
+                    <Tag :value="tag" severity="info" rounded></Tag>
                 </div>
             </div>
         </SplitterPanel>

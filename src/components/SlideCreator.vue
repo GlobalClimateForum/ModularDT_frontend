@@ -10,11 +10,14 @@ import Select from 'primevue/select'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import type { Slide } from '@/services/slide_service'
+import { saveSlide } from '@/services/slide_service'
 import SlideView from '@/components/SlideView.vue'
+import { useToast } from 'primevue/usetoast';
 
 import '@/assets/main.css'
 
 const props = defineProps<{ slide?: Slide | null }>()
+const toast = useToast();
 
 const DEFAULT_CONTENT = `---
 marp: true
@@ -28,12 +31,28 @@ Start writing your slide...
 function makeSlide(content: string): Slide {
     return {
         id: 0,
-        name: 'untitled',
+        name: '',
         content,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         tags: []
     }
+}
+
+function storeSlide() {
+    const slideToSave: Slide = {
+        name: currentSlide.value.name,
+        content: currentSlide.value.content,
+        tags: currentSlide.value.tags
+    }
+
+    saveSlide(slideToSave).then(response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 });
+
+    }).catch(error => {
+        console.error("Error saving slide:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 });
+    })
 }
 
 const editor = ref<HTMLElement | null>(null)
@@ -82,12 +101,12 @@ watch(() => props.slide, (newSlide) => {
         <SplitterPanel :size="50" class="sub-panel">
 
             <Toolbar class="editor-toolbar">
-                <template #start class="editor-toolbar-start">
-                    <Button icon="pi pi-save" size="small" rounded />
-                    <InputText placeholder="Filename" size="small" rounded />
-                </template>
-                <template #end>
-                    <Select :options="['Theme 1', 'Theme 2']" placeholder="Theme" size="small" rounded />
+                <template #start>
+                    <div class="editor-toolbar-start">
+                        <Button icon="pi pi-save" size="small" rounded @click="storeSlide"
+                            :disabled="currentSlide.name == ''" />
+                        <InputText v-model="currentSlide.name" placeholder="Enter slide name..." size="small" rounded />
+                    </div>
                 </template>
             </Toolbar>
 
@@ -108,6 +127,7 @@ watch(() => props.slide, (newSlide) => {
     height: 100%;
     display: flex;
     flex-direction: column;
+
 }
 
 .editor-toolbar {
@@ -118,13 +138,15 @@ watch(() => props.slide, (newSlide) => {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 1rem;
+    width: 100%;
+    gap: 0.5rem;
 }
 
 .editor-container {
     height: 100%;
     display: flex;
     flex-direction: column;
+    box-shadow: var(--shadow-light);
 }
 
 .editor-host {
