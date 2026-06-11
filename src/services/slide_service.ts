@@ -1,11 +1,11 @@
 import {api, marpApi} from "./api";
 
 export interface Slide {
-    id: number; 
+    id?: number; 
     name: string;
     content: string;
-    created_at: string | null;
-    updated_at: string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
     tags: string[];
 }
 
