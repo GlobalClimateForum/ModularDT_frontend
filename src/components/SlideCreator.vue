@@ -116,7 +116,7 @@ watch(() => props.slide, (newSlide) => {
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel editor-panel">
-            <SlideView :slide="currentSlide" />
+            <SlideView :content="currentSlide" />
             <div>
                 Test
             </div>

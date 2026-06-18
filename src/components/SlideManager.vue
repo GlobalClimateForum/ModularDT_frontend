@@ -154,7 +154,7 @@ function onTagAdded(addedTag: string) {
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel slide-preview">
-            <SlideView :slide="selectedSlide"></SlideView>
+            <SlideView :content="selectedSlide"></SlideView>
             <TagView :slide="selectedSlide? selectedSlide : null" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded"></TagView>
         </SplitterPanel>
     </Splitter>

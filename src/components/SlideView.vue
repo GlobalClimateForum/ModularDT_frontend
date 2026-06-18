@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Slide } from '@/services/slide_service';
 import MarkdownSlide from '@/components/MarkdownSlide.vue';
-const props = defineProps<{ slide: Slide | null }>();
+import ViteSlide from '@/components/ViteSlide.vue';
+const props = defineProps<{ content: Slide | Object | null }>();
 
 </script>
 
@@ -9,7 +10,7 @@ const props = defineProps<{ slide: Slide | null }>();
 <template>
 
     <div class="slide-preview">
-        <MarkdownSlide :slide="props.slide" />
+        <MarkdownSlide v-if="props.content && 'markdown' in props.content" :slide="props.content" />
     </div>
 
 </template>
