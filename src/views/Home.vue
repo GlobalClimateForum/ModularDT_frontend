@@ -2,6 +2,7 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputOtp from 'primevue/inputotp'
+import Select from 'primevue/select'
 
 import { ref } from 'vue'
 import router from '@/router'
@@ -14,9 +15,9 @@ import '@/assets/main.css'
   <div class="welcome">
 
     <h1>Decision Theater</h1>
-    <p v-if="selectedRole === null">Select your role to get started.</p>
 
     <div class="role_options" v-if="selectedRole === null">
+
 
       <Card class="role_option_card " v-if="selectedRole === null || selectedRole === 'moderator'"
         @click="selectedRole = 'moderator'">
@@ -24,7 +25,7 @@ import '@/assets/main.css'
           <h2>Moderator</h2>
         </template>
         <template #content>
-          <span class="material-icons big-icon">record_voice_over</span>
+          <span class="material-symbols-outlined big-icon">record_voice_over</span>
         </template>
       </Card>
 
@@ -34,17 +35,17 @@ import '@/assets/main.css'
           <h2>Participant</h2>
         </template>
         <template #content>
-          <span class="material-icons big-icon">person</span>
+          <span class="material-symbols-outlined big-icon">person</span>
         </template>
       </Card>
 
       <Card class="role_option_card" v-if="selectedRole === null || selectedRole === 'monitor'"
         @click="selectedRole = 'monitor'">
-        <template #title>
-          <h2>Monitor</h2>
-        </template>
         <template #content>
-          <span class="material-icons big-icon">monitor</span>
+          <div class="role_option_card_content">
+            <span class="material-symbols-outlined big-icon">monitor</span>
+            <h2>Monitor</h2>
+          </div>
         </template>
       </Card>
     </div>
@@ -66,7 +67,6 @@ import '@/assets/main.css'
 
 
 <style scoped>
-
 .welcome {
   display: flex;
   flex-direction: column;
@@ -75,7 +75,7 @@ import '@/assets/main.css'
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
-  background-color: var(--primary);
+  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
 }
 
 .role_options {
@@ -85,11 +85,28 @@ import '@/assets/main.css'
 }
 
 .role_option_card {
-  background-color: var(--primary-light);
+
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4.3px);
+  -webkit-backdrop-filter: blur(4.3px);
+
+  border: 1px solid rgba(255, 255, 255, 0.31);
   width: 20rem;
   height: 15rem;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 
+  color: var(--p-primary-50);
+}
+
+.role_option_card_content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .role_option_card:hover {
@@ -101,8 +118,8 @@ import '@/assets/main.css'
   font-size: 4rem;
 }
 
-.pin_enter{
-  display:flex; 
+.pin_enter {
+  display: flex;
   flex-direction: column;
   align-items: center;
 }
