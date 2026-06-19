@@ -5,9 +5,11 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import router from '@/router';
 
-import SlideManager from '@/components/SlideManager.vue';
-import GroupManager from '@/components/GroupManager.vue';
-import SlideCreator from '@/components/SlideCreator.vue';
+import SlideManager   from '@/components/SlideManager.vue';
+import GroupManager   from '@/components/GroupManager.vue';
+import SlideCreator   from '@/components/SlideCreator.vue';
+import EventSettings  from '@/components/EventSettings.vue';
+import GlobalSettings from '@/components/GlobalSettings.vue';
 
 import '@/assets/main.css'
 
@@ -17,21 +19,56 @@ import { onMounted, ref } from 'vue';
 import type { Slide } from "@/services/slide_service"
 import {Transition} from "vue";
 
-const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'eventcreate' | 'eventsettings' | 'globalsettings' >('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
 const items = [
   {
-    label: 'Presentation',
+    label: 'Event',
     items: [
+      {
+        key: 'events',
+        label: 'Overview',
+        materialIcon: "filter",
+        command: () => { currentDashboard.value = 'events'; }
+      },
+      { 
+        key: 'eventcreate',
+        label: "Editor",
+        materialIcon: 'code',
+        command: () => { currentDashboard.value = 'eventcreate'; }
+      },
+      { 
+        key: 'eventsettings',
+        label: "Settings",
+        materialIcon: 'settings',
+        command: () => { currentDashboard.value = 'eventsettings'; }
+      },
       { 
         key: 'live',
         label: "Live",
         materialIcon: 'live_tv',
-        command: () => { currentDashboard.value = 'livePresentation'; }
-      }
-    ]
+        command: () => { currentDashboard.value = 'live'; }
+      },
+    ],
+  },
+  {
+    label: 'Scenes',
+    items: [
+      {
+        key: 'scenes',
+        label: 'Overview',
+        materialIcon: "filter",
+        command: () => { currentDashboard.value = 'scenes'; }
+      },
+      {
+        key: 'scenecreate',
+        label: 'Editor',
+        materialIcon: 'code',
+        command: () => { currentDashboard.value = 'scenecreate'; }
+      },
+    ],
   },
   {
     label: 'Slides',
@@ -51,13 +88,13 @@ const items = [
     ],
   },
   {
-    label: 'Groups',
+    label: 'Settings',
     items: [
       {
-        key: 'groups',
-        label: 'Manage',
-        materialIcon: 'group',
-        command: () => { currentDashboard.value = 'groups'; }
+        key: 'globalsettings',
+        label: 'DT settings',
+        materialIcon: "settings",
+        command: () => { currentDashboard.value = 'globalsettings'; }
       },
     ],
   },
@@ -109,6 +146,9 @@ function handleEdit(slide: Slide) {
       </Transition>
       <Transition name="fade" mode="out-in">
         <SlideCreator v-if="currentDashboard === 'slidecreate'" :slide="currentSlide" />
+      </Transition>
+      <Transition name="fade" mode="out-in">
+        <GlobalSettings v-if="currentDashboard === 'globalsettings'"/>
       </Transition>
     </SplitterPanel>
   </Splitter>
