@@ -10,6 +10,7 @@ import "primeicons/primeicons.css";
 import 'animate.css';
 import ToastService from 'primevue/toastservice';
 import { definePreset } from '@primevue/themes';
+import i18n from './i18n';
 
 const primecolors = definePreset(Aura, {
   semantic: {
@@ -32,7 +33,8 @@ const primecolors = definePreset(Aura, {
 
 const app = createApp(App)
 app.use(createPinia())
-app.use(router) 
+app.use(router)
+app.use(i18n)
 app.use(ToastService)
 
 app.use(PrimeVue, {

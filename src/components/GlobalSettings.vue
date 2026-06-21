@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Column from 'primevue/column';
+import { useI18n } from 'vue-i18n' 
+
+const { locale, availableLocales } = useI18n()
+
+const languageNames = {
+  en: 'English',
+  de: 'Deutsch',
+  fr: 'Français'
+}
 
 // reactive settings
 const settings = ref({
@@ -9,11 +18,36 @@ const settings = ref({
   background_image: ''
 })
 
-// Funktion zum Speichern der Daten
+// save function - todo
 const saveSettings = () => {
   console.log('Saved settings:', JSON.parse(JSON.stringify(settings.value)))
   alert('Settings saved!')
 }
+
+// better: go via backend.
+const testConnection = async () => {
+  const url = `${settings.value.cs_url}/ping`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Server-Fehler: Status ${response.status}`);
+    }
+
+    const textData = await response.text(); 
+    console.log('Antwort vom Server:', textData);
+
+    // Falls der Server JSON zurückgibt:
+    // const jsonData = await response.json();
+    // console.log('JSON vom Server:', jsonData);
+
+  } catch (error) {
+    alert(`Connection test failed! ${error.message}`);
+  }
+
+}
+
 </script>
 
 <template>
@@ -22,7 +56,7 @@ const saveSettings = () => {
     <form @submit.prevent="saveSettings" class="settings-form">
       <!-- CS URL -->
       <div class="form-group">
-      <label for="cs_url">Url of content server:</label>
+      <label for="cs_url">{{ $t('moderator.settings.cs_url') }}</label>
       <div class="input-with-button">
         <input 
           id="cs_url"
@@ -37,7 +71,7 @@ const saveSettings = () => {
 
       <!-- number of screens -->
       <div class="form-group">
-        <label for="numberOfX">Number of screens:</label>
+        <label for="numberOfX">{{ $t('moderator.settings.numberscreens') }}</label>
         <input 
           id="number_of_screens"
           v-model.number="settings.number_of_screens" 
@@ -58,6 +92,19 @@ const saveSettings = () => {
           placeholder=""
         />
       </div>
+
+      <div class="form-group"> 
+      <label for="language">{{ $t('moderator.settings.language') }}</label>
+       <select v-model="$i18n.locale" class="custom-select">
+        <option
+          v-for="locale in $i18n.availableLocales"
+          :key="`locale-${locale}`"
+          :value="locale"
+        >
+          {{ languageNames[locale] || locale }}
+        </option>
+      </select>
+      </div> 
 
       <!-- Button -->
       <button type="submit" class="save-btn">Save</button>
@@ -90,7 +137,6 @@ const saveSettings = () => {
 }
 
 label {
-/*  color: var(--surface, #fff); */
   font-weight: bold;
   font-size: 0.9rem;
 }
@@ -99,6 +145,11 @@ input {
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-size: 1rem;
+}
+
+.custom-select {
+  padding: 8px 12px;
   font-size: 1rem;
 }
 

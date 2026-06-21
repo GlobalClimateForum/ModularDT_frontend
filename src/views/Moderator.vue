@@ -8,40 +8,42 @@ import router from '@/router';
 import SlideManager   from '@/components/SlideManager.vue';
 import GroupManager   from '@/components/GroupManager.vue';
 import SlideCreator   from '@/components/SlideCreator.vue';
-import EventSettings  from '@/components/EventSettings.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 
 import '@/assets/main.css'
 
 import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import type { Slide } from "@/services/slide_service"
 import {Transition} from "vue";
+import { useI18n } from 'vue-i18n'; 
+
+const { t } = useI18n();
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'eventcreate' | 'eventsettings' | 'globalsettings' >('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
-const items = [
+const items = computed(() => [
   {
-    label: 'Event',
+    label: t('moderator.nav.event'),
     items: [
       {
         key: 'events',
-        label: 'Overview',
+        label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'events'; }
       },
       { 
         key: 'eventcreate',
-        label: "Editor",
+        label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'eventcreate'; }
       },
       { 
         key: 'eventsettings',
-        label: "Settings",
+        label: t('moderator.nav.settings'),
         materialIcon: 'settings',
         command: () => { currentDashboard.value = 'eventsettings'; }
       },
@@ -54,41 +56,41 @@ const items = [
     ],
   },
   {
-    label: 'Scenes',
+    label: t('moderator.nav.scenes'),
     items: [
       {
         key: 'scenes',
-        label: 'Overview',
+        label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'scenes'; }
       },
       {
         key: 'scenecreate',
-        label: 'Editor',
+        label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'scenecreate'; }
       },
     ],
   },
   {
-    label: 'Slides',
+    label: t('moderator.nav.slides'),
     items: [
       {
-        key: 'slides',
-        label: 'Overview',
+        key: t('moderator.nav.slides'),
+        label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'slides'; }
       },
       {
         key: 'slidecreate',
-        label: 'Editor',
+        label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
       },
     ],
   },
   {
-    label: 'Settings',
+    label: t('moderator.nav.settings'),
     items: [
       {
         key: 'globalsettings',
@@ -98,7 +100,7 @@ const items = [
       },
     ],
   },
-];
+]);
 
 onMounted(() => {
   getGroups()
@@ -123,7 +125,7 @@ function handleEdit(slide: Slide) {
 
         <template #start>
           <div class="menu-header">
-            <div class="content-title">Moderator Dashboard</div>
+            <div class="content-title">{{ $t('moderator.nav.dashboard') }}</div>
             <Button icon="pi pi-home" @click="router.push('/')" />
           </div>
         </template>

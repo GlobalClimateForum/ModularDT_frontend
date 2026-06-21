@@ -26,6 +26,7 @@
     "vega-lite": "^6.4.3",
     "vue": "^3.5.34",
     "vue-codemirror6": "^1.5.2",
+    "vue-i18n": "^9.14.5",
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
