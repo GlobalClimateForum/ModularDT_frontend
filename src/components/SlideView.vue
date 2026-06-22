@@ -2,23 +2,24 @@
 import type { Slide } from '@/services/slide_service';
 import MarkdownSlide from '@/components/MarkdownSlide.vue';
 import ViteSlide from '@/components/ViteSlide.vue';
-const props = defineProps<{ content: Slide | Object | null }>();
+
+const props = withDefaults(defineProps<{ content: Slide | Object | null, boxed?: boolean }>(), {
+    boxed: true
+});
 
 </script>
 
 
 <template>
 
-    <div class="slide-preview">
+    <div :class="{ 'slide-preview': props.boxed }">
         <MarkdownSlide v-if="props.content && 'markdown' in props.content" :slide="props.content" />
     </div>
 
 </template>
 
 <style scoped>
-
 .slide-preview {
-    width: 100%;
     aspect-ratio: 16 / 9;
     border-radius: var(--br-medium);
     background-color: var(--p-primary-50);
@@ -29,4 +30,7 @@ const props = defineProps<{ content: Slide | Object | null }>();
     overflow: hidden;
 }
 
+* {
+    pointer-events: none;
+}
 </style>

@@ -8,6 +8,7 @@ import router from '@/router';
 import SlideManager from '@/components/SlideManager.vue';
 import GroupManager from '@/components/GroupManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
+import SceneBuilder from '@/components/SceneBuilder.vue';
 
 import '@/assets/main.css'
 
@@ -17,7 +18,7 @@ import { onMounted, ref } from 'vue';
 import type { Slide } from "@/services/slide_service"
 import {Transition} from "vue";
 
-const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation'>('slides');
+const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation' | 'scenes' | 'scenebuilder'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
@@ -32,6 +33,23 @@ const items = [
         command: () => { currentDashboard.value = 'livePresentation'; }
       }
     ]
+  },
+  {
+    label: 'Scenes',
+    items: [
+      {
+        key: 'scenes',
+        label: 'Overview',
+        materialIcon: 'theaters',
+        command: () => { currentDashboard.value = 'scenes'; }
+      },
+      {
+        key: 'scenecreate',
+        label: 'Builder',
+        materialIcon: 'slide_library',
+        command: () => { currentDashboard.value = 'scenebuilder'; }
+      },
+    ],
   },
   {
     label: 'Slides',
@@ -101,6 +119,9 @@ function handleEdit(slide: Slide) {
 
     </SplitterPanel>
     <SplitterPanel :size="85">
+      <Transition name="fade" mode="out-in">
+        <SceneBuilder v-if="currentDashboard === 'scenebuilder'" :n-monitors="4" />
+      </Transition>
       <Transition name="fade" mode="out-in">
         <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleEdit" />
       </Transition>
