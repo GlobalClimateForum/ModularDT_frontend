@@ -9,30 +9,52 @@ import SlideManager from '@/components/SlideManager.vue';
 import GroupManager from '@/components/GroupManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
 import SceneBuilder from '@/components/SceneBuilder.vue';
+import GlobalSettings from '@/components/GlobalSettings.vue';
 
 import '@/assets/main.css'
 
 import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import type { Slide } from "@/services/slide_service"
 import {Transition} from "vue";
+import { useI18n } from 'vue-i18n'; 
 
-const currentDashboard = ref<'slides' | 'groups' | 'slidecreate' | 'livePresentation' | 'scenes' | 'scenebuilder'>('slides');
+const { t } = useI18n();
+
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'eventsettings' | 'globalsettings' >('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
-const items = [
+const items = computed(() => [
   {
-    label: 'Presentation',
+    label: t('moderator.nav.event'),
     items: [
+      {
+        key: 'events',
+        label: t('moderator.nav.overview'),
+        materialIcon: "filter",
+        command: () => { currentDashboard.value = 'events'; }
+      },
+      { 
+        key: 'eventcreate',
+        label: t('moderator.nav.editor'),
+        materialIcon: 'code',
+        command: () => { currentDashboard.value = 'eventcreate'; }
+      },
+      { 
+        key: 'eventsettings',
+        label: t('moderator.nav.settings'),
+        materialIcon: 'settings',
+        command: () => { currentDashboard.value = 'eventsettings'; }
+      },
       { 
         key: 'live',
         label: "Live",
         materialIcon: 'live_tv',
-        command: () => { currentDashboard.value = 'livePresentation'; }
-      }
-    ]
+        command: () => { currentDashboard.value = 'live'; }
+      },
+    ],
   },
   {
     label: 'Scenes',
@@ -55,31 +77,48 @@ const items = [
     label: 'Slides',
     items: [
       {
-        key: 'slides',
-        label: 'Overview',
+        key: 'scenes',
+        label: t('moderator.nav.overview'),
+        materialIcon: "filter",
+        command: () => { currentDashboard.value = 'scenes'; }
+      },
+      {
+        key: 'scenecreate',
+        label: t('moderator.nav.editor'),
+        materialIcon: 'code',
+        command: () => { currentDashboard.value = 'scenecreate'; }
+      },
+    ],
+  },
+  {
+    label: t('moderator.nav.slides'),
+    items: [
+      {
+        key: t('moderator.nav.slides'),
+        label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'slides'; }
       },
       {
         key: 'slidecreate',
-        label: 'Editor',
+        label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
       },
     ],
   },
   {
-    label: 'Groups',
+    label: t('moderator.nav.settings'),
     items: [
       {
-        key: 'groups',
-        label: 'Manage',
-        materialIcon: 'group',
-        command: () => { currentDashboard.value = 'groups'; }
+        key: 'globalsettings',
+        label: 'DT settings',
+        materialIcon: "settings",
+        command: () => { currentDashboard.value = 'globalsettings'; }
       },
     ],
   },
-];
+]);
 
 onMounted(() => {
   getGroups()
@@ -104,7 +143,7 @@ function handleEdit(slide: Slide) {
 
         <template #start>
           <div class="menu-header">
-            <div class="content-title">Moderator Dashboard</div>
+            <div class="content-title">{{ $t('moderator.nav.dashboard') }}</div>
             <Button icon="pi pi-home" @click="router.push('/')" />
           </div>
         </template>
@@ -130,6 +169,9 @@ function handleEdit(slide: Slide) {
       </Transition>
       <Transition name="fade" mode="out-in">
         <SlideCreator v-if="currentDashboard === 'slidecreate'" :slide="currentSlide" />
+      </Transition>
+      <Transition name="fade" mode="out-in">
+        <GlobalSettings v-if="currentDashboard === 'globalsettings'"/>
       </Transition>
     </SplitterPanel>
   </Splitter>

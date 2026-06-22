@@ -1,0 +1,21 @@
+{
+  "greeting": "Hello!",
+  "moderator": {
+    "name": "Moderator",
+    "nav": {
+      "event": "Event",
+      "scenes": "Scenes",
+      "slides": "Slides",
+      "settings": "Settings",
+      "overview": "Overview",
+      "editor": "Editor",
+      "dashboard": "Dashboard",
+      "globalsettings": "DT Settings"
+    },
+    "settings": {
+      "numberscreens": "Number of Screens",
+      "language": "Language",
+      "cs_url": "URL of content server"
+    }
+  }
+}
