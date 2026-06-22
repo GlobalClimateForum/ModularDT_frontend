@@ -22,7 +22,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'eventsettings' | 'globalsettings' >('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'eventsettings' | 'globalsettings' | 'groups'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
@@ -57,36 +57,19 @@ const items = computed(() => [
     ],
   },
   {
-    label: 'Scenes',
+    label: t('moderator.nav.scenes'),
     items: [
       {
         key: 'scenes',
-        label: 'Overview',
+        label: t('moderator.nav.overview'),
         materialIcon: 'theaters',
         command: () => { currentDashboard.value = 'scenes'; }
       },
       {
         key: 'scenecreate',
-        label: 'Builder',
+        label: t('moderator.nav.builder'),
         materialIcon: 'slide_library',
         command: () => { currentDashboard.value = 'scenebuilder'; }
-      },
-    ],
-  },
-  {
-    label: 'Slides',
-    items: [
-      {
-        key: 'scenes',
-        label: t('moderator.nav.overview'),
-        materialIcon: "filter",
-        command: () => { currentDashboard.value = 'scenes'; }
-      },
-      {
-        key: 'scenecreate',
-        label: t('moderator.nav.editor'),
-        materialIcon: 'code',
-        command: () => { currentDashboard.value = 'scenecreate'; }
       },
     ],
   },
