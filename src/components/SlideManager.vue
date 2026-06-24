@@ -198,21 +198,4 @@ function onTagAdded(addedTag: string) {
     font-weight: 500;
 }
 
-:deep(.p-datatable-table-container::-webkit-scrollbar) {
-    width: 8px;
-    height: 8px;
-}
-
-:deep(.p-datatable-table-container::-webkit-scrollbar-thumb) {
-    background: var(--p-primary-300);
-    border-radius: 4px;
-}
-
-:deep(.p-datatable-table-container::-webkit-scrollbar-thumb:hover) {
-    background: var(--p-primary-500);
-}
-
-:deep(.p-datatable-table-container::-webkit-scrollbar-track) {
-    background: transparent;
-}
 </style>
