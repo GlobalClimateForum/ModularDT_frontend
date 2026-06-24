@@ -7,11 +7,14 @@ import type { Slide } from '@/services/slide_service'
 import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
+import '@/assets/main.css'
 import { ref, onMounted } from 'vue';
 import { getSlides } from "@/services/slide_service";
 import draggable from 'vuedraggable';
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
+import { getViewConfigContinuousSize } from 'vega-lite/types_unstable/config.js'
 
 const slides = ref<Slide[]>([]);
 const scene = ref<(Slide | null)[]>([null, null, null, null]);
@@ -57,7 +60,7 @@ function onSaveScene() {
         name: scenename.value,
         slides: scene.value.map(s => s?.id ?? null)
     };
-   
+
     saveScene(scene_).then(response => {
         console.log("Scene saved successfully:", response.data);
     }).catch(error => {
@@ -65,6 +68,16 @@ function onSaveScene() {
     });
 }
 
+function duplicates() {
+    const slideIds = scene.value
+        .map(s => s?.id)
+        .filter(id => id != null);
+    return new Set(slideIds).size !== slideIds.length;
+}
+
+function emptyScreens() {
+    return scene.value.filter(s => s === null).length;
+}
 
 </script>
 
@@ -88,27 +101,48 @@ function onSaveScene() {
         </SplitterPanel>
 
         <SplitterPanel :size="70" :minSize="15" class="sub-panel">
-            <h2 class="dashboard_label">Available Monitors</h2>
+            <h2 class="dashboard_label">Scene</h2>
             <Toolbar class="scene-toolbar">
                 <template #start>
-                    <InputText v-model="scenename" placeholder="Enter scene name..." />
+                    <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
+                        <Message info size="small">
+                            <span style="display: flex; align-items: center; gap: 0.25rem;">
+                                <i class="material-symbols-outlined">desktop_windows</i>
+                                {{ scene.length }}
+                            </span>
+                        </Message>
+                        <Message v-if="duplicates()" severity="warn" size="small">
+                            duplicate slides
+                        </Message>
+                        <Message severity="warn" v-if="emptyScreens()" size="small">
+                            empty {{ emptyScreens() === 1 ? 'screen' : 'screens' }}
+                        </Message>
+                    </div>
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <Button label="" icon="pi pi-times" outlined rounded
-                            @click="scene = [null, null, null, null]" />
+                        <InputText v-model="scenename" placeholder="Enter scene name..." />
                         <Button label="Save" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
+                        <Button icon="pi pi-trash" outlined label="Clear" @click="scene = [null, null, null, null]" />
                     </div>
                 </template>
             </Toolbar>
 
             <div class="monitor_container">
-                <div v-for="(slot, index) in scene" :key="index" class="monitor-item monitor-preview"
-                    @dragover.prevent @drop="onDrop($event, index)">
+                <div v-for="(slot, index) in scene" :key="index" class="monitor-item monitor-preview" @dragover.prevent
+                    @drop="onDrop($event, index)">
+                    <div class="monitor-info">
+                        <div class="monitor-label-container">
+                            <h3 class="monitor-label"><i class="material-symbols-outlined">desktop_windows</i>{{ index +
+                                1 }}
+                            </h3>
+                            <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
+                        </div>
+                        <Button icon="pi pi-times" small rounded @click="scene[index] = null" />
+                    </div>
                     <SlideView v-if="slot" :boxed="false" :content="slot" />
                     <div v-else class="monitor-symbol">
                         <i class="pi pi-desktop"></i>
-                        <h3 class="monitor-label">Monitor {{ index + 1 }}</h3>
                     </div>
                 </div>
             </div>
@@ -160,7 +194,7 @@ function onSaveScene() {
 .slide-label {
     font-weight: bold;
     font-size: var(--fs-small);
-    color: var(--p-primary-700);
+    color: var(--p-primary-500);
 }
 
 .slide-date {
@@ -193,6 +227,42 @@ function onSaveScene() {
     align-items: center;
     width: 100%;
     height: 200px;
+    position: relative;
+}
+
+.monitor-info {
+    position: absolute;
+    bottom: 0;
+    z-index: 10;
+    width: 100%;
+    background-color: var(--p-primary-500);
+
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+
+}
+
+.monitor-label-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1.0rem;
+}
+
+.monitor-label {
+    font-size: var(--fs-small);
+    color: var(--p-primary-50);
+    margin-bottom: 0;
+    padding: 0;
+    text-transform: uppercase;
+}
+
+.assigned-slide-label {
+    font-weight: normal;
+    font-size: var(--fs-small);
+    color: var(--p-primary-50);
+    margin-bottom: 0;
+    padding: 0;
 }
 
 .monitor-symbol {
@@ -203,13 +273,5 @@ function onSaveScene() {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-}
-
-.monitor-label {
-    font-size: 0.8rem;
-    color: var(--p-primary-300);
-    margin-bottom: 0;
-    padding: 0;
-    text-transform: uppercase;
 }
 </style>

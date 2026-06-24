@@ -100,7 +100,7 @@ body,
 
 .dashboard_label{
   text-transform: uppercase;
-  color: var(--p-primary-400);
+  color: var(--p-primary-700);
   font-size: var(--fs-medium);
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
