@@ -18,6 +18,11 @@
   --br-large: 16px;
   --br-xlarge: 32px;
 
+  --fs-small: 0.75rem;
+  --fs-medium: 1rem;
+  --fs-large: 1.5rem;
+  --fs-xlarge: 2rem;
+
   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-dark: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -84,7 +89,6 @@ body,
 }
 
 .monitor-preview {
-    aspect-ratio: 16 / 9;
     border-radius: var(--br-medium);
     background-color: var(--p-primary-50);
     box-shadow: inset 0 0 10px 5px var(--p-primary-100);
@@ -97,7 +101,7 @@ body,
 .dashboard_label{
   text-transform: uppercase;
   color: var(--p-primary-400);
-  font-size: 0.75rem;
+  font-size: var(--fs-medium);
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
   padding: 0;
