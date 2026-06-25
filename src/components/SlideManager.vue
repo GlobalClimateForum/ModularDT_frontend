@@ -74,6 +74,43 @@ function onDeleteSlide(slide: Slide) {
     }
 }
 
+function onDuplicateSlide(slide: Slide) {
+//    if (slide.id) {
+//        deleteSlide(slide.id).then(() => {
+//            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
+//            slides.value = slides.value.filter(s => s.id !== slide.id);
+//            if (selectedSlide.value?.id === slide.id) {
+//                selectedSlide.value = null;
+//            }
+//        }).catch(error => {
+//            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
+//            console.error("Error deleting slide:", error);
+//        })
+//    }
+//    else{
+//        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
+//        console.error("Error deleting slide: no valid slide.id");
+//    }
+}
+
+function formatDate(iso: string): string {
+
+    // calculate how long ago the date is from now
+    const min_ago = (Date.now() - new Date(iso).getTime()) / (1000 * 60);
+    const hours_ago = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
+    const days_ago = hours_ago / 24;
+
+    if (min_ago < 1) {
+        return "Just now";
+    } else if (min_ago < 60) {
+        return `${Math.floor(min_ago)} ${Math.floor(min_ago) <= 1 ? 'minute' : 'minutes'} ago`;
+    } else if (hours_ago < 24) {
+        return `${Math.floor(hours_ago)} ${Math.floor(hours_ago) <= 1 ? 'hour' : 'hours'} ago`;
+    } else {
+        return `${Math.floor(days_ago)} ${Math.floor(days_ago) <= 1 ? 'day' : 'days'} ago`;
+    }
+}
+
 function onTagRemoved(removedTag: string) {
     if (selectedSlide.value) {
         selectedSlide.value.tags = selectedSlide.value.tags.filter(tag => tag !== removedTag);
@@ -109,9 +146,10 @@ function onTagAdded(addedTag: string) {
                     </template>
                 </Column>
 
-                <Column style="width: 8rem">
+                <Column style="width: 11 em">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-plus-circle" @click="onDuplicateSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
                         <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteSlide(slotProps.data)" />
