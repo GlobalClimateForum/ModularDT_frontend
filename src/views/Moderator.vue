@@ -109,7 +109,7 @@ onMounted(() => {
     .catch(error => { console.error("Error fetching groups:", error); });
 });
 
-function handleEdit(slide: Slide) {
+function handleSlideEdit(slide: Slide) {
   currentSlide.value = slide
   currentDashboard.value = 'slidecreate';
 }
@@ -145,7 +145,7 @@ function handleEdit(slide: Slide) {
         <SceneBuilder v-if="currentDashboard === 'scenebuilder'" :n-monitors="4" />
       </Transition>
       <Transition name="fade" mode="out-in">
-        <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleEdit" />
+        <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleSlideEdit" />
       </Transition>
       <Transition name="fade" mode="out-in">
         <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />

@@ -52,7 +52,7 @@ function onRowEditSave(event: any) {
 const emit = defineEmits<{ 'edit-slide': [slide: Slide] }>()
 
 function onEditSlide(slide: Slide) {
-    emit('edit-slide', slide)
+    emit('edit-slide', {...slide, sections: slide.sections || []});
 }
 
 function onDeleteSlide(slide: Slide) {
@@ -68,47 +68,29 @@ function onDeleteSlide(slide: Slide) {
             console.error("Error deleting slide:", error);
         })
     }
-    else{
+    else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
         console.error("Error deleting slide: no valid slide.id");
     }
 }
 
 function onDuplicateSlide(slide: Slide) {
-//    if (slide.id) {
-//        deleteSlide(slide.id).then(() => {
-//            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
-//            slides.value = slides.value.filter(s => s.id !== slide.id);
-//            if (selectedSlide.value?.id === slide.id) {
-//                selectedSlide.value = null;
-//            }
-//        }).catch(error => {
-//            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
-//            console.error("Error deleting slide:", error);
-//        })
-//    }
-//    else{
-//        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-//        console.error("Error deleting slide: no valid slide.id");
-//    }
-}
-
-function formatDate(iso: string): string {
-
-    // calculate how long ago the date is from now
-    const min_ago = (Date.now() - new Date(iso).getTime()) / (1000 * 60);
-    const hours_ago = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
-    const days_ago = hours_ago / 24;
-
-    if (min_ago < 1) {
-        return "Just now";
-    } else if (min_ago < 60) {
-        return `${Math.floor(min_ago)} ${Math.floor(min_ago) <= 1 ? 'minute' : 'minutes'} ago`;
-    } else if (hours_ago < 24) {
-        return `${Math.floor(hours_ago)} ${Math.floor(hours_ago) <= 1 ? 'hour' : 'hours'} ago`;
-    } else {
-        return `${Math.floor(days_ago)} ${Math.floor(days_ago) <= 1 ? 'day' : 'days'} ago`;
-    }
+    //    if (slide.id) {
+    //        deleteSlide(slide.id).then(() => {
+    //            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
+    //            slides.value = slides.value.filter(s => s.id !== slide.id);
+    //            if (selectedSlide.value?.id === slide.id) {
+    //                selectedSlide.value = null;
+    //            }
+    //        }).catch(error => {
+    //            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
+    //            console.error("Error deleting slide:", error);
+    //        })
+    //    }
+    //    else{
+    //        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
+    //        console.error("Error deleting slide: no valid slide.id");
+    //    }
 }
 
 function onTagRemoved(removedTag: string) {
@@ -149,7 +131,8 @@ function onTagAdded(addedTag: string) {
                 <Column style="width: 11 em">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
-                        <Button size="small" rounded text icon="pi pi-plus-circle" @click="onDuplicateSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-plus-circle"
+                            @click="onDuplicateSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
                         <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteSlide(slotProps.data)" />
@@ -174,14 +157,24 @@ function onTagAdded(addedTag: string) {
             </DataTable>
         </SplitterPanel>
 
-        <SplitterPanel class="sub-panel slide-preview">
-            <SlideView :content="selectedSlide"></SlideView>
-            <TagView :slide="selectedSlide? selectedSlide : null" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded"></TagView>
+        <SplitterPanel class="sub-panel">
+            <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
+                :sections="selectedSlide.sections" class="slide-preview" />
+            <TagView :slide="selectedSlide ? selectedSlide : null" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded">
+            </TagView>
         </SplitterPanel>
     </Splitter>
 </template>
 
 <style scoped>
+.slide-preview {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-height: 500px
+}
+
+
 .slide-table {
     flex: 1;
     min-height: 0;
@@ -235,5 +228,4 @@ function onTagAdded(addedTag: string) {
     box-shadow: inset 3px 0 0 var(--p-primary-400);
     font-weight: 500;
 }
-
 </style>

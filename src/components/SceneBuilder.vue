@@ -8,26 +8,26 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
-import '@/assets/main.css'
 import { ref, onMounted } from 'vue';
 import { getSlides } from "@/services/slide_service";
-import draggable from 'vuedraggable';
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
-import { getViewConfigContinuousSize } from 'vega-lite/types_unstable/config.js'
 
 const slides = ref<Slide[]>([]);
 const scene = ref<(Slide | null)[]>([null, null, null, null]);
 const scenename = ref<string>("");
 
+// on mount get all slides from backend and store in slides ref
 onMounted(() => {
     getSlides().then(response => {
         slides.value = response.data;
+        console.log("Fetched slides:", slides.value);
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
 });
 
+// Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
     e.dataTransfer?.setData('slide', JSON.stringify(slide));
 
@@ -50,12 +50,12 @@ function onDrop(event: DragEvent, index: number) {
     scene.value[index] = slide;
 }
 
+// Handle saving the scene to the backend
 function onSaveScene() {
     if (!scenename.value.trim()) {
         alert("Please enter a scene name before saving.");
         return;
     }
-
     const scene_ = {
         name: scenename.value,
         slides: scene.value.map(s => s?.id ?? null)
@@ -68,6 +68,9 @@ function onSaveScene() {
     });
 }
 
+// -- Validation Functions --
+
+// Check if there are slides assinged to multiple monitors (duplicates)
 function duplicates() {
     const slideIds = scene.value
         .map(s => s?.id)
@@ -75,6 +78,7 @@ function duplicates() {
     return new Set(slideIds).size !== slideIds.length;
 }
 
+// Check if there are empty monitors (null slots) in the scene
 function emptyScreens() {
     return scene.value.filter(s => s === null).length;
 }
@@ -83,24 +87,26 @@ function emptyScreens() {
 
 <template>
     <Splitter :gutter-size="2" class="dashboard">
-        <SplitterPanel :size="30" class="sub-panel">
-            <h2 class="dashboard_label">Available Slides</h2>
 
-            <draggable v-model="slides" class="slide_gallery_container slide-container" :sort="false">
-                <template #item="{ element: slide }">
+        <!-- Available Slides -->
+        <SplitterPanel :size="25" class="sub-panel">
+            <h2 class="dashboard_label">Available Slides</h2>
+            <div class="slide_gallery_container">
+                <div v-for="slide in slides" :key="slide.id" class="slide-card">
+                    <div class="slide-info">
+                        <p class="slide-label">{{ slide.name }}</p>
+                        <p class="slide-date">{{ formatDate(slide.created_at) }}</p>
+                    </div>
                     <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)"
                         @dragend="onDragEnd($event)">
-                        <div class="slide-info">
-                            <p class="slide-label">{{ slide.name }}</p>
-                            <p class="slide-date">{{ formatDate(slide.created_at) }}</p>
-                        </div>
-                        <SlideView :boxed="false" :content="slide" />
+                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []"
+                            :showFrame="false" style="pointer-events: none;" :shadow="true" />
                     </div>
-                </template>
-            </draggable>
+                </div>
+            </div>
         </SplitterPanel>
-
-        <SplitterPanel :size="70" :minSize="15" class="sub-panel">
+        <!-- Scene Builder -->
+        <SplitterPanel :size="75" :minSize="15" class="sub-panel">
             <h2 class="dashboard_label">Scene</h2>
             <Toolbar class="scene-toolbar">
                 <template #start>
@@ -129,21 +135,32 @@ function emptyScreens() {
             </Toolbar>
 
             <div class="monitor_container">
-                <div v-for="(slot, index) in scene" :key="index" class="monitor-item monitor-preview" @dragover.prevent
+
+                <!-- For each slide in the scene, render a monitor item -->
+                <div v-for="(slot, index) in scene" :key="index" class="monitor-item inset-control" @dragover.prevent
                     @drop="onDrop($event, index)">
+
+                    <!-- Monitor Info: Name, Index, and Clear Button -->
                     <div class="monitor-info">
                         <div class="monitor-label-container">
-                            <h3 class="monitor-label"><i class="material-symbols-outlined">desktop_windows</i>{{ index +
-                                1 }}
+                            <h3 class="monitor-label"><i class="material-symbols-outlined">desktop_windows</i>
+                                {{ index + 1 }}
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
                         <Button icon="pi pi-times" small rounded @click="scene[index] = null" />
                     </div>
-                    <SlideView v-if="slot" :boxed="false" :content="slot" />
+
+                    <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
+                    <div v-if="slot" style="width: 100%; height:90%;">
+                        <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
+                            :showFrame="false">
+                        </SlideView>
+                    </div>
                     <div v-else class="monitor-symbol">
                         <i class="pi pi-desktop"></i>
                     </div>
+
                 </div>
             </div>
         </SplitterPanel>
@@ -171,17 +188,38 @@ function emptyScreens() {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
     overflow-y: auto !important;
     padding: 1rem;
     flex: 1;
     min-height: 0;
 }
 
+.slide-card {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
 .slide-item {
+
+    flex: 1;
+    /* fill remaining height after slide-info */
+    min-height: 0;
+    /* allow shrinking */
+    width: 100%;
+
     cursor: grab;
     transition: opacity 0.2s, outline 0.2s;
     width: 100%;
+
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .slide-info {
@@ -193,7 +231,7 @@ function emptyScreens() {
 
 .slide-label {
     font-weight: bold;
-    font-size: var(--fs-small);
+    font-size: var(--fs-medium);
     color: var(--p-primary-500);
 }
 
@@ -214,10 +252,10 @@ function emptyScreens() {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
     padding: 1rem;
-    overflow-y: auto;
     flex: 1;
     min-height: 0;
     align-content: start;
+    overflow: hidden;
 }
 
 .monitor-item {
@@ -273,5 +311,9 @@ function emptyScreens() {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+.slide_gallery_container :deep(> div) {
+    width: 100%;
 }
 </style>
