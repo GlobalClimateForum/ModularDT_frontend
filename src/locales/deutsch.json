@@ -8,7 +8,7 @@
       "slides": "Folien",
       "settings": "Einstellungen",
       "overview": "Überblick",
-      "builder" : "Erstellen",
+      "builder": "Erstellen",
       "editor": "Editor",
       "dashboard": "Kontrollzentrum",
       "globalsettings": "DT Einstellungen"
@@ -16,7 +16,13 @@
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
       "language": "Sprache",
-      "cs_url": "URL des Content-Servers"
-    }
+      "cs_url": "URL des default Content-Servers",
+      "background_image" : "Hintergrundbild"
+    },
+    "presentation": {
+      "next": "Vor",
+      "previous": "Zurück"
+    },
+    "save": "Speichern"
   }
 }

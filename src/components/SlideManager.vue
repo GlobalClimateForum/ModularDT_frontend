@@ -11,6 +11,7 @@ import SlideView from '@/components/SlideView.vue';
 import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
+import { saveSlide } from '@/services/slide_service'
 
 import { getSlides, updateSlide, deleteSlide } from "@/services/slide_service";
 import { onMounted, ref } from 'vue';
@@ -128,7 +129,7 @@ function onTagAdded(addedTag: string) {
                     </template>
                 </Column>
 
-                <Column style="width: 11 em">
+                <Column style="width: 9 em">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-plus-circle"

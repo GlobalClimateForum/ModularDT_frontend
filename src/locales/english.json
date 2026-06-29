@@ -16,7 +16,13 @@
     "settings": {
       "numberscreens": "Number of Screens",
       "language": "Language",
-      "cs_url": "URL of content server"
-    }
+      "cs_url": "URL of default content server",
+      "background_image" : "Background image"
+    },
+    "presentation": {
+      "next": "Next",
+      "previous": "Previous"
+    },
+    "save": "Save"
   }
 }
