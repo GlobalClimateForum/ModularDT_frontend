@@ -10,6 +10,7 @@ import GroupManager from '@/components/GroupManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
 import SceneBuilder from '@/components/SceneBuilder.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
+import PresentationControl from '@/components/PresentationControl.vue';
 
 import '@/assets/main.css'
 
@@ -17,8 +18,8 @@ import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
 import { onMounted, ref, computed } from 'vue';
 import type { Slide } from "@/services/slide_service"
-import {Transition} from "vue";
-import { useI18n } from 'vue-i18n'; 
+import { Transition } from "vue";
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
@@ -36,19 +37,19 @@ const items = computed(() => [
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'events'; }
       },
-      { 
+      {
         key: 'eventcreate',
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'eventcreate'; }
       },
-      { 
+      {
         key: 'eventsettings',
         label: t('moderator.nav.settings'),
         materialIcon: 'settings',
         command: () => { currentDashboard.value = 'eventsettings'; }
       },
-      { 
+      {
         key: 'live',
         label: "Live",
         materialIcon: 'live_tv',
@@ -132,7 +133,7 @@ function handleSlideEdit(slide: Slide) {
         </template>
 
         <template #item="{ item, props }">
-          <a :class="{'p-menu-item-link': true, 'active-item': currentDashboard === item.key }" v-bind="props.action">
+          <a :class="{ 'p-menu-item-link': true, 'active-item': currentDashboard === item.key }" v-bind="props.action">
             <span class="material-symbols-outlined">{{ item.materialIcon }}</span>
             <span>{{ item.label }}</span>
           </a>
@@ -141,6 +142,9 @@ function handleSlideEdit(slide: Slide) {
 
     </SplitterPanel>
     <SplitterPanel :size="85">
+      <Transition name="fade" mode="out-in">
+        <PresentationControl v-if="currentDashboard === 'live'" />
+      </Transition>
       <Transition name="fade" mode="out-in">
         <SceneBuilder v-if="currentDashboard === 'scenebuilder'" :n-monitors="4" />
       </Transition>
@@ -154,7 +158,7 @@ function handleSlideEdit(slide: Slide) {
         <SlideCreator v-if="currentDashboard === 'slidecreate'" :slide="currentSlide" />
       </Transition>
       <Transition name="fade" mode="out-in">
-        <GlobalSettings v-if="currentDashboard === 'globalsettings'"/>
+        <GlobalSettings v-if="currentDashboard === 'globalsettings'" />
       </Transition>
     </SplitterPanel>
   </Splitter>
@@ -207,7 +211,7 @@ function handleSlideEdit(slide: Slide) {
   border: none;
 }
 
-.active-item{
+.active-item {
   background-color: var(--p-primary-600);
   color: var(--p-primary-50);
 }
