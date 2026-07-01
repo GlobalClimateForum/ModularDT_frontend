@@ -23,7 +23,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'eventsettings' | 'globalsettings' | 'groups'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'globalsettings' | 'groups'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 
@@ -42,12 +42,6 @@ const items = computed(() => [
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'eventcreate'; }
-      },
-      {
-        key: 'eventsettings',
-        label: t('moderator.nav.settings'),
-        materialIcon: 'settings',
-        command: () => { currentDashboard.value = 'eventsettings'; }
       },
       {
         key: 'live',
@@ -96,7 +90,7 @@ const items = computed(() => [
     items: [
       {
         key: 'globalsettings',
-        label: 'DT settings',
+        label: t('moderator.nav.settings'),
         materialIcon: "settings",
         command: () => { currentDashboard.value = 'globalsettings'; }
       },
