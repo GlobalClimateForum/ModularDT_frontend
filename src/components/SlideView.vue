@@ -30,7 +30,8 @@ watch(
 // -- Dynamic Component Mapping --
 // Mapping of view types to their corresponding components for dynamic rendering - TODO: Get from Backend (db)
 const componentsMap: Record<string, any> = {
-    markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue'))
+    markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue')),
+    map: defineAsyncComponent(() => import('@/components/MapSlide.vue'))
 };
 
 // -- Auto scaling --
@@ -98,7 +99,6 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
 
     </div>
 </template>
-
 
 <style scoped>
 .slide-outer {

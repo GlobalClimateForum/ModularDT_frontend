@@ -20,6 +20,21 @@ export interface SlideSection {
     content_path: string;
 }
 
+export const SlideSectionTypes = [
+    { value: "markdown", icon: "markdown", label: "Markdown", description: "Markdown content rendered as MARP slides." },
+    { value: "map", icon: "map", label: "Map", description: "Interactive map view." },
+    { value: "interactive", icon: "interactive_space", label: "Interactive Panel", description: "An interactive panel." },
+    { value: "vega", icon: "bar_chart", label: "Vega", description: "Vega data visualization." }
+];
+
+export const getSlideSectionType = (value: string) => {
+    const type = SlideSectionTypes.find(type => type.value === value);
+    if (!type) {
+        return { value: "unknown", icon: "question_mark", label: "Unknown", description: "Unknown section type." };
+    }
+    return type;
+}
+
 export type SlidePayload = Omit<Slide, "id" | "created_at" | "updated_at">;
 
 export const getSlides = () => api.get("/slides/");

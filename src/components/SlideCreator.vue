@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { EditorView, basicSetup } from 'codemirror'
-import { markdown } from '@codemirror/lang-markdown'
-import { EditorState } from '@codemirror/state'
-import { onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
+import { ref, watch } from 'vue'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import type { Slide } from '@/services/slide_service'
-import { saveSlide } from '@/services/slide_service'
+import { saveSlide, getSlideSectionType, SlideSectionTypes } from '@/services/slide_service'
 import SlideView from '@/components/SlideView.vue'
 import { useToast } from 'primevue/usetoast'
 import LayoutEditor from '@/components/LayoutEditor.vue'
@@ -19,8 +16,11 @@ import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import type { SlideSection } from '@/services/slide_service'
-import type { Extension } from '@codemirror/state'
+import CodeEditor from '@/components/CodeEditor.vue'
+import MapEditor from '@/components/MapEditor.vue'
 import '@/assets/main.css'
+import Select from 'primevue/select';
+
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
 const DEFAULT_CONTENT = ''
@@ -32,26 +32,16 @@ const SECTION_LIMIT = 3
 const props = defineProps<{ slide?: Slide | null }>()
 
 // Define references
-const editorRefs = ref<(HTMLElement | null)[]>([]) // References for each Editor (in TabPanel)
-const views: EditorView[] = [] // Array to hold the EditorView instances for each Section / TabPanel
 const currentSlide = ref<Slide>(props.slide ?? DEFAULT_SLIDE) // Init a new slide if no slide is passed as prop
 
 const slideSections = ref<SlideSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
-
+const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
-
-// Define Icon Mapping for each view type -> TODO: Get from backend (db)
-const TABICONS: Record<string, string> = {
-    markdown: 'markdown',
-    chart: 'bar_chart',
-    video: 'video_file',
-    image: 'image',
-}
 
 // Save a slide handler
 function storeSlide() {
@@ -79,24 +69,6 @@ function storeSlide() {
     });
 }
 
-// Function to initialize the CodeMirror editors for each section
-function initEditors() {
-    editorRefs.value.forEach((el, index) => {
-        if (!el || views[index]) return
-        views[index] = new EditorView({
-            parent: el,
-            state: EditorState.create({
-                doc: slideSections.value[index].content,
-                extensions: [
-                    basicSetup,
-                    markdown(),
-                    editorUpdateListener(index),
-                ],
-            }),
-        })
-    })
-}
-
 // Small Helper to identify the layout type based on the section widths (fullscreen, golden, reversegolden, custom)
 function getLayoutType(widths: number[]): string {
     if (widths.length === 1) return 'fullscreen'
@@ -113,12 +85,11 @@ function addSection() {
     }
 
     slideSections.value.push(DEFAULT_SECTION) // Push a new defaultt section
+    selectedTypes.value.push(getSlideSectionType(DEFAULT_SECTION.view_type)) // Push the default view type
     // Make all section widths equal (1 / number of sections)
     sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length)
     // Update the layout type based on the new section widths
     layout.value = getLayoutType(sectionWidths.value)
-    // Initialize the new editor for the added section before the next tick to ensure the DOM is updated
-    nextTick(() => initEditors())
 }
 
 // Handler to remove a section from the slide (by index)
@@ -129,59 +100,50 @@ function removeSection(index: number) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'At least one section is required', life: 3000 })
         return
     }
-
     slideSections.value.splice(index, 1) // Remove the section at the specified index
     sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length) // Recalculate widths
     layout.value = getLayoutType(sectionWidths.value) // Update layout type
 
-    // Destroy the corresponding editor view and remove it from the views array
-    if (views[index]) {
-        views[index].destroy()
-        views.splice(index, 1)
-    }
-
-    // Re-initialize editors to ensure they are correctly set up after removal
-    nextTick(() => initEditors())
 }
 
-// Listener for CodeMirror editor updates to sync content with slideSections
-function editorUpdateListener(index: number): Extension {
-    return EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-            // Update the content of the corresponding section in slideSections
-            const updated = [...slideSections.value]
-            updated[index] = { ...updated[index], content: update.state.doc.toString() }
-            slideSections.value = updated
-        }
-    })
-}
+// Handler to update the content of a section when the CodeEditor emits a contentUpdated event
+function updateSectionContent(index: number, newContent: string) {
 
-// Clean up the EditorView instances when the component is unmounted
-onBeforeUnmount(() => {
-    views.forEach(v => v?.destroy())
-    views.length = 0
-})
+    console.log(`Updating content of section ${index} to:`, newContent)
+
+    const updatedSections = [...slideSections.value]
+    updatedSections[index] = { ...updatedSections[index], content: newContent }
+    slideSections.value = updatedSections
+
+    // Refresh current slide to trigger re-render of SlideView with updated content
+    currentSlide.value = { ...currentSlide.value }
+}
 
 // Watch for changes in the slide prop and update the currentSlide and slideSections accordingly
 watch(() => props.slide, (newSlide) => {
-    // Destroy existing editors first
-    views.forEach(v => v?.destroy())
-    views.length = 0
 
+    // Update the currentSlide and slideSections based on the new slide prop
     if (newSlide) {
         currentSlide.value = { ...newSlide }
         slideSections.value = newSlide.sections?.map(section => ({ ...section })) ?? []
         sectionWidths.value = newSlide.sections?.map(section => section.width_fraction ?? 1.0) ?? [1.0]
         layout.value = getLayoutType(sectionWidths.value)
-    } else {
-        // No slide passed — initialize with defaults
+    } else { // If no slide is passed, initialize a new slide with default values
         slideSections.value = [{ view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 }]
         sectionWidths.value = [1.0]
         layout.value = 'fullscreen'
     }
 
-    nextTick(() => initEditors())
+    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+
 }, { immediate: true })
+
+watch(selectedTypes, (newTypes) => {
+    slideSections.value = slideSections.value.map((section, i) => ({
+        ...section,
+        view_type: newTypes[i]?.value ?? section.view_type
+    }))
+}, { deep: true })
 
 </script>
 
@@ -200,8 +162,31 @@ watch(() => props.slide, (newSlide) => {
                             <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
                                 <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
                             </Button>
-                            <p>Section {{ index + 1 }}</p>
-                            <i class="material-symbols-outlined">{{ TABICONS[section.view_type] }}</i>
+                            <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
+                                optionLabel="label" scrollHeight="auto" class="tab-type-select">
+                                <template #value="slotProps">
+                                    <div class="tab-type-selected" v-if="slotProps.value">
+                                        <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
+                                        <span>{{ slotProps.value.label }}</span>
+                                    </div>
+                                </template>
+                                <template #option="slotProps">
+                                    <div>
+                                        <div class="tab-type-option"
+                                            style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; border-radius: var(--br-medium); cursor: pointer;">
+                                            <i class="material-symbols-outlined">{{ slotProps.option.icon }}</i>
+                                            <div>
+                                                <p style="margin: 0; font-size: var(--fs-medium)"> {{
+                                                    slotProps.option.label
+                                                    }}</p>
+                                                <p style="margin: 0; font-size: var(--fs-small)">{{
+                                                    slotProps.option.description }}</p>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </template>
+                            </Select>
                         </div>
                     </Tab>
                     <Button text rounded v-if="slideSections.length < SECTION_LIMIT" class="add-tab-btn"
@@ -214,9 +199,8 @@ watch(() => props.slide, (newSlide) => {
                 <TabPanels class="tab-panel">
                     <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
                         style="height: 100%;">
-                        <div class="editor-container">
-                            <div :ref="el => { editorRefs[index] = el as HTMLElement }" class="editor-host"></div>
-                        </div>
+                        <CodeEditor :slideSection="section" @contentUpdated="updateSectionContent(index, $event)">
+                        </CodeEditor>
                     </TabPanel>
                 </TabPanels>
             </Tabs>
@@ -239,6 +223,7 @@ watch(() => props.slide, (newSlide) => {
                     </template>
                 </Toolbar>
 
+
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
@@ -252,7 +237,6 @@ watch(() => props.slide, (newSlide) => {
         </SplitterPanel>
     </Splitter>
 </template>
-
 <style scoped>
 .p-toolbar {
     margin: 0;
@@ -273,20 +257,63 @@ watch(() => props.slide, (newSlide) => {
     width: 100%;
 }
 
-:deep(.p-tab[data-p-active="true"]) {
-    background-color: var(--p-primary-500);
-    border-bottom: none;
-    color: var(--p-primary-50);
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--fs-medium);
+    font-weight: 700;
 }
 
 :deep(.p-tab) {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0rem 1.0rem;
+    padding: 0rem 0.5rem;
     border: 1px solid var(--p-primary-200);
     border-radius: var(--br-medium) var(--br-medium) 0 0;
     height: 2.5rem;
+    background-color: transparent;
+    color: var(--p-primary-700);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+:deep(.p-tab:not([data-p-active="true"]):hover) {
+    background-color: var(--p-primary-100);
+    cursor: pointer;
+}
+
+:deep(.p-tab[data-p-active="true"]) {
+    background-color: var(--p-primary-500);
+    border-bottom: none;
+    color: var(--p-primary-50);
+}
+
+:deep(.p-tab[data-p-active="true"] .close-tab-btn) {
+    color: white;
+}
+
+:deep(.p-tab:not([data-p-active="true"]) .close-tab-btn) {
+    color: var(--p-primary-500);
+}
+
+/* Type select: purple fill only on active tab, transparent on inactive */
+:deep(.p-tab[data-p-active="true"] .tab-type-select) {
+    background-color: var(--p-primary-500);
+    border: none;
+}
+
+:deep(.p-tab:not([data-p-active="true"]) .tab-type-select) {
+    background-color: transparent;
+    border: none;
+}
+
+:deep(.p-tab[data-p-active="true"] .tab-type-selected) {
+    color: white;
+}
+
+:deep(.p-tab:not([data-p-active="true"]) .tab-type-selected) {
+    color: var(--p-primary-500);
 }
 
 .add-tab-btn {
@@ -297,6 +324,20 @@ watch(() => props.slide, (newSlide) => {
     border-radius: var(--br-medium) var(--br-medium) 0 0;
     height: 2.5rem;
     cursor: pointer;
+}
+
+.tab-type-option {
+    padding: 0.25rem 0.5rem;
+}
+
+.tab-type-select:deep(.p-select-dropdown) {
+    color: var(--p-primary-200);
+}
+
+.tab-type-selected {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .tab-header {
@@ -330,11 +371,9 @@ watch(() => props.slide, (newSlide) => {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 0.75rem;
-    height: 1.5rem;
     cursor: pointer;
-    color: white;
+    margin: 0;
 }
-
 
 .editor-toolbar {
     margin-bottom: 1rem;
@@ -346,63 +385,5 @@ watch(() => props.slide, (newSlide) => {
     align-items: center;
     width: 100%;
     gap: 0.5rem;
-}
-
-.editor-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.editor-host {
-    flex: 1;
-    min-height: 0;
-}
-
-.editor-host :deep(.cm-editor) {
-    height: 100%;
-    border: 1px solid var(--p-primary-200);
-    border-radius: var(--br-medium);
-    overflow: hidden;
-    box-shadow: inset 0 0 5px 2.5px var(--p-primary-50);
-}
-
-.editor-host :deep(.cm-gutters) {
-    background-color: var(--p-primary-100);
-    border: none;
-    box-shadow: -5px 0 10px 5px var(--p-primary-50);
-}
-
-.editor-host :deep(.cm-lineNumbers .cm-activeLineGutter) {
-    border-left: 3px solid var(--p-primary-400);
-}
-
-.editor-host :deep(.cm-gutters) {
-    border-right: none;
-}
-
-.editor-host :deep(.cm-activeLine) {
-    background-color: var(--p-primary-200);
-}
-
-.editor-host :deep(.cm-line) {
-    font-size: 1rem;
-}
-
-.editor-host :deep(.cm-lineNumbers) {
-    font-size: 1rem;
-}
-
-.editor-host :deep(.cm-activeLineGutter, .cm-activeLine) {
-    background-color: var(--p-primary-200);
-}
-
-.editor-host :deep(.cm-content) {
-    height: 100%;
-}
-
-.editor-host :deep(.cm-content) {
-    font-family: "Fira Code", monospace;
-    font-variant-ligatures: contextual;
 }
 </style>
