@@ -21,21 +21,22 @@ import '@/assets/main.css'
 
       <Card class="role_option_card " v-if="selectedRole === null || selectedRole === 'moderator'"
         @click="selectedRole = 'moderator'">
-        <template #title>
-          <h2>Moderator</h2>
-        </template>
+
         <template #content>
-          <span class="material-symbols-outlined big-icon">record_voice_over</span>
+          <div class="role_option_card_content">
+            <span class="material-symbols-outlined big-icon">record_voice_over</span>
+            <h2>Moderator</h2>
+          </div>
         </template>
       </Card>
 
       <Card class="role_option_card" v-if="selectedRole === null || selectedRole === 'participant'"
         @click="selectedRole = 'participant'">
-        <template #title>
-          <h2>Participant</h2>
-        </template>
         <template #content>
-          <span class="material-symbols-outlined big-icon">person</span>
+          <div class="role_option_card_content">
+            <span class="material-symbols-outlined big-icon">person</span>
+            <h2>Participant</h2>
+          </div>
         </template>
       </Card>
 
@@ -50,8 +51,14 @@ import '@/assets/main.css'
       </Card>
     </div>
 
+    <Button class="home-btn" v-if="selectedRole !== null" @click="selectedRole = null"  >
+      <i class="material-symbols-outlined">home</i>
+    </Button>
+
     <div class="pin_enter" v-if="selectedRole !== null">
-      <p v-if="selectedRole !== null && selectedRole === 'moderator'">
+      <p v-if="selectedRole !== null && selectedRole === 'moderator'"
+        style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+        <i class="material-symbols-outlined">lock</i>
         Enter pin to acces moderator dashboard.
       </p>
 
@@ -67,6 +74,12 @@ import '@/assets/main.css'
 
 
 <style scoped>
+.home-btn{
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
 .welcome {
   display: flex;
   flex-direction: column;
@@ -100,6 +113,19 @@ import '@/assets/main.css'
   color: var(--p-primary-50);
 }
 
+:deep(.p-card-body) {
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+:deep(.p-card-content) {
+    padding: 0;
+    height: 100%;
+    flex: 1;
+}
+
 .role_option_card_content {
   height: 100%;
   display: flex;
@@ -107,6 +133,7 @@ import '@/assets/main.css'
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  flex: 1; 
 }
 
 .role_option_card:hover {
@@ -122,5 +149,18 @@ import '@/assets/main.css'
   display: flex;
   flex-direction: column;
   align-items: center;
+
+}
+
+.pin_enter:deep(.p-inputtext) {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--br-large);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4.3px);
+  -webkit-backdrop-filter: blur(4.3px);
+  color: white;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+  border: 1px solid rgba(255, 255, 255, 0.31);
 }
 </style>
