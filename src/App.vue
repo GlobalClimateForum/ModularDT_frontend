@@ -5,8 +5,6 @@ import { onMounted } from 'vue'
 import { settings } from '@/utils/settings'
 import { getSettings } from "@/services/settings_service";
 
-// Läuft sofort, wenn das Skript geladen wird
-//settings.value.language = 'de' // Beispiel: Sprache hartkodiert setzen
 onMounted(async () => {
   getSettings().then(response => {
     const settings_read = response.data.settings
