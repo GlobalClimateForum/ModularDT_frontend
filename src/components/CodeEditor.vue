@@ -5,10 +5,15 @@ import { markdown } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import type { Extension } from '@codemirror/state'
 import type { SlideSection } from '@/services/slide_service'
+import { json } from "@codemirror/lang-json"
+import * as prettier from 'prettier/standalone'
+import parserBabel from 'prettier/plugins/babel'
+import parserEstree from 'prettier/plugins/estree'
+import Button from 'primevue/button'
 
 const emit = defineEmits<{ contentUpdated: [content: string] }>();
 
-const props = defineProps<{ slideSection: SlideSection }>()
+const props = defineProps<{ slideSection: SlideSection, language?: string }>()
 
 const editorHost = ref<HTMLDivElement | undefined>(undefined)
 let editorView: EditorView | null = null
@@ -17,6 +22,25 @@ onMounted(() => {
     if (!editorHost.value) return
     editorView = initEditor()
 })
+
+const languageExtensions: Record<string, Extension> = {
+    markdown: markdown(),
+    json: json(),
+}
+
+async function formatJsonWithPrettier() {
+    const text = editorView?.state.doc.toString()
+    if (!text) return
+
+    const formatted = await prettier.format(text, {
+        parser: 'json',
+        plugins: [parserBabel, parserEstree]
+    })
+
+    editorView?.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: formatted }
+    })
+}
 
 // Listener for CodeMirror editor updates
 function editorUpdateListener(): Extension {
@@ -36,7 +60,7 @@ function initEditor() {
             doc: props.slideSection?.content ?? '',
             extensions: [
                 basicSetup,
-                markdown(),
+                props.language ? languageExtensions[props.language] : markdown(),
                 editorUpdateListener(),
             ],
         }),
@@ -51,14 +75,31 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="editor-container">
+        <Button small rounded class="format-btn" v-if="props.language === 'json'">
+            <template #icon>
+                <i class="material-symbols-outlined" @click="formatJsonWithPrettier()">data_object</i>
+            </template>
+        </Button>
         <div ref="editorHost" class="editor-host"></div>
     </div>
 </template>
 <style scoped>
+
+.format-btn {
+    align-self: flex-end;
+    position: absolute;
+    z-index: 10;
+    bottom: 2rem;
+    right: 2rem;
+}
+
 .editor-container {
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
+    padding: 0;
+
 }
 
 .editor-host {
@@ -105,11 +146,8 @@ onBeforeUnmount(() => {
 }
 
 .editor-host :deep(.cm-content) {
-    height: 100%;
-}
-
-.editor-host :deep(.cm-content) {
     font-family: "Fira Code", monospace;
     font-variant-ligatures: contextual;
 }
+
 </style>
