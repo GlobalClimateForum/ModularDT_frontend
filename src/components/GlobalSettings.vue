@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import Column from 'primevue/column';
 import { useI18n } from 'vue-i18n'
+import { useToast } from 'primevue/usetoast';
 
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 
-const { locale, availableLocales } = useI18n()
+import { getSettings, updateSettings } from "@/services/settings_service";
 
+const { locale, availableLocales } = useI18n()
+const toast = useToast();
 const languageNames = {
   en: 'English',
   de: 'Deutsch',
@@ -27,13 +30,38 @@ const translatedLocales = computed(() => {
 const settings = ref({
   cs_url: 'http://127.0.0.1:8002',
   number_of_screens: 4,
-  background_image: ''
+  background_image: '',
+  language: 'en'
 })
+
+locale.value = settings.value.language
+
+onMounted(() => {
+  getSettings().then(response => {
+    if (response.data.length) {
+      //  
+    }
+  }).catch(error => {
+    console.error("Error fetching settings:", error);
+  });
+});
 
 // save function - todo
 const saveSettings = () => {
-  console.log('Saved settings:', JSON.parse(JSON.stringify(settings.value)))
-  alert('Settings saved!')
+  //console.info('Saved settings:', JSON.parse(JSON.stringify(settings.value)))
+  const fetched_settings = {
+    cs_url: settings.value.cs_url,
+    number_of_screens: settings.value.number_of_screens,
+    background_image: settings.value.background_image,
+    language: settings.value.language
+  };
+
+  updateSettings(fetched_settings).then(response => {
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully', life: 3000 })
+  }).catch(error => {
+    console.error("Error saving settings:", error);
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings', life: 3000 })
+  });
 }
 
 // better: go via backend.
@@ -71,7 +99,7 @@ const testConnection = async () => {
         <label for="cs_url" class="form-label">{{ $t('moderator.settings.cs_url') }}</label>
         <div class="input-with-button">
           <InputText id="cs_url" v-model.trim="settings.cs_url" type="text" fluid required />
-          <Button type="button" label="Test" @click="testConnection" class="test-btn"/>
+          <Button type="button" label="Test" @click="testConnection" class="test-btn" />
         </div>
       </div>
 
@@ -96,7 +124,7 @@ const testConnection = async () => {
       </div>
 
       <!-- Button -->
-      <Button type="button" :label="$t('moderator.save')" class="save-btn"/>
+      <Button type="button" :label="$t('moderator.save')" class="save-btn" @click="saveSettings" />
     </form>
   </div>
 </template>

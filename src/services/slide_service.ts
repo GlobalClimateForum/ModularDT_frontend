@@ -59,3 +59,4 @@ export const renderSlide = (content: string, width: number, height: number) => m
 
 export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
 export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
+
