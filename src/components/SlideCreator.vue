@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, defineAsyncComponent } from 'vue'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -17,7 +17,6 @@ import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import type { SlideSection } from '@/services/slide_service'
 import CodeEditor from '@/components/CodeEditor.vue'
-import MapEditor from '@/components/MapEditor.vue'
 import '@/assets/main.css'
 import Select from 'primevue/select';
 
@@ -39,6 +38,14 @@ const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each 
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
+
+// Mapping for which editor to use for each view type (markdown, map, chart, etc.)
+// all except markdown are lazy-loaded to reduce initial bundle size
+const editorMapping: Record<string, any> = {
+    markdown: CodeEditor,
+    map: defineAsyncComponent(() => import('@/components/MapEditor.vue')), 
+    vega: defineAsyncComponent(() => import('@/components/VegaEditor.vue'))
+};
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
@@ -113,6 +120,16 @@ function updateSectionContent(index: number, newContent: string) {
 
     const updatedSections = [...slideSections.value]
     updatedSections[index] = { ...updatedSections[index], content: newContent }
+    slideSections.value = updatedSections
+
+    // Refresh current slide to trigger re-render of SlideView with updated content
+    currentSlide.value = { ...currentSlide.value }
+}
+
+function updateSection(index: number, updatedSection: SlideSection) {
+
+    const updatedSections = [...slideSections.value]
+    updatedSections[index] = { ...updatedSections[index], ...updatedSection }
     slideSections.value = updatedSections
 
     // Refresh current slide to trigger re-render of SlideView with updated content
@@ -199,8 +216,11 @@ watch(selectedTypes, (newTypes) => {
                 <TabPanels class="tab-panel">
                     <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
                         style="height: 100%;">
-                        <CodeEditor :slideSection="section" @contentUpdated="updateSectionContent(index, $event)">
-                        </CodeEditor>
+
+                    <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
+                    <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']" 
+                    :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
+                     @contentUpdated="updateSectionContent(index, $event)" @sectionUpdated="updateSection(index, $event)"></component>
                     </TabPanel>
                 </TabPanels>
             </Tabs>
@@ -222,7 +242,6 @@ watch(selectedTypes, (newTypes) => {
                         </div>
                     </template>
                 </Toolbar>
-
 
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"

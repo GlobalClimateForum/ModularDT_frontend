@@ -31,7 +31,8 @@ watch(
 // Mapping of view types to their corresponding components for dynamic rendering - TODO: Get from Backend (db)
 const componentsMap: Record<string, any> = {
     markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue')),
-    map: defineAsyncComponent(() => import('@/components/MapSlide.vue'))
+    map: defineAsyncComponent(() => import('@/components/MapSlide.vue')), 
+    vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue'))
 };
 
 // -- Auto scaling --

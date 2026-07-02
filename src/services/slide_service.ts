@@ -18,6 +18,7 @@ export interface SlideSection {
     width_fraction: number;
     content: string;
     content_path: string;
+    mode?: string;
 }
 
 export const SlideSectionTypes = [
