@@ -9,6 +9,7 @@ import SlideManager from '@/components/SlideManager.vue';
 import GroupManager from '@/components/GroupManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
 import SceneBuilder from '@/components/SceneBuilder.vue';
+import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
 
@@ -18,14 +19,16 @@ import { PrimeIcons } from '@primevue/core/api';
 import { getGroups } from "@/services/group_service";
 import { onMounted, ref, computed } from 'vue';
 import type { Slide } from "@/services/slide_service"
+import type { Scene } from "@/services/scene_service"
 import { Transition } from "vue";
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenebuilder' | 'eventcreate' | 'globalsettings' | 'groups'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenecreate' | 'eventcreate' | 'globalsettings' | 'groups'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
+const currentScene = ref<Scene | null>(null);
 
 const items = computed(() => [
   {
@@ -64,7 +67,7 @@ const items = computed(() => [
         key: 'scenecreate',
         label: t('moderator.nav.builder'),
         materialIcon: 'slide_library',
-        command: () => { currentDashboard.value = 'scenebuilder'; }
+        command: () => { currentDashboard.value = 'scenecreate'; }
       },
     ],
   },
@@ -109,6 +112,10 @@ function handleSlideEdit(slide: Slide) {
   currentDashboard.value = 'slidecreate';
 }
 
+function handleSceneEdit(scene: Scene) {
+  currentScene.value = scene
+  currentDashboard.value = 'scenecreate';
+}
 
 </script>
 
@@ -140,10 +147,13 @@ function handleSlideEdit(slide: Slide) {
         <PresentationControl v-if="currentDashboard === 'live'" />
       </Transition>
       <Transition name="fade" mode="out-in">
-        <SceneBuilder v-if="currentDashboard === 'scenebuilder'" :n-monitors="4" />
+        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" />
       </Transition>
       <Transition name="fade" mode="out-in">
         <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleSlideEdit" />
+      </Transition>
+      <Transition name="fade" mode="out-in">
+        <SceneManager v-if="currentDashboard === 'scenes'" @edit-scene="handleSceneEdit" />
       </Transition>
       <Transition name="fade" mode="out-in">
         <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />

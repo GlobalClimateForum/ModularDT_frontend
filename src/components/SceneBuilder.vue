@@ -13,11 +13,15 @@ import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
 import { settings } from '@/utils/settings'
+import { useToast } from 'primevue/usetoast'
+import type { Scene } from 'vega'
 
 const slides = ref<Slide[]>([]);
-//const scene = ref<(Slide | null)[]>([null, null, null, null]);
-const scene = ref<(Slide | null)[]>([]);
+const scene = ref<(Scene | null)[]>([]);
 const scenename = ref<string>("");
+
+    // Import the toast notification composable from PrimeVue for displaying success/error messages
+const toast = useToast()
 
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
@@ -79,9 +83,10 @@ function onSaveScene() {
     };
 
     saveScene(scene_).then(response => {
-        console.log("Scene saved successfully:", response.data);
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
         console.error("Error saving scene:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     });
 }
 
