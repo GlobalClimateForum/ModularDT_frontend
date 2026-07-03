@@ -26,13 +26,16 @@ const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-
-onMounted(() => {
+function fetchSlides() {
     getSlides().then(response => {
         slides.value = response.data;
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
+}
+
+onMounted(() => {
+    fetchSlides();
 });
 
 function onRowEditSave(event: any) {
@@ -53,7 +56,7 @@ function onRowEditSave(event: any) {
 const emit = defineEmits<{ 'edit-slide': [slide: Slide] }>()
 
 function onEditSlide(slide: Slide) {
-    emit('edit-slide', {...slide, sections: slide.sections || []});
+    emit('edit-slide', { ...slide, sections: slide.sections || [] });
 }
 
 function onDeleteSlide(slide: Slide) {
@@ -76,22 +79,34 @@ function onDeleteSlide(slide: Slide) {
 }
 
 function onDuplicateSlide(slide: Slide) {
-    //    if (slide.id) {
-    //        deleteSlide(slide.id).then(() => {
-    //            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
-    //            slides.value = slides.value.filter(s => s.id !== slide.id);
-    //            if (selectedSlide.value?.id === slide.id) {
-    //                selectedSlide.value = null;
-    //            }
-    //        }).catch(error => {
-    //            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
-    //            console.error("Error deleting slide:", error);
-    //        })
-    //    }
-    //    else{
-    //        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-    //        console.error("Error deleting slide: no valid slide.id");
-    //    }
+    if (slide.id) {
+
+        const new_sections = slide.sections?.map((section, index) => ({
+            view_type: section.view_type,
+            content: section.content,
+            content_path: section.content_path,
+            width_fraction: section.width_fraction
+        })) || [];
+
+        const new_slide = {
+            name: slide.name + " (copy)",
+            width: slide.width,
+            height: slide.height,
+            tags: slide.tags
+        };
+
+        saveSlide(new_slide, new_sections).then(response => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
+            fetchSlides();
+        }).catch(error => {
+            console.error("Error saving slide:", error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
+            fetchSlides();
+        });
+    } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
+        console.error("Error deleting slide: no valid slide.id");
+    }
 }
 
 function onTagRemoved(removedTag: string) {
