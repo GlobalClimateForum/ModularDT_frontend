@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import Column from 'primevue/column';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
@@ -9,42 +9,26 @@ import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 
+import { settings } from '@/utils/settings'
 import { getSettings, updateSettings } from "@/services/settings_service";
+
+// @ts-ignore: module has no declaration file
+import { LANGUAGE_NAMES } from '@/constants/languages.ts'
 
 const { locale, availableLocales } = useI18n()
 const toast = useToast();
-const languageNames = {
-  en: 'English',
-  de: 'Deutsch',
-  fr: 'Français'
-}
 
 const translatedLocales = computed(() => {
   return availableLocales.map(locale => ({
-    label: languageNames[locale] || locale,
+    label: LANGUAGE_NAMES[locale] || locale,
     value: locale
   }));
 });
 
-// reactive settings
-const settings = ref({
-  cs_url: 'http://127.0.0.1:8002',
-  number_of_screens: 4,
-  background_image: '',
-  language: 'en'
-})
-
-locale.value = settings.value.language
-
-onMounted(() => {
-  getSettings().then(response => {
-    if (response.data.length) {
-      //  
-    }
-  }).catch(error => {
-    console.error("Error fetching settings:", error);
-  });
-});
+//locale.value = settings.value.language
+watch(() => settings.value.language, (newLanguage) => {
+  locale.value = newLanguage
+}, { immediate: true })
 
 // save function - todo
 const saveSettings = () => {
@@ -116,10 +100,11 @@ const testConnection = async () => {
         <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
       </div>
 
+      <!-- language -->
       <div class="form-group">
         <label for="language" class="form-label">{{ $t('moderator.settings.language') }}</label>
         <!-- Select-Komponente für das Dropdown-Menü -->
-        <Select id="language" v-model="$i18n.locale" :options="translatedLocales" optionLabel="label"
+        <Select id="language" v-model="settings.language" :options="translatedLocales" optionLabel="label"
           optionValue="value" fluid />
       </div>
 

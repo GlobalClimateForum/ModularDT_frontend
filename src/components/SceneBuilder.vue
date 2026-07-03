@@ -8,13 +8,15 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
+import { settings } from '@/utils/settings'
 
 const slides = ref<Slide[]>([]);
-const scene = ref<(Slide | null)[]>([null, null, null, null]);
+//const scene = ref<(Slide | null)[]>([null, null, null, null]);
+const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 
 // on mount get all slides from backend and store in slides ref
@@ -26,6 +28,21 @@ onMounted(() => {
         console.error("Error fetching slides:", error);
     });
 });
+
+watch(
+  () => settings.value.number_of_screens,
+  (newCount) => {
+    const currentCount = scene.value.length
+
+    if (newCount > currentCount) {
+      const extraSlots = Array(newCount - currentCount).fill(null)
+      scene.value.push(...extraSlots)
+    } else if (newCount < currentCount) {
+      scene.value.splice(newCount)
+    }
+  },
+  { immediate: true } 
+)
 
 // Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
@@ -114,7 +131,7 @@ function emptyScreens() {
                         <Message info size="small">
                             <span style="display: flex; align-items: center; gap: 0.25rem;">
                                 <i class="material-symbols-outlined">desktop_windows</i>
-                                {{ scene.length }}
+                                {{ settings.number_of_screens }}
                             </span>
                         </Message>
                         <Message v-if="duplicates()" severity="warn" size="small">
