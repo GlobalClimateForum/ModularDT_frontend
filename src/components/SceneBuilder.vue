@@ -14,13 +14,14 @@ import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
 import { settings } from '@/utils/settings'
 import { useToast } from 'primevue/usetoast'
-import type { Scene } from 'vega'
+//mport type { Scene } from '@/services/scene_service';
+//import type { Scene } from 'vega'
 
 const slides = ref<Slide[]>([]);
-const scene = ref<(Scene | null)[]>([]);
+const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 
-    // Import the toast notification composable from PrimeVue for displaying success/error messages
+// Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
 
 // on mount get all slides from backend and store in slides ref
@@ -34,18 +35,18 @@ onMounted(() => {
 });
 
 watch(
-  () => settings.value.number_of_screens,
-  (newCount) => {
-    const currentCount = scene.value.length
+    () => settings.value.number_of_screens,
+    (newCount) => {
+        const currentCount = scene.value.length
 
-    if (newCount > currentCount) {
-      const extraSlots = Array(newCount - currentCount).fill(null)
-      scene.value.push(...extraSlots)
-    } else if (newCount < currentCount) {
-      scene.value.splice(newCount)
-    }
-  },
-  { immediate: true } 
+        if (newCount > currentCount) {
+            const extraSlots = Array(newCount - currentCount).fill(null)
+            scene.value.push(...extraSlots)
+        } else if (newCount < currentCount) {
+            scene.value.splice(newCount)
+        }
+    },
+    { immediate: true }
 )
 
 // Handle drag-and-drop events for slides and monitors
@@ -77,20 +78,24 @@ function onSaveScene() {
         alert("Please enter a scene name before saving.");
         return;
     }
+
+    const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
+    .filter((s): s is (Slide & { position: number }) => s !== null);
+
     const scene_ = {
         name: scenename.value,
-        slides: scene.value.map(s => s?.id ?? null)
+        description: "",
+        tags: [],
+        slides: validSlidesWithPositions 
     };
 
-    saveScene(scene_).then(response => {
+    saveScene(scene_).then(_response => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
         console.error("Error saving scene:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     });
 }
-
-// -- Validation Functions --
 
 // Check if there are slides assinged to multiple monitors (duplicates)
 function duplicates() {
@@ -121,8 +126,8 @@ function emptyScreens() {
                     </div>
                     <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)"
                         @dragend="onDragEnd($event)">
-                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []"
-                            :showFrame="false" style="pointer-events: none;" :shadow="true" />
+                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []" :showFrame="false"
+                            style="pointer-events: none;" :shadow="true" />
                     </div>
                 </div>
             </div>
@@ -151,7 +156,7 @@ function emptyScreens() {
                     <div style="display: flex; gap: 0.5rem;">
                         <InputText v-model="scenename" placeholder="Enter scene name..." />
                         <Button label="Save" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
-                        <Button icon="pi pi-trash" outlined label="Clear" @click="scene = [null, null, null, null]" />
+                        <Button icon="pi pi-trash" outlined label="Clear" @click="scene.fill(null)" />
                     </div>
                 </template>
             </Toolbar>

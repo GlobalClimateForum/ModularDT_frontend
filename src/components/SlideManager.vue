@@ -179,7 +179,7 @@ function onTagAdded(addedTag: string) {
 
         <SplitterPanel class="sub-panel">
             <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
-                :sections="selectedSlide.sections" class="slide-preview" />
+                :sections="selectedSlide.sections ? selectedSlide.sections : []" class="slide-preview" />
             <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" :onRemoveTagApi="removeTagFromSlide"
                 @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
         </SplitterPanel>

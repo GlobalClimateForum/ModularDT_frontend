@@ -173,6 +173,7 @@ function onTagAdded(addedTag: string) {
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel">
+            <!--{{ selectedScene }}-->
             <SceneView v-if="selectedScene" :preview="true" :scene="selectedScene" :showframe="false" class="scene-preview" />
             <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null" :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene"
                 @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />

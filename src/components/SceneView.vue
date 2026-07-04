@@ -5,26 +5,21 @@ import SlideView from '@/components/SlideView.vue';
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { settings } from '@/utils/settings'
 
-const scene = ref<(Scene | null)[]>([]);
-
-watch(
-    () => settings.value.number_of_screens,
-    (newCount) => {
-        const currentCount = scene.value.length
-
-        if (newCount > currentCount) {
-            const extraSlots = Array(newCount - currentCount).fill(null)
-            scene.value.push(...extraSlots)
-        } else if (newCount < currentCount) {
-            scene.value.splice(newCount)
-        }
-    },
-    { immediate: true }
-)
+const props = withDefaults(defineProps<{
+    scene: Scene | null,
+    preview: boolean,
+    showframe?: boolean,
+    shadow?: boolean
+}>(), {
+    scene: null,
+    showframe: false,
+    shadow: true
+});
 
 // Berechnet das optimale Grid-Layout dynamisch, damit alle Monitore reinpassen
 const gridStyle = computed(() => {
-    const count = scene.value.length;
+    //console.log("Got :", props.scene);
+    const count = settings.value.number_of_screens;
     if (count <= 0) return {};
 
     let cols = 1;
@@ -47,12 +42,13 @@ const gridStyle = computed(() => {
 
 <template>
     <div class="monitor_container" :style="gridStyle">
-        <div v-for="(slot, index) in scene" :key="index" class="monitor-item" @dragover.prevent>
-
+        <div v-for="(slot, index) in props.scene?.slides" :key="index" class="monitor-item" @dragover.prevent>
+            
             <!-- Wrapper for 16:9  -->
             <div class="monitor-content">
 
                 <!-- Monitor Info: Name, Index -->
+
                 <div class="monitor-info">
                     <div class="monitor-label-container">
                         <h3 class="monitor-label">
@@ -61,18 +57,17 @@ const gridStyle = computed(() => {
                         </h3>
                         <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                     </div>
-                    <Button icon="pi pi-times" small rounded @click="scene[index] = null" />
+                    <Button icon="pi pi-times" small rounded @click="props.scene?.slides.splice(index, 1)" />
                 </div>
 
                 <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
                 <div v-if="slot" class="slide-wrapper">
                     <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
-                        :showFrame="false" />
+                        :showFrame="false" /> 
                 </div>
                 <div v-else class="monitor-symbol">
                     <i class="pi pi-desktop"></i>
-                </div>
-
+                </div> -->
             </div>
 
         </div>
@@ -149,7 +144,7 @@ const gridStyle = computed(() => {
     width: 100%;
     /* Füllt den Raum über der Info-Leiste aus */
     height: calc(100% - 32px);
-    position: relative;
+    position: relative; 
 }
 
 .monitor-symbol {

@@ -1,5 +1,7 @@
 import { api } from "./api";
 
+import type { Slide } from "@/services/slide_service"  
+
 export interface Scene {
     id?: number;
     name: string;
@@ -7,13 +9,25 @@ export interface Scene {
     created_at?: string | null;
     updated_at?: string | null;
     tags: string[];
-    slides: (number | null)[];
+    slides: (Slide & { position: number })[]; 
 }
 
 export type ScenePayload = Omit<Scene, "id" | "created_at" | "updated_at">;
 
 export const getScenes = () => api.get("/scenes/");
-export const saveScene = (scene: Omit<Scene , "id" | "created_at" | "updated_at">) => api.post("/scenes/", scene);
+export const saveScene = (scene: Omit<Scene , "id" | "created_at" | "updated_at">) => {
+  const payload = {
+    ...scene,
+    // Wir extrahieren nur id und position aus den erweiterten A-Objekten
+    as: scene.slides.map(slide => ({
+      id: slide.id,
+      position: slide.position
+    }))
+  };
+
+  return api.post("/scenes/", payload);
+}
+
 
 export const updateScene = (id: number, scene: Partial<ScenePayload>) =>
     api.patch(`/scenes/${id}/`, scene);

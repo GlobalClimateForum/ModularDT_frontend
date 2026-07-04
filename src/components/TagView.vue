@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends { id?: string; tags: string[] }">
+<script setup lang="ts" generic="T extends { id?: number; tags: string[] }">
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
@@ -9,8 +9,8 @@ import { ref } from 'vue';
 // Definiere die Props unter Verwendung des generischen Typs T
 const props = defineProps<{
     item: T | null;
-    onAddTagApi: (id: string, tag: string) => Promise<any>;
-    onRemoveTagApi: (id: string, tag: string) => Promise<any>;
+    onAddTagApi: (id: number, tag: string) => Promise<any>;
+    onRemoveTagApi: (id: number, tag: string) => Promise<any>;
 }>();
 
 const emit = defineEmits<{
