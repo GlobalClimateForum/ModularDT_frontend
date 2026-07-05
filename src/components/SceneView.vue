@@ -16,6 +16,18 @@ const props = withDefaults(defineProps<{
     shadow: true
 });
 
+const gridedSlides = computed(() => {
+  const grid = Array(settings.value.number_of_screens).fill(null)
+  
+  props.scene?.slides.forEach(slide => {
+    if (slide && slide.position && slide.position <= settings.value.number_of_screens) {
+      grid[slide.position - 1] = slide
+    }
+  })
+  
+  return grid
+})
+
 // Berechnet das optimale Grid-Layout dynamisch, damit alle Monitore reinpassen
 const gridStyle = computed(() => {
     //console.log("Got :", props.scene);
@@ -42,7 +54,7 @@ const gridStyle = computed(() => {
 
 <template>
     <div class="monitor_container" :style="gridStyle">
-        <div v-for="(slot, index) in props.scene?.slides" :key="index" class="monitor-item" @dragover.prevent>
+        <div v-for="(slot, index) in gridedSlides" :key="index" class="monitor-item" @dragover.prevent>
             
             <!-- Wrapper for 16:9  -->
             <div class="monitor-content">
@@ -67,7 +79,7 @@ const gridStyle = computed(() => {
                 </div>
                 <div v-else class="monitor-symbol">
                     <i class="pi pi-desktop"></i>
-                </div> -->
+                </div> 
             </div>
 
         </div>
