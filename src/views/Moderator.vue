@@ -25,26 +25,26 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'events' | 'scenecreate' | 'eventcreate' | 'globalsettings' | 'groups'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'presentationcreate' | 'globalsettings' | 'groups'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
 const items = computed(() => [
   {
-    label: t('moderator.nav.event'),
+    label: t('moderator.nav.presentations'),
     items: [
       {
-        key: 'events',
+        key: 'presentations',
         label: t('moderator.nav.overview'),
         materialIcon: "filter",
-        command: () => { currentDashboard.value = 'events'; }
+        command: () => { currentDashboard.value = 'presentations'; }
       },
       {
-        key: 'eventcreate',
+        key: 'presentationcreate',
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
-        command: () => { currentDashboard.value = 'eventcreate'; }
+        command: () => { currentDashboard.value = 'presentationcreate'; }
       },
       {
         key: 'live',
