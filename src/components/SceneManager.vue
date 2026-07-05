@@ -60,6 +60,7 @@ function onRowEditSave(event: any) {
 const emit = defineEmits<{ 'edit-scene': [scene: Scene] }>()
 
 function onEditScene(scene: Scene) {
+    console.info('Emitting edit-scene event with scene:', JSON.parse(JSON.stringify(scene)));
     emit('edit-scene', { ...scene });
 }
 
@@ -162,7 +163,7 @@ function onTagAdded(addedTag: string) {
 
 
                 <template #header>
-                    <InputText class="search-input" v-model="filters.global.value" placeholder="Search" type="text" />
+                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')" type="text" />
                     <Button class="button-reset-search" @click="filters.global.value = null" rounded
                         :disabled="!filters.global.value">
                         <i class="pi pi-times"></i>

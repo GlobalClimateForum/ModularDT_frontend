@@ -167,7 +167,7 @@ function onTagAdded(addedTag: string) {
 
 
                 <template #header>
-                    <InputText class="search-input" v-model="filters.global.value" placeholder="Search" type="text" />
+                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')" type="text" />
                     <Button class="button-reset-search" @click="filters.global.value = null" rounded
                         :disabled="!filters.global.value">
                         <i class="pi pi-times"></i>

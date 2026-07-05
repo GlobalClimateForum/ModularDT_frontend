@@ -14,8 +14,14 @@ import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
 import { settings } from '@/utils/settings'
 import { useToast } from 'primevue/usetoast'
-//mport type { Scene } from '@/services/scene_service';
+import type { Scene } from '@/services/scene_service';
 //import type { Scene } from 'vega'
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+// Define Input Proerties
+// const props = defineProps<{ scene?: Scene | null }>()
 
 const slides = ref<Slide[]>([]);
 const scene = ref<(Slide | null)[]>([]);
@@ -117,7 +123,7 @@ function emptyScreens() {
 
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <h2 class="dashboard_label">Available Slides</h2>
+            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
             <div class="slide_gallery_container">
                 <div v-for="slide in slides" :key="slide.id" class="slide-card">
                     <div class="slide-info">
@@ -134,7 +140,7 @@ function emptyScreens() {
         </SplitterPanel>
         <!-- Scene Builder -->
         <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-            <h2 class="dashboard_label">Scene</h2>
+            <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
             <Toolbar class="scene-toolbar">
                 <template #start>
                     <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
@@ -145,18 +151,18 @@ function emptyScreens() {
                             </span>
                         </Message>
                         <Message v-if="duplicates()" severity="warn" size="small">
-                            duplicate slides
+                            {{ $t('moderator.duplicate_slides') }}
                         </Message>
                         <Message severity="warn" v-if="emptyScreens()" size="small">
-                            empty {{ emptyScreens() === 1 ? 'screen' : 'screens' }}
+                            {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens') }}
                         </Message>
                     </div>
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <InputText v-model="scenename" placeholder="Enter scene name..." />
-                        <Button label="Save" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
-                        <Button icon="pi pi-trash" outlined label="Clear" @click="scene.fill(null)" />
+                        <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" />
+                        <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
                     </div>
                 </template>
             </Toolbar>
