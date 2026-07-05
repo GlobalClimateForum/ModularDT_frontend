@@ -12,6 +12,7 @@ import SceneBuilder from '@/components/SceneBuilder.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
+import PresentationManager from '@/components/PresentationManager.vue';
 
 import '@/assets/main.css'
 
@@ -25,7 +26,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'presentationcreate' | 'globalsettings' | 'groups'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'globalsettings' | 'groups'>('slides');
 const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -40,12 +41,12 @@ const items = computed(() => [
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'presentations'; }
       },
-      {
+/*      {
         key: 'presentationcreate',
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'presentationcreate'; }
-      },
+      },*/
       {
         key: 'live',
         label: "Live",
@@ -143,6 +144,9 @@ function handleSceneEdit(scene: Scene) {
 
     </SplitterPanel>
     <SplitterPanel :size="85">
+      <!--nsition name="fade" mode="out-in">
+        <PresentationManager v-if="currentDashboard === 'presentations'" />
+      </Transition>-->
       <Transition name="fade" mode="out-in">
         <PresentationControl v-if="currentDashboard === 'live'" />
       </Transition>

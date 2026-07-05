@@ -1,5 +1,4 @@
 import { api } from "./api";
-
 import type { Slide } from "@/services/slide_service"  
 
 export interface Scene {
@@ -18,7 +17,6 @@ export const getScenes = () => api.get("/scenes/");
 export const saveScene = (scene: Omit<Scene , "id" | "created_at" | "updated_at">) => {
   const payload = {
     ...scene,
-    // Wir extrahieren nur id und position aus den erweiterten A-Objekten
     as: scene.slides.map(slide => ({
       id: slide.id,
       position: slide.position

@@ -32,7 +32,7 @@ const filters = ref({
 function fetchScenes() {
     getScenes().then(response => {
         scenes.value = response.data.scenes;
-        console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
+        //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
     }).catch(error => {
         console.error("Error fetching scenes:", error);
     });
