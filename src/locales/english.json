@@ -4,11 +4,12 @@
     "name": "Moderator",
     "nav": {
       "event": "Event",
+      "presentations": "Presentations",
       "scenes": "Scenes",
       "slides": "Slides",
       "settings": "Settings",
       "overview": "Overview",
-      "builder" : "Builder",
+      "builder": "Builder",
       "editor": "Editor",
       "dashboard": "Dashboard",
       "globalsettings": "DT Settings"
@@ -17,12 +18,27 @@
       "numberscreens": "Number of Screens",
       "language": "Language",
       "cs_url": "URL of default content server",
-      "background_image" : "Background image"
+      "background_image": "Background image"
     },
     "presentation": {
       "next": "Next",
       "previous": "Previous"
     },
-    "save": "Save"
+    "scene": "Scene",
+    "available_slides": "Available Slides",
+    "duplicate_slides": "Duplicate Slides",
+    "empty_screens": "Empty Screens",
+    "empty_screen": "Empty Screen",
+    "enter_scene_name": "Enter scene name...",
+    "clear": "Clear",
+    "save": "Save",
+    "copy": "Copy",
+    "search": "Search"
+  },
+  "participant": {
+    "name": "Participant"
+  },
+  "monitor": {
+    "name": "Monitor"
   }
 }

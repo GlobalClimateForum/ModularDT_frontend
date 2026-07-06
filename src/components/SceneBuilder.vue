@@ -13,11 +13,22 @@ import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
 import { settings } from '@/utils/settings'
+import { useToast } from 'primevue/usetoast'
+import type { Scene } from '@/services/scene_service';
+//import type { Scene } from 'vega'
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+// Define Input Proerties
+// const props = defineProps<{ scene?: Scene | null }>()
 
 const slides = ref<Slide[]>([]);
-//const scene = ref<(Slide | null)[]>([null, null, null, null]);
 const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
+
+// Import the toast notification composable from PrimeVue for displaying success/error messages
+const toast = useToast()
 
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
@@ -30,18 +41,18 @@ onMounted(() => {
 });
 
 watch(
-  () => settings.value.number_of_screens,
-  (newCount) => {
-    const currentCount = scene.value.length
+    () => settings.value.number_of_screens,
+    (newCount) => {
+        const currentCount = scene.value.length
 
-    if (newCount > currentCount) {
-      const extraSlots = Array(newCount - currentCount).fill(null)
-      scene.value.push(...extraSlots)
-    } else if (newCount < currentCount) {
-      scene.value.splice(newCount)
-    }
-  },
-  { immediate: true } 
+        if (newCount > currentCount) {
+            const extraSlots = Array(newCount - currentCount).fill(null)
+            scene.value.push(...extraSlots)
+        } else if (newCount < currentCount) {
+            scene.value.splice(newCount)
+        }
+    },
+    { immediate: true }
 )
 
 // Handle drag-and-drop events for slides and monitors
@@ -73,19 +84,24 @@ function onSaveScene() {
         alert("Please enter a scene name before saving.");
         return;
     }
+
+    const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
+    .filter((s): s is (Slide & { position: number }) => s !== null);
+
     const scene_ = {
         name: scenename.value,
-        slides: scene.value.map(s => s?.id ?? null)
+        description: "",
+        tags: [],
+        slides: validSlidesWithPositions 
     };
 
-    saveScene(scene_).then(response => {
-        console.log("Scene saved successfully:", response.data);
+    saveScene(scene_).then(_response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
         console.error("Error saving scene:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     });
 }
-
-// -- Validation Functions --
 
 // Check if there are slides assinged to multiple monitors (duplicates)
 function duplicates() {
@@ -107,7 +123,7 @@ function emptyScreens() {
 
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <h2 class="dashboard_label">Available Slides</h2>
+            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
             <div class="slide_gallery_container">
                 <div v-for="slide in slides" :key="slide.id" class="slide-card">
                     <div class="slide-info">
@@ -116,15 +132,15 @@ function emptyScreens() {
                     </div>
                     <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)"
                         @dragend="onDragEnd($event)">
-                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []"
-                            :showFrame="false" style="pointer-events: none;" :shadow="true" />
+                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []" :showFrame="false"
+                            style="pointer-events: none;" :shadow="true" />
                     </div>
                 </div>
             </div>
         </SplitterPanel>
         <!-- Scene Builder -->
         <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-            <h2 class="dashboard_label">Scene</h2>
+            <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
             <Toolbar class="scene-toolbar">
                 <template #start>
                     <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
@@ -135,18 +151,18 @@ function emptyScreens() {
                             </span>
                         </Message>
                         <Message v-if="duplicates()" severity="warn" size="small">
-                            duplicate slides
+                            {{ $t('moderator.duplicate_slides') }}
                         </Message>
                         <Message severity="warn" v-if="emptyScreens()" size="small">
-                            empty {{ emptyScreens() === 1 ? 'screen' : 'screens' }}
+                            {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens') }}
                         </Message>
                     </div>
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <InputText v-model="scenename" placeholder="Enter scene name..." />
-                        <Button label="Save" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
-                        <Button icon="pi pi-trash" outlined label="Clear" @click="scene = [null, null, null, null]" />
+                        <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" />
+                        <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
                     </div>
                 </template>
             </Toolbar>

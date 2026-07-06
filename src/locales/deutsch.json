@@ -4,6 +4,7 @@
     "name": "Moderator",
     "nav": {
       "event": "Veranstaltung",
+      "presentations": "Präsentationen",
       "scenes": "Szenen",
       "slides": "Folien",
       "settings": "Einstellungen",
@@ -17,12 +18,27 @@
       "numberscreens": "Anzahl Bildschirme",
       "language": "Sprache",
       "cs_url": "URL des default Content-Servers",
-      "background_image" : "Hintergrundbild"
+      "background_image": "Hintergrundbild"
     },
     "presentation": {
       "next": "Vor",
       "previous": "Zurück"
     },
-    "save": "Speichern"
+    "scene": "Szene",
+    "available_slides": "Verfügbare Folien",
+    "duplicate_slides": "Doppelte Folien",
+    "empty_screens": "Leere Bildschirme",
+    "empty_screen": "Leerer Bildschirm",
+    "enter_scene_name": "Name für Szene eingeben...",
+    "clear": "Löschen",
+    "save": "Speichern",
+    "copy": "Kopie",
+    "search": "Suche"
+  },
+  "participant": {
+    "name": "Teilnehmer"
+  },
+  "monitor": {
+    "name": "Monitor"
   }
 }

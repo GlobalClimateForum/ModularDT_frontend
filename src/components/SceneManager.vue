@@ -3,43 +3,43 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
-import type { Slide } from "@/services/slide_service"
+import type { Scene } from "@/services/scene_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-import SlideView from '@/components/SlideView.vue';
+import SceneView from '@/components/SceneView.vue';
 import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
-import { saveSlide } from '@/services/slide_service'
+import { saveScene } from '@/services/scene_service'
 
-import { getSlides, updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
-
+import { getScenes, updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const slides = ref<Slide[]>([]);
-const selectedSlide = ref<Slide | null>(null);
-const previewSlide = ref('');
-const editingRows = ref<Slide[]>([]);
+const scenes = ref<Scene[]>([]);
+const selectedScene = ref<Scene | null>(null);
+//const previewScene = ref('');
+const editingRows = ref<Scene[]>([]);
 const toast = useToast();
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-function fetchSlides() {
-    getSlides().then(response => {
-        slides.value = response.data;
+function fetchScenes() {
+    getScenes().then(response => {
+        scenes.value = response.data.scenes;
+        //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
     }).catch(error => {
-        console.error("Error fetching slides:", error);
+        console.error("Error fetching scenes:", error);
     });
 }
 
 onMounted(() => {
-    fetchSlides();
+    fetchScenes();
 });
 
 function onRowEditSave(event: any) {
@@ -47,95 +47,91 @@ function onRowEditSave(event: any) {
     if (name === event.data.name) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
     } else {
-        updateSlide(id, { name: name }).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide updated successfully', life: 3000 });
-            slides.value[event.index] = response.data;
+        updateScene(id, { name: name }).then(response => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 });
+            scenes.value[event.index] = { ...response.data };
         }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update slide', life: 3000 });
-            console.error("Error updating slide:", error)
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update scene', life: 3000 });
+            console.error("Error updating scene:", error)
         })
     }
 }
 
-const emit = defineEmits<{ 'edit-slide': [slide: Slide] }>()
+const emit = defineEmits<{ 'edit-scene': [scene: Scene] }>()
 
-function onEditSlide(slide: Slide) {
-    emit('edit-slide', { ...slide, sections: slide.sections || [] });
+function onEditScene(scene: Scene) {
+    console.info('Emitting edit-scene event with scene:', JSON.parse(JSON.stringify(scene)));
+    emit('edit-scene', { ...scene });
 }
 
-function onDeleteSlide(slide: Slide) {
-    if (slide.id) {
-        deleteSlide(slide.id).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
-            slides.value = slides.value.filter(s => s.id !== slide.id);
-            if (selectedSlide.value?.id === slide.id) {
-                selectedSlide.value = null;
+function onDeleteScene(scene: Scene) {
+    if (scene.id) {
+        deleteScene(scene.id).then(() => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene deleted successfully', life: 3000 });
+            scenes.value = scenes.value.filter(s => s.id !== scene.id);
+            if (selectedScene.value?.id === scene.id) {
+                selectedScene.value = null;
             }
         }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
-            console.error("Error deleting slide:", error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete scene', life: 3000 });
+            console.error("Error deleting scene:", error);
         })
     }
     else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-        console.error("Error deleting slide: no valid slide.id");
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Scene ID is missing', life: 3000 });
+        console.error("Error deleting scene: no valid scene.id");
     }
 }
 
-function onDuplicateSlide(slide: Slide) {
-    if (slide.id) {
+function onDuplicateScene(scene: Scene) {
+    if (scene.id) {
 
-        const new_sections = slide.sections?.map((section, index) => ({
-            view_type: section.view_type,
-            content: section.content,
-            content_path: section.content_path,
-            width_fraction: section.width_fraction
-        })) || [];
-
-        const new_slide = {
-            name: `${slide.name} (${t('moderator.copy')})`,
-            width: slide.width,
-            height: slide.height,
-            tags: slide.tags
+        const new_scene = {
+            name:  `${scene.name} (${t('moderator.copy')})`,
+            description: scene.description,
+            slides: scene.slides,
+            tags: scene.tags
         };
 
-        saveSlide(new_slide, new_sections).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-            fetchSlides();
+        saveScene(new_scene).then(response => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene saved successfully', life: 3000 })
+            fetchScenes();
         }).catch(error => {
-            console.error("Error saving slide:", error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-            fetchSlides();
+            console.error("Error saving scene:", error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save scene', life: 3000 })
+            fetchScenes();
         });
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-        console.error("Error deleting slide: no valid slide.id");
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Scene ID is missing', life: 3000 });
+        console.error("Error deleting scene: no valid scene.id");
     }
 }
 
 function onTagRemoved(removedTag: string) {
-    if (selectedSlide.value) {
-        selectedSlide.value.tags = selectedSlide.value.tags.filter(tag => tag !== removedTag);
+    if (selectedScene.value) {
+        selectedScene.value.tags = selectedScene.value.tags.filter(tag => tag !== removedTag);
     }
 }
 
 function onTagAdded(addedTag: string) {
-    if (selectedSlide.value) {
-        selectedSlide.value.tags = [...selectedSlide.value.tags, addedTag];
+    if (selectedScene.value) {
+        //console.error("Tags before:", selectedScene.value.tags);
+        selectedScene.value.tags = [...selectedScene.value.tags, addedTag];
+        // console.error("Tags after:", selectedScene.value.tags);
     }
 }
 </script>
 
 
 <template>
-    <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
+    <Splitter class="dashboard" :gutterSize="2" stateKey="scene-manager-splitter" stateStorage="local">
 
         <SplitterPanel class="sub-panel" :size="30">
 
-            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
-                v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single"
-                :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
+            <DataTable :value="scenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="scene-table"
+                v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single"
+                :globalFilterFields="['name', 'tags']" v-model:filters="filters">
 
                 <Column field="name" header="">
                     <template #editor="slotProps">
@@ -150,12 +146,12 @@ function onTagAdded(addedTag: string) {
 
                 <Column style="width: 9 em">
                     <template #body="slotProps">
-                        <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-code" @click="onEditScene(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-plus-circle"
-                            @click="onDuplicateSlide(slotProps.data)" />
+                            @click="onDuplicateScene(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
-                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteScene(slotProps.data)" />
                     </template>
                     <template #editor="slotProps">
                         <Button size="small" rounded text icon="pi pi-check"
@@ -178,16 +174,16 @@ function onTagAdded(addedTag: string) {
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel">
-            <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
-                :sections="selectedSlide.sections ? selectedSlide.sections : []" class="slide-preview" />
-            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" :onRemoveTagApi="removeTagFromSlide"
+            <!--{{ selectedScene }}-->
+            <SceneView v-if="selectedScene" :preview="true" :scene="selectedScene" :showframe="false" class="scene-preview" />
+            <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null" :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene"
                 @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
         </SplitterPanel>
     </Splitter>
 </template>
 
 <style scoped>
-.slide-preview {
+.scene-preview {
     flex: 1;
     min-height: 0;
     width: 100%;
@@ -195,7 +191,7 @@ function onTagAdded(addedTag: string) {
 }
 
 
-.slide-table {
+.scene-table {
     flex: 1;
     min-height: 0;
     /* the critical line */

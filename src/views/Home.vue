@@ -6,6 +6,9 @@ import Select from 'primevue/select'
 
 import { ref } from 'vue'
 import router from '@/router'
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const selectedRole = ref<string | null>(null)
 import '@/assets/main.css'
@@ -25,7 +28,7 @@ import '@/assets/main.css'
         <template #content>
           <div class="role_option_card_content">
             <span class="material-symbols-outlined big-icon">record_voice_over</span>
-            <h2>Moderator</h2>
+            <h2>{{ t('moderator.name') }}</h2>
           </div>
         </template>
       </Card>
@@ -35,7 +38,7 @@ import '@/assets/main.css'
         <template #content>
           <div class="role_option_card_content">
             <span class="material-symbols-outlined big-icon">person</span>
-            <h2>Participant</h2>
+            <h2>{{ t('participant.name') }}</h2>
           </div>
         </template>
       </Card>
@@ -45,7 +48,7 @@ import '@/assets/main.css'
         <template #content>
           <div class="role_option_card_content">
             <span class="material-symbols-outlined big-icon">monitor</span>
-            <h2>Monitor</h2>
+            <h2>{{ t('monitor.name') }}</h2>
           </div>
         </template>
       </Card>
