@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
-import { onMounted } from 'vue'
+import { onMounted, onBeforeMount, watch } from 'vue'
 import { settings } from '@/utils/settings'
 import { getSettings } from "@/services/settings_service";
+import { registerContentServer } from '@/services/api.ts';
+
+watch(() => settings.value.cs_url, (url) => {
+  if (url) registerContentServer();
+}, { immediate: true });
 
 onMounted(async () => {
   getSettings().then(response => {

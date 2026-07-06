@@ -1,6 +1,9 @@
 import axios from "axios";
+import { settings } from "@/utils/settings";
+import { computed, shallowRef } from "vue";
 
-let contentServer:null | ReturnType<typeof axios.create>;
+const contentServer = shallowRef<ReturnType<typeof axios.create> | null>(null);
+const contentServerStatus = shallowRef<string | null>(null);
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -16,28 +19,36 @@ const marpApi = axios.create({
     },
 })
 
-function registerContentServer(baseURL:string) {
-    contentServer = axios.create({
-        baseURL: baseURL,
-        headers: {
-            "Content-Type": "application/json",
-        },
-    })
+function registerContentServer() {
+    contentServer.value = axios.create({
+        baseURL: settings.value.cs_url,
+        headers: { "Content-Type": "application/json" },
+    });
+    getContentServerStatus()
 }
 
-function getContentServerStatus() {
-    if (!contentServer) {
-        return {status: 404, data: {message: "Content server not registered"}}
+async function getContentServerStatus() {
+    if (!contentServer.value) {
+        contentServerStatus.value = "not registered";
+        return { status: "not registered", message: "Content server is not registered." };
     } else {
-        // Test if content Server is reachable 
-        contentServer.get("/health/").then((response) => {
-            return response;
-        }).catch((error) => {
-            return {status: 500, data: {message: "Content server not reachable"}}
-        })
+        return contentServer.value.get("/health").then(response => {
+            contentServerStatus.value = "registered";
+            return { status: "registered", message: "Content server is registered.", data: response.data };
+        }).catch(error => {
+            contentServerStatus.value = "error";
+            return { status: "error", message: "Error occurred while fetching content server status." };
+        });
     }
 }
 
-export default api;
-export { api, marpApi, contentServer, registerContentServer, getContentServerStatus };
+const contentServerStatusClass = computed(() => {
+    switch (contentServerStatus.value) {
+        case "registered": return "success";
+        case "error": return "error";
+        default: return "warning";
+    }
+});
 
+export default api;
+export { api, marpApi, contentServer, registerContentServer, getContentServerStatus, contentServerStatus, contentServerStatusClass };
