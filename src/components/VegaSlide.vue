@@ -2,8 +2,9 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
-import { SlideSectionTypes, type Slide, type SlideSection } from '@/services/slide_service'
+import { type Slide, type SlideSection } from '@/services/slide_service'
 import { useToast } from 'primevue/usetoast'
+import { settings } from '@/utils/settings'
 
 const props = defineProps<{
   slide: Slide | null,
@@ -16,8 +17,7 @@ const container = ref(null)
 let view: any = null
 let renderToken = 0
 
-async function render() {
-
+async function renderContent(){
   if (!container.value) return
   const token = ++renderToken
 
@@ -39,15 +39,27 @@ async function render() {
   }
 }
 
+async function renderUrl(){
+  if (!container.value) return
+  const token = ++renderToken
+}
 
-onMounted(render)
+
+onMounted( async () => {
+  if (props.section.mode === 'content') {
+    await renderContent()
+  } else if (props.section.mode === 'url') {
+    await renderUrl()
+  }
+})
 // render the chart whenever the section content changes, 
 // but debounce to avoid excessive re-renders while typing
-watchDebounced(() => props.section.content, render, { debounce: 400 })
+watchDebounced(() => props.section.content, renderContent, { debounce: 400 })
 onBeforeUnmount(() => view?.finalize())
 </script>
 
 <template>
+  <div style="position: absolute; top: 0; left: 0; font-size: 60px"> {{ props.section.mode }}</div>
   <div ref="container" class="vega-container"></div>
 </template>
 

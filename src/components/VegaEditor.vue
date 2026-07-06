@@ -1,16 +1,13 @@
 <script lang="ts" setup>
 import SelectButton from 'primevue/selectbutton';
-import ToggleSwitch from 'primevue/toggleswitch';
 import '@/assets/main.css'
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { ref, onMounted, watch } from 'vue';
 import CodeEditor from '@/components/CodeEditor.vue';
-import { json } from "@codemirror/lang-json"
 import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast'
-import { saveSlide } from '@/services/slide_service';
-import { registerContentServer, getContentServerStatus } from '@/services/api.ts';
+import ContentServerStatus from '@/components/ContentServerStatus.vue'
+import Button from 'primevue/button';
 
 const toast = useToast()
 const props = defineProps<{
@@ -24,7 +21,6 @@ const emit = defineEmits<{
 }>()
 
 const vegaUrlSource = ref<string>("")
-const contentServerUrl = ref<string>("")
 
 interface ModeOption {
     label: string
@@ -90,13 +86,22 @@ watch(selectedMode, (newMode) => {
             </div>
         </div>
 
-        <div v-else-if="selectedMode.value === 'url'" class="label-container">
-            <label for="vega-url-input">Vega JSON URL</label>
-            <InputText v-model="vegaUrlSource" id="vega-url-input" placeholder="Enter url to fetch from"
-                style="width: 100%" @input="$emit('sectionUpdated', {...slideSection, content_path: vegaUrlSource})">
-            </InputText>
-        </div>
+        <ContentServerStatus v-if="selectedMode.value === 'url' || selectedMode.value === 'interactive'" />
 
+        <div v-if="selectedMode.value === 'url'" style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; width: 100%">
+            <div class="label-container">
+                <label for="vega-url-input">Vega JSON URL</label>
+                <InputText v-model="vegaUrlSource" id="vega-url-input" placeholder="Enter url to fetch from"
+                    style="width: 100%"
+                    @input="$emit('sectionUpdated', { ...slideSection, content_path: vegaUrlSource })">
+                </InputText>
+            </div>
+            <Button rounded>
+                <template #icon>
+                    <i class="material-symbols-outlined">reset_colors</i>
+                </template>
+            </Button>
+        </div>
     </div>
 </template>
 
