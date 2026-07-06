@@ -69,7 +69,7 @@ const gridStyle = computed(() => {
                         </h3>
                         <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                     </div>
-                    <Button icon="pi pi-times" small rounded @click="props.scene?.slides.splice(index, 1)" />
+                    <!-- <Button icon="pi pi-times" small rounded @click="props.scene?.slides.splice(index, 1)" /> -->
                 </div>
 
                 <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
