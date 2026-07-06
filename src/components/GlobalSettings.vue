@@ -11,6 +11,7 @@ import Button from 'primevue/button';
 
 import { settings } from '@/utils/settings'
 import { getSettings, updateSettings } from "@/services/settings_service";
+import ContentServerStatus from '@/components/ContentServerStatus.vue';
 
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
@@ -79,6 +80,7 @@ const testConnection = async () => {
 
     <form @submit.prevent="saveSettings" class="settings-form">
       <!-- CS URL -->
+       <ContentServerStatus />
       <div class="form-group">
         <label for="cs_url" class="form-label">{{ $t('moderator.settings.cs_url') }}</label>
         <div class="input-with-button">
