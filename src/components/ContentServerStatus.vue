@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 
-import { contentServerStatusClass, getContentServerStatus } from '@/services/api.ts';
+import { contentServerStatusClass, getContentServerStatus } from '@/services/cs_service.ts';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import { settings } from '@/utils/settings'
