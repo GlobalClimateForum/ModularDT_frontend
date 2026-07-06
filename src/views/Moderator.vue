@@ -12,7 +12,6 @@ import SceneBuilder from '@/components/SceneBuilder.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
-import PresentationManager from '@/components/PresentationManager.vue';
 
 import '@/assets/main.css'
 
