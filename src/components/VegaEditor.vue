@@ -12,12 +12,29 @@ import { settings } from '@/utils/settings';
 import TextArea from 'primevue/textarea';
 import ProgressBar from 'primevue/progressbar';
 import Inplace from 'primevue/inplace';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import ToggleSwitch from 'primevue/toggleswitch';
+import ToggleButton from 'primevue/togglebutton';
 
 const toast = useToast()
 const props = defineProps<{
     slide: Slide | null,
     slideSection: SlideSection,
 }>()
+
+interface Parameter {
+    type: 'string' | 'number' | 'boolean' | 'select'
+    options?: string[]
+    range?: { min: number; max: number; step?: number }  // for 'number'
+    default?: unknown
+}
+
+interface Parameters {
+    [key: string]: Parameter
+}
+
+const paramters = ref<Parameters>({})
 
 const emit = defineEmits<{
     (e: 'contentUpdated', content: string): void,
@@ -107,6 +124,37 @@ function onUrlInput() {
     urlError.value = message
 }
 
+function parametersFromUrl(url: string) {
+    // example url http://127.0.0.1:8002/diva_line_plot?y=expected_annual_damages&filter%5Bquantile%5D=0.95&filter%5Bmigration%5D=false&data=.%2Fdata%2Fdiva_runs_country.csv&x=time&filter%5Blocationid%5D=GBR&filter%5Bssp%5D=SSP2&filter%5Brcp%5D=370&filter%5Badaptation%5D=Optimal%20protection
+    const url_ = new URL(url, window.location.origin) // Use window.location.origin to handle relative URLs
+    const params = new URLSearchParams(url_.search)
+    Array.from(params.keys()).forEach(key => {
+        // Check if the keys matches the filter pattern (filter[<key>])
+        const isfilter = key.match(/^(\w+)\[(\w+)\]$/)
+        // If the key matches the filter pattern, use the inner key (<key>), otherwise the original key
+        const key_ = isfilter ? isfilter[2] : key
+
+        // Identify the type of the parameter based on its value
+        const value = params.get(key)
+        let type_: 'string' | 'number' | 'boolean' = 'string'
+        if (value?.toLowerCase() === 'true' || value?.toLowerCase() === 'false') {
+            type_ = 'boolean'
+        } else if (!isNaN(Number(value))) {
+            type_ = 'number'
+        }
+        // Filter out fixed paramters
+        if (isfilter) {
+            paramters.value[key_] = { type: type_, default: null }
+        }
+    })
+}
+
+function parametersArray() {
+    return Object.entries(paramters.value).map(([key, param]) => {
+        return { key, ...param }
+    })
+}
+
 watch(selectedMode, (newMode) => {
     props.slideSection.mode = newMode.value
     emit('sectionUpdated', props.slideSection)
@@ -173,14 +221,73 @@ watch(props.progress?.value, (newProgress) => {
             </Inplace>
         </div>
 
-
         <div v-if="selectedMode.value === 'url'" class="label-container"
             style="display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0;">
             <label for="json-preview">Preview</label>
             <TextArea class="vegaspec-preview" id="json-preview" disabled
                 v-model="props.slideSection.content"></TextArea>
-            <div v-if="props.progress !== null" class="progressIndicator">
+        </div>
+
+        <div v-if="selectedMode.value === 'interactive'" class="label-container"
+            style="display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0;">
+
+            <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; ">
+                <InputText v-model="vegaUrlSource" placeholder="Enter a URL pattern" fluid
+                    style="flex: 1; min-width: 0;">
+                </InputText>
+                <Button @click="parametersFromUrl(vegaUrlSource)">Get Parameters</Button>
             </div>
+
+            <!-- interface Parameter {
+            type: 'string' | 'number' | 'boolean' | 'select'
+            options?: string[]
+            range?: { min: number; max: number; step?: number } // for 'number'
+            default?: unknown
+            } -->
+            <div class="label-container">
+                <label>Parameters</label>
+                <div class="parameter-list">
+                    <DataTable :value="parametersArray()" responsiveLayout="scroll"
+                        :emptyMessage="'No parameters found. Enter a URL pattern and click Get Parameters.'">
+                        <Column field="key" header="Parameter" :sortable="true" :filter="true"
+                            filterPlaceholder="Search by name">
+                            <template #body="slotProps">
+                                <div>
+                                    <p class="parameter-item-name">{{ slotProps.data.key }}</p>
+                                </div>
+                            </template>
+                        </Column>
+                        <Column field="type" header="Type" filterPlaceholder="Search by type">
+                            <template #body="slotProps">
+                                <div>
+                                    <p class="parameter-item-type">{{ slotProps.data.type }}</p>
+                                </div>
+                            </template>
+                        </Column>
+                        <Column header="Options">
+                            <template #body="slotProps">
+                                <div v-if="slotProps.data.type == 'string'">
+                                    <ToggleButton onLabel="select" offLabel="text"></ToggleButton>
+                                </div>
+                            </template>
+                        </Column>
+                        <Column header="Default">
+                            <template #body="slotProps">
+                                <div v-if="slotProps.data.type == 'string'">
+                                    <InputText small></InputText>
+                                </div>
+                                <div v-if="slotProps.data.type == 'number'">
+                                    <InputText type="number" small></InputText>
+                                </div>
+                                <div v-if="slotProps.data.type == 'boolean'">
+                                    <ToggleSwitch small></ToggleSwitch>
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+                </div>
+            </div>
+
         </div>
 
 
@@ -188,6 +295,50 @@ watch(props.progress?.value, (newProgress) => {
 </template>
 
 <style scoped>
+.parameter-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+}
+
+.parameter-list .parameter-item-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.parameter-list .parameter-item {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.parameter-list .parameter-item-name {
+    font-weight: 800;
+    text-transform: lowercase;
+    font-size: var(--fs-medium);
+    margin: 0;
+    padding: 0;
+    color: var(--p-primary-500);
+    font-family: 'Fira Code', monospace;
+}
+
+.parameter-list .parameter-item-type {
+    margin: 0;
+    padding: 0;
+    font-family: 'Fira Code', monospace;
+    background-color: var(--p-gray-100);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: var(--fs-small);
+    width: fit-content;
+}
+
 .editor-toolbar {
     display: flex;
     align-items: flex-end;
