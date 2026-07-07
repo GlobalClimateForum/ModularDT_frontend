@@ -150,7 +150,7 @@ function handleSceneEdit(scene: Scene) {
         <PresentationControl v-if="currentDashboard === 'live'" />
       </Transition>
       <Transition name="fade" mode="out-in">
-        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" />
+        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" :inp_scene="currentScene"/>
       </Transition>
       <Transition name="fade" mode="out-in">
         <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleSlideEdit" />

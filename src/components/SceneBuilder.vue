@@ -21,20 +21,13 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 // Define Input Proerties
-//const props = defineProps<{ inp_scene?: Scene | null }>()
-//defineProps({
-  // Optional string: defaults to 'Guest' if not provided
-  //username: {
-    //type: String,
-    //required: false,
-    //default: 'Guest'
-  //},
-// Optional number: defaults to 0 if not provided
-  //age: {
-    //type: Number,
-    //required: false,
-    //default: 0
-  //})
+const props = defineProps({
+    inp_scene: {
+        type: Object as () => Scene | null,
+        required: false,
+        default: null
+    }
+})
 
 const slides = ref<Slide[]>([]);
 var scene = ref<(Slide | null)[]>([]);
@@ -51,7 +44,19 @@ onMounted(() => {
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
-    //scene = props.inp_scene?.slides.map(s => s) ?? Array(settings.value.number_of_screens).fill(null);
+
+    if (props.inp_scene && props.inp_scene.slides) {
+        const grid = Array(settings.value.number_of_screens).fill(null)
+
+        props.inp_scene?.slides.forEach(slide => {
+            if (slide && slide.position && slide.position <= settings.value.number_of_screens) {
+                grid[slide.position - 1] = slide
+            }
+        })
+        scene.value = grid;
+    } else {
+        scene.value = Array(settings.value.number_of_screens).fill(null);
+    }
 });
 
 watch(
@@ -68,6 +73,7 @@ watch(
     },
     { immediate: true }
 )
+'*'
 
 // Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
@@ -100,13 +106,13 @@ function onSaveScene() {
     }
 
     const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
-    .filter((s): s is (Slide & { position: number }) => s !== null);
+        .filter((s): s is (Slide & { position: number }) => s !== null);
 
     const scene_ = {
         name: scenename.value,
         description: "",
         tags: [],
-        slides: validSlidesWithPositions 
+        slides: validSlidesWithPositions
     };
 
     saveScene(scene_).then(_response => {
@@ -175,7 +181,8 @@ function emptyScreens() {
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
                         <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" />
-                        <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
+                        <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene"
+                            :disabled="scenename === ''" />
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
                     </div>
                 </template>
