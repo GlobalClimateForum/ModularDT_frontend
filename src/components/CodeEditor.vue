@@ -71,6 +71,14 @@ onBeforeUnmount(() => {
     editorView?.destroy()
 })
 
+watch(() => props.slideSection.content, (newContent) => {
+    if (editorView && newContent !== editorView.state.doc.toString()) {
+        editorView.dispatch({
+            changes: { from: 0, to: editorView.state.doc.length, insert: newContent }
+        })
+    }
+})
+
 </script>
 
 <template>
