@@ -37,4 +37,4 @@ const contentServerStatusClass = computed(() => {
 });
 
 
-export {contentServer, registerContentServer, getContentServerStatus, contentServerStatus, contentServerStatusClass}
+export { contentServer, registerContentServer, getContentServerStatus, contentServerStatus, contentServerStatusClass }
