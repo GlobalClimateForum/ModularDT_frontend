@@ -21,10 +21,23 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 // Define Input Proerties
-// const props = defineProps<{ scene?: Scene | null }>()
+//const props = defineProps<{ inp_scene?: Scene | null }>()
+//defineProps({
+  // Optional string: defaults to 'Guest' if not provided
+  //username: {
+    //type: String,
+    //required: false,
+    //default: 'Guest'
+  //},
+// Optional number: defaults to 0 if not provided
+  //age: {
+    //type: Number,
+    //required: false,
+    //default: 0
+  //})
 
 const slides = ref<Slide[]>([]);
-const scene = ref<(Slide | null)[]>([]);
+var scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
@@ -38,6 +51,7 @@ onMounted(() => {
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
+    //scene = props.inp_scene?.slides.map(s => s) ?? Array(settings.value.number_of_screens).fill(null);
 });
 
 watch(

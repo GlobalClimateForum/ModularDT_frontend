@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
-import { onMounted, onBeforeMount, watch } from 'vue'
+import { onMounted, onBeforeMount, watch, ref } from 'vue'
 import { settings } from '@/utils/settings'
 import { getSettings } from "@/services/settings_service";
 import { registerContentServer } from '@/services/cs_service.ts';
+import { useI18n } from 'vue-i18n' 
+
+const { locale } = useI18n()
+const isSettingsLoaded = ref(false)
 
 watch(() => settings.value.cs_url, (url) => {
   if (url) registerContentServer();
 }, { immediate: true });
+
+watch(() => settings.value.language, (newLanguage) => {
+  locale.value = newLanguage
+}, { immediate: true })
 
 onMounted(async () => {
   getSettings().then(response => {
@@ -23,17 +31,23 @@ onMounted(async () => {
 
   }).catch(error => {
     console.error("Error reading settings:", error)
+  }).finally(() => {
+    // allow the App to render now, independet if the settings were read successfully or not
+    isSettingsLoaded.value = true
   })
 })
 </script>
 
 <template>
   <Toast position="bottom-right" />
-  <RouterView />
+  <RouterView v-if="isSettingsLoaded" />
+  <div v-else class="loading-screen">
+    Load Settings...
+  </div>
 </template>
 
 <style scoped>
-.welcome {
+.loading-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,5 +55,6 @@ onMounted(async () => {
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
+  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
 }
 </style>

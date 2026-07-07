@@ -39,6 +39,10 @@
     "name": "Teilnehmer"
   },
   "monitor": {
+    "greeting": "Ich bin ein Monitor.",
+    "instance_id": "Meine Instanz-ID",
+    "waiting": "Ich warte auf den Start der Präsentation und lausche dafür auf einem Django-Channel.",
+    "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv.",
     "name": "Monitor"
   }
 }

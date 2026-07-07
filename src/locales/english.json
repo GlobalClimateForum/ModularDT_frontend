@@ -39,6 +39,10 @@
     "name": "Participant"
   },
   "monitor": {
+    "greeting": "I'm a Monitor.",
+    "instance_id": "My Instance ID",
+    "waiting": "I'm waiting for the presentation to start and listening for it on a Django channel.",
+    "invalid": "My instance ID is invalid. I'm staying inactive.",
     "name": "Monitor"
   }
 }

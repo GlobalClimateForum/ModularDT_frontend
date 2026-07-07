@@ -7,17 +7,16 @@ export interface Presentation {
     description: string;
     created_at?: string | null;
     updated_at?: string | null;
-    sscenes: (Scene & { position: number })[];
+    scenes: (Scene & { position: number })[];
 }
 
 export type PresentationPayload = Omit<Presentation, "id" | "created_at" | "updated_at">;
-
 
 export const getPresentations = () => api.get("/presentations/");
 export const savePresentation = (presentation: Omit<Presentation, "id" | "created_at" | "updated_at">) => {
     const payload = {
         ...presentation,
-        sscenes: presentation.sscenes.map(scene => ({
+        scenes: presentation.scenes.map(scene => ({
             id: scene.id,
             position: scene.position
         }))

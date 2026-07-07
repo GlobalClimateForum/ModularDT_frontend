@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
-import Column from 'primevue/column';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
 
@@ -10,13 +9,13 @@ import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 
 import { settings } from '@/utils/settings'
-import { getSettings, updateSettings } from "@/services/settings_service";
+import { updateSettings } from "@/services/settings_service";
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
 
-const { locale, availableLocales } = useI18n()
+const { availableLocales } = useI18n()
 const toast = useToast();
 
 const translatedLocales = computed(() => {
@@ -25,11 +24,6 @@ const translatedLocales = computed(() => {
     value: locale
   }));
 });
-
-//locale.value = settings.value.language
-watch(() => settings.value.language, (newLanguage) => {
-  locale.value = newLanguage
-}, { immediate: true })
 
 // save function - todo
 const saveSettings = () => {
