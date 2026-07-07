@@ -19,6 +19,7 @@ import type { SlideSection } from '@/services/slide_service'
 import CodeEditor from '@/components/CodeEditor.vue'
 import '@/assets/main.css'
 import Select from 'primevue/select';
+import { streamVegaSpec } from '@/utils/vega_utils'
 
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
@@ -38,12 +39,13 @@ const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each 
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
+const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
 const editorMapping: Record<string, any> = {
     markdown: CodeEditor,
-    map: defineAsyncComponent(() => import('@/components/MapEditor.vue')), 
+    map: defineAsyncComponent(() => import('@/components/MapEditor.vue')),
     vega: defineAsyncComponent(() => import('@/components/VegaEditor.vue'))
 };
 
@@ -126,7 +128,10 @@ function updateSectionContent(index: number, newContent: string) {
     currentSlide.value = { ...currentSlide.value }
 }
 
+// Handler to update the entire section (view_type, content, content_path, width_fraction) when the editor emits a sectionUpdated event
 function updateSection(index: number, updatedSection: SlideSection) {
+
+    const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
 
     const updatedSections = [...slideSections.value]
     updatedSections[index] = { ...updatedSections[index], ...updatedSection }
@@ -134,6 +139,38 @@ function updateSection(index: number, updatedSection: SlideSection) {
 
     // Refresh current slide to trigger re-render of SlideView with updated content
     currentSlide.value = { ...currentSlide.value }
+
+    if (pathChanged && (updatedSection.mode === 'url' || updatedSection.mode === 'interactive')) {
+        fetchVegaForSection(index)
+    }
+}
+
+// Helper to fetch Vega specifications
+async function fetchVegaForSection(index: number) {
+    const section = slideSections.value[index]
+    // Guard-clause to ensure we only fetch Vega specs for sections that are of type 'vega'
+    // and are in 'url' or 'interactive' mode with a defined content_path.
+    if (section.view_type !== 'vega' ||
+        (section.mode !== 'url' && section.mode !== 'interactive') || !section.content_path ||
+        section.content_path.trim() === ''
+    ) {
+        return
+    }
+    // Try to fetch the Vega specification from the server using SSE
+    try {
+        const spec = await streamVegaSpec(section.content_path, (progress) => {
+            vegaProgress.value = progress
+        })
+        // Write the fetched spec to the section's content and update the section
+        const updatedSections = [...slideSections.value]
+        updatedSections[index] = { ...updatedSections[index], content: spec }
+        slideSections.value = updatedSections
+        currentSlide.value = { ...currentSlide.value }
+        vegaProgress.value = null
+    } catch (error) {
+        console.log('Vega spec fetch failed for section', index, 'with error:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: `Failed to fetch Vega spec for section ${index + 1}`, life: 3000 })
+    }
 }
 
 // Watch for changes in the slide prop and update the currentSlide and slideSections accordingly
@@ -199,7 +236,6 @@ watch(selectedTypes, (newTypes) => {
                                                 <p style="margin: 0; font-size: var(--fs-small)">{{
                                                     slotProps.option.description }}</p>
                                             </div>
-
                                         </div>
                                     </div>
                                 </template>
@@ -217,10 +253,13 @@ watch(selectedTypes, (newTypes) => {
                     <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
                         style="height: 100%;">
 
-                    <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
-                    <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']" 
-                    :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
-                     @contentUpdated="updateSectionContent(index, $event)" @sectionUpdated="updateSection(index, $event)"></component>
+                        <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
+                        <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
+                            :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
+                            @contentUpdated="updateSectionContent(index, $event)"
+                            @sectionUpdated="updateSection(index, $event)"
+                            :progress="vegaProgress">
+                        </component>
                     </TabPanel>
                 </TabPanels>
             </Tabs>
@@ -246,7 +285,7 @@ watch(selectedTypes, (newTypes) => {
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame" />
+                    :showframe="showFrame"/>
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
