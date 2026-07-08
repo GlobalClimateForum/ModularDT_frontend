@@ -1,0 +1,240 @@
+<script setup lang="ts">
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputText from 'primevue/inputtext';
+import { useToast } from 'primevue/usetoast';
+import type { Presentation } from "@/services/presentation_service"
+import SplitterPanel from 'primevue/splitterpanel';
+import Splitter from 'primevue/splitter';
+import Button from 'primevue/button';
+//import PresentationView from '@/components/PresentationView.vue';
+import { formatDate } from '@/utils/date_utils';
+import { savePresentation } from '@/services/presentation_service'
+import { FilterMatchMode } from '@primevue/core/api'
+
+import { getPresentations, updatePresentation, deletePresentation } from "@/services/presentation_service";
+import { onMounted, ref } from 'vue';
+import '@/assets/main.css'
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+
+const presentations = ref<Presentation[]>([]);
+const selectedPresentation = ref<Presentation | null>(null);
+const presentationName = ref<string>("");
+const editingRows = ref<Presentation[]>([]);
+const toast = useToast();
+
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+})
+
+function fetchPresentations() {
+    getPresentations().then(response => {
+        presentations.value = response.data.presentations;
+        console.info('fetched presentations:', JSON.parse(JSON.stringify(presentations.value)))
+    }).catch(error => {
+        console.error("Error fetching presentations:", error);
+    });
+}
+
+onMounted(() => {
+    fetchPresentations();
+});
+
+function onRowEditSave(event: any) {
+    const { id, name } = event.newData
+    if (name === event.data.name) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
+    } else {
+        updatePresentation(id, { name: name }).then(response => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation updated successfully', life: 3000 });
+            presentations.value[event.index] = { ...response.data };
+        }).catch(error => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update presentation', life: 3000 });
+            console.error("Error updating presentation:", error)
+        })
+    }
+}
+
+/*
+const emit = defineEmits<{ 'edit-presentation': [presentation: Presentation] }>()
+
+function onEditPresentation(presentation: Presentation) {
+    console.info('Emitting edit-presentation event with presentation:', JSON.parse(JSON.stringify(presentation)));
+    emit('edit-presentation', { ...presentation });
+}
+*/
+
+function onDeletePresentation(presentation: Presentation) {
+    if (presentation.id) {
+        deletePresentation(presentation.id).then(() => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation deleted successfully', life: 3000 });
+            presentations.value = presentations.value.filter(s => s.id !== presentation.id);
+            if (selectedPresentation.value?.id === presentation.id) {
+                selectedPresentation.value = null;
+            }
+        }).catch(error => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete presentation', life: 3000 });
+            console.error("Error deleting presentation:", error);
+        })
+    }
+    else {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Presentation ID is missing', life: 3000 });
+        console.error("Error deleting presentation: no valid presentation.id");
+    }
+}
+
+function onDuplicatePresentation(presentation: Presentation) {
+    if (presentation.id) {
+
+        const new_presentation = {
+            name: `${presentation.name} (${t('moderator.copy')})`,
+            description: presentation.description,
+            slides: presentation.slides,
+            tags: presentation.tags
+        };
+
+        savePresentation(new_presentation).then(response => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation saved successfully', life: 3000 })
+            fetchPresentations();
+        }).catch(error => {
+            console.error("Error saving presentation:", error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save presentation', life: 3000 })
+            fetchPresentations();
+        });
+    } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Presentation ID is missing', life: 3000 });
+        console.error("Error deleting presentation: no valid presentation.id");
+    }
+}
+
+// Handle saving the scene to the backend
+function onAddPresentation() {
+
+    const presenation_ = {
+        name: presentationName.value || `${t('moderator.presentation.new_presentation')} ${presentations.value.length + 1}`,
+        description: "",
+        scenes: []
+    };
+
+    savePresentation(presenation_ ).then(_response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation created successfully', life: 3000 })
+    }).catch(error => {
+        console.error("Error saving presentation:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create presentation', life: 3000 })
+    });
+}
+</script>
+
+
+<template>
+    <Splitter class="dashboard" :gutterSize="2" stateKey="presentation-manager-splitter" stateStorage="local">
+
+        <SplitterPanel class="sub-panel" :size="30">
+            <div style="display: flex; gap: 0.5rem;">
+                <InputText class="name-input" v-model="presentationName" :placeholder="$t('moderator.presentation.new_presentation')"
+                    type="text" />
+                <Button class="button-add-presentation" :label="$t('moderator.presentation.create')" icon="pi pi-save"
+                    @click="onAddPresentation" />
+            </div>
+            <div>
+                <DataTable :value="presentations" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                    @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="presentation-table"
+                    v-model:editingRows="editingRows" v-model:selection="selectedPresentation" selectionMode="single"
+                    :globalFilterFields="['name']" v-model:filters="filters">
+
+                    <Column field="name" header="">
+                        <template #editor="slotProps">
+                            <InputText v-model="slotProps.data.name" />
+                        </template>
+                        <template #body="slotProps">
+                            <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                            <span style="font-size: 0.875rem; color: #64748b;">Updated
+                                {{ formatDate(slotProps.data.updated_at) }}</span>
+                        </template>
+                    </Column>
+
+                    <Column style="width: 9 em">
+                        <template #body="slotProps">
+                            <!-- <Button size="small" rounded text icon="pi pi-code" @click="onEditPresentation(slotProps.data)" /> -->
+                            <!--<Button size="small" rounded text icon="pi pi-plus-circle"
+                            @click="onDuplicatePresentation(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-pencil"
+                            @click="(e) => slotProps.editorInitCallback(e)" />
+                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeletePresentation(slotProps.data)" />-->
+                        </template>
+                        <template #editor="slotProps">
+                            <Button size="small" rounded text icon="pi pi-check"
+                                @click="(e) => slotProps.editorSaveCallback(e)" />
+                            <Button size="small" rounded text icon="pi pi-times"
+                                @click="(e) => slotProps.editorCancelCallback(e)" />
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
+        </SplitterPanel>
+
+        <SplitterPanel class="sub-panel">
+            <h2>Hi!</h2>
+        </SplitterPanel>
+    </Splitter>
+</template>
+
+<style scoped>
+.presentation-preview {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-height: 500px
+}
+
+
+.presentation-table {
+    flex: 1;
+    min-height: 0;
+    /* the critical line */
+}
+
+
+.marp-output {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    border-radius: var(--br-medium);
+    background: transparent;
+    border: 1px solid var(--surface-border, #e2e8f0);
+    background-color: var(--surface, #f8fafc);
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+.preview-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-color-secondary, #64748b);
+    flex-shrink: 0;
+}
+
+.name-input {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: var(--br-medium);
+    border: 1px solid var(--surface-border, #e2e8f0);
+    background-color: var(--p-primary-50, #f8fafc);
+}
+
+:deep(.p-datatable-thead) {
+    display: none;
+}
+
+:deep(.p-datatable-row-selected) {
+    background: var(--p-primary-50);
+    color: var(--p-primary-900);
+    box-shadow: inset 3px 0 0 var(--p-primary-400);
+    font-weight: 500;
+}
+</style>
