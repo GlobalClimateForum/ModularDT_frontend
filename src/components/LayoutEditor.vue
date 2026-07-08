@@ -6,18 +6,21 @@ import { ref, watch } from 'vue'
 
 const emit = defineEmits<{
     (e: 'sectionWidths', layout: number[]): void,
-    (e: 'showframe', show: boolean): void // emits a boolean value indicating whether to show the frame or not
+    (e: 'showframe', show: boolean): void,  // emits a boolean value indicating whether to show the frame or not
+    (e: 'autosize', autoSize: boolean): void // emits a boolean value indicating whether to auto size or not
 }>()
 
 const props = defineProps<{
     layout?: string,
     widths?: number[],
-    showFrame?: boolean
+    showFrame?: boolean,
+    autoSizeButton?: boolean
 }>()
 
 const currentLayout = ref<string>(props.layout || 'fullscreen');
 const currentWidths = ref<number[]>(props.widths || [0.5]);
 const showFrame = ref<boolean>(props.showFrame || false);
+const autoSize = ref<boolean>(props.autoSizeButton || false);
 
 interface Layout {
     id: string;
@@ -60,7 +63,7 @@ watch(() => props.layout, (newLayout) => {
 </script>
 
 <template>
-    <div >
+    <div>
         <Toolbar class="">
             <template #start>
                 <div class="label-container">
@@ -78,12 +81,26 @@ watch(() => props.layout, (newLayout) => {
                 </div>
             </template>
             <template #end>
-                <div class="label-container">
-                    <label for="showFrame">Show Frame</label>
-                    <Button small rounded  @click="showFrame = !showFrame; emit('showframe', showFrame)">
-                        <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
-                        <i v-else class="material-symbols-outlined">grid_on</i>
-                    </Button>
+                <div class="layout-btn-controls">
+                    <div class="label-container" center>
+                        <label for="showFrame">show frame</label>
+                        <Button small rounded @click="showFrame = !showFrame; emit('showframe', showFrame)">
+                            <template #icon>
+                                <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
+                                <i v-else class="material-symbols-outlined">grid_on</i>
+                            </template>
+                        </Button>
+                    </div>
+
+                    <div class="label-container" center v-if="props.autoSizeButton">
+                        <label>auto fit</label>
+                        <Button small rounded @click="autoSize = !autoSize; emit('autosize', autoSize)">
+                            <template #icon>
+                                <i v-if="autoSize" class="material-symbols-outlined">fit_screen</i>
+                                <i v-else class="material-symbols-outlined">photo_size_select_small</i>
+                            </template>
+                        </Button>
+                    </div>
                 </div>
             </template>
         </Toolbar>
@@ -95,6 +112,12 @@ watch(() => props.layout, (newLayout) => {
     display: flex;
     align-items: center;
     gap: 0.375rem;
+}
+
+.layout-btn-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
 }
 
 .disabled {

@@ -121,6 +121,10 @@ body,
   gap: 0.2rem;
 }
 
+.label-container[center] {
+  align-items: center;
+}
+
 label {
   font-size: var(--fs-small) !important;
   color: var(--p-primary-500) !important;

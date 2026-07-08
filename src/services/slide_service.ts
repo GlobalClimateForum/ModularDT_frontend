@@ -19,6 +19,18 @@ export interface SlideSection {
     content: string;
     content_path: string;
     mode?: string;
+    parameters?: Parameters;
+}
+
+export interface Parameter {
+    type: 'string' | 'number' | 'boolean' | 'select'
+    options?: string[]
+    range?: { min: number, max: number}
+    default?: unknown
+}
+
+export interface Parameters {
+    [key: string]: Parameter
 }
 
 export const SlideSectionTypes = [
@@ -59,4 +71,3 @@ export const renderSlide = (content: string, width: number, height: number) => m
 
 export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
 export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
-

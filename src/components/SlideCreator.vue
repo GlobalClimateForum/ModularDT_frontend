@@ -33,6 +33,7 @@ const props = defineProps<{ slide?: Slide | null }>()
 
 // Define references
 const currentSlide = ref<Slide>(props.slide ?? DEFAULT_SLIDE) // Init a new slide if no slide is passed as prop
+const currentSectionIndex = ref<number>(0) // Track the index of the currently selected section
 
 const slideSections = ref<SlideSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
@@ -59,7 +60,8 @@ function storeSlide() {
         view_type: section.view_type,
         content: section.content,
         content_path: section.content_path,
-        width_fraction: sectionWidths.value[index]
+        width_fraction: sectionWidths.value[index],
+        parameters: section.parameters ?? {}
     }));
 
     const slide = {
@@ -133,8 +135,11 @@ function updateSection(index: number, updatedSection: SlideSection) {
 
     const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
 
-    const updatedSections = [...slideSections.value]
+    // Create a shallow copy of the current sections
+    const updatedSections = [...slideSections.value] 
+    // Update the section at the specified index with the new data
     updatedSections[index] = { ...updatedSections[index], ...updatedSection }
+    // Update the reactive slideSections reference with the modified sections
     slideSections.value = updatedSections
 
     // Refresh current slide to trigger re-render of SlideView with updated content
@@ -211,7 +216,8 @@ watch(selectedTypes, (newTypes) => {
 
                 <!-- For every section in the slide, create a tab with an editor -->
                 <TabList class="tab-header">
-                    <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab">
+                    <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab"
+                    @click="currentSectionIndex = index">
                         <div class="tab-title">
                             <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
                                 <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
@@ -258,7 +264,8 @@ watch(selectedTypes, (newTypes) => {
                             :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)"
-                            :progress="vegaProgress">
+                            :progress="vegaProgress"
+                            :sectionIdx="index">
                         </component>
                     </TabPanel>
                 </TabPanels>
@@ -289,7 +296,9 @@ watch(selectedTypes, (newTypes) => {
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
-                    @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event" />
+                    @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
+                    :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
+                   />
 
             </div>
         </SplitterPanel>
