@@ -27,15 +27,18 @@
       "previous": "Previous"
     },
     "scene": "Scene",
+    "available_scenes": "Available Scenes",
     "available_slides": "Available Slides",
     "duplicate_slides": "Duplicate Slides",
     "empty_screens": "Empty Screens",
     "empty_screen": "Empty Screen",
     "enter_scene_name": "Enter scene name...",
+    "order": "Order",
     "clear": "Clear",
     "save": "Save",
     "copy": "Copy",
-    "search": "Search"
+    "search": "Search",
+    "order_instruction": "Drag the scenes here to specify order"
   },
   "participant": {
     "name": "Participant"

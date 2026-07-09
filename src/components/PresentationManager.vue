@@ -7,10 +7,9 @@ import type { Presentation } from "@/services/presentation_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-//import PresentationView from '@/components/PresentationView.vue';
+import PresentationEditing from '@/components/PresentationEditor.vue';
 import { formatDate } from '@/utils/date_utils';
 import { savePresentation } from '@/services/presentation_service'
-import { FilterMatchMode } from '@primevue/core/api'
 
 import { getPresentations, updatePresentation, deletePresentation } from "@/services/presentation_service";
 import { onMounted, ref } from 'vue';
@@ -25,10 +24,6 @@ const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
 const editingRows = ref<Presentation[]>([]);
 const toast = useToast();
-
-const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-})
 
 function fetchPresentations() {
     getPresentations().then(response => {
@@ -92,8 +87,7 @@ function onDuplicatePresentation(presentation: Presentation) {
         const new_presentation = {
             name: `${presentation.name} (${t('moderator.copy')})`,
             description: presentation.description,
-            slides: presentation.slides,
-            tags: presentation.tags
+            scenes: presentation.scenes
         };
 
         savePresentation(new_presentation).then(response => {
@@ -106,7 +100,7 @@ function onDuplicatePresentation(presentation: Presentation) {
         });
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Presentation ID is missing', life: 3000 });
-        console.error("Error deleting presentation: no valid presentation.id");
+        console.error("Error duplicating presentation: no valid presentation.id");
     }
 }
 
@@ -119,12 +113,17 @@ function onAddPresentation() {
         scenes: []
     };
 
-    savePresentation(presenation_ ).then(_response => {
+    savePresentation(presenation_).then(_response => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation created successfully', life: 3000 })
+        fetchPresentations();
     }).catch(error => {
         console.error("Error saving presentation:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create presentation', life: 3000 })
     });
+}
+
+function onPlayPresentation() {
+
 }
 </script>
 
@@ -132,18 +131,17 @@ function onAddPresentation() {
 <template>
     <Splitter class="dashboard" :gutterSize="2" stateKey="presentation-manager-splitter" stateStorage="local">
 
-        <SplitterPanel class="sub-panel" :size="30">
+        <SplitterPanel class="sub-panel" :size="40" :minSize="40" :maxSize="40">
             <div style="display: flex; gap: 0.5rem;">
-                <InputText class="name-input" v-model="presentationName" :placeholder="$t('moderator.presentation.new_presentation')"
-                    type="text" />
+                <InputText class="name-input" v-model="presentationName"
+                    :placeholder="$t('moderator.presentation.new_presentation')" type="text" />
                 <Button class="button-add-presentation" :label="$t('moderator.presentation.create')" icon="pi pi-save"
                     @click="onAddPresentation" />
             </div>
             <div>
                 <DataTable :value="presentations" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                     @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="presentation-table"
-                    v-model:editingRows="editingRows" v-model:selection="selectedPresentation" selectionMode="single"
-                    :globalFilterFields="['name']" v-model:filters="filters">
+                    v-model:editingRows="editingRows" v-model:selection="selectedPresentation" selectionMode="single">
 
                     <Column field="name" header="">
                         <template #editor="slotProps">
@@ -156,14 +154,19 @@ function onAddPresentation() {
                         </template>
                     </Column>
 
-                    <Column style="width: 9 em">
+                    <Column style="width: 12rem" bodyClass="flex justify-content-end white-space-nowrap"
+                        editorClass="flex justify-content-end white-space-nowrap">
                         <template #body="slotProps">
-                            <!-- <Button size="small" rounded text icon="pi pi-code" @click="onEditPresentation(slotProps.data)" /> -->
-                            <!--<Button size="small" rounded text icon="pi pi-plus-circle"
-                            @click="onDuplicatePresentation(slotProps.data)" />
-                        <Button size="small" rounded text icon="pi pi-pencil"
-                            @click="(e) => slotProps.editorInitCallback(e)" />
-                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeletePresentation(slotProps.data)" />-->
+                            <Button size="small" rounded text icon="pi pi-code"
+                                @click="onEditPresentation(slotProps.data)" />
+                            <Button size="small" rounded text icon="pi pi-clone"
+                                @click="onDuplicatePresentation(slotProps.data)" />
+                            <Button size="small" rounded text icon="pi pi-pencil"
+                                @click="(e) => slotProps.editorInitCallback(e)" />
+                            <Button size="small" rounded text icon="pi pi-trash"
+                                @click="onDeletePresentation(slotProps.data)" />
+                            <Button size="small" rounded text icon="pi pi-play-circle"
+                                @click="onPlayPresentation()" />
                         </template>
                         <template #editor="slotProps">
                             <Button size="small" rounded text icon="pi pi-check"
@@ -176,13 +179,20 @@ function onAddPresentation() {
             </div>
         </SplitterPanel>
 
-        <SplitterPanel class="sub-panel">
-            <h2>Hi!</h2>
+        <SplitterPanel class="sub-panel" :size="60" :minSize="60" :maxSize="60">
+            <div v-if="selectedPresentation">
+                <!-- <h2>Details für: {{ selectedPresentation.name }}</h2> -->
+                <PresentationEditing :presentation="selectedPresentation" />
+            </div>
+            <div v-else>
+                <h2>Keine Präsentation ausgewählt</h2>
+            </div>
         </SplitterPanel>
     </Splitter>
 </template>
 
 <style scoped>
+
 .presentation-preview {
     flex: 1;
     min-height: 0;

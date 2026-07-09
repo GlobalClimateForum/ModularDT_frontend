@@ -144,10 +144,10 @@ function onTagAdded(addedTag: string) {
                     </template>
                 </Column>
 
-                <Column style="width: 9 em">
+                <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap" editorClass="flex justify-content-end white-space-nowrap">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditScene(slotProps.data)" />
-                        <Button size="small" rounded text icon="pi pi-plus-circle"
+                        <Button size="small" rounded text icon="pi pi-clone"
                             @click="onDuplicateScene(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />

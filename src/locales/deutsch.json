@@ -27,15 +27,18 @@
       "previous": "Zurück"
     },
     "scene": "Szene",
+    "available_scenes": "Verfügbare Szenen",
     "available_slides": "Verfügbare Folien",
     "duplicate_slides": "Doppelte Folien",
     "empty_screens": "Leere Bildschirme",
     "empty_screen": "Leerer Bildschirm",
     "enter_scene_name": "Name für Szene eingeben...",
+    "order": "Reihenfolge",
     "clear": "Löschen",
     "save": "Speichern",
     "copy": "Kopie",
-    "search": "Suche"
+    "search": "Suche",
+    "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen"
   },
   "participant": {
     "name": "Teilnehmer"
