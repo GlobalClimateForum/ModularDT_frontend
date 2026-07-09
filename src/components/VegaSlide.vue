@@ -52,7 +52,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="container" class="vega-container"></div>
+  <div ref="container" class="vega-container" :style="{
+    border: props.showframe ? '3px solid var(--accent)' : 'none',
+  }"></div>
 </template>
 
 <style scoped>
@@ -61,5 +63,4 @@ onBeforeUnmount(() => {
   height: 100%;
   background-color: white;
 }
-
 </style>
