@@ -19,7 +19,8 @@ const toast = useToast()
 const props = defineProps<{
     slide: Slide | null,
     slideSection: SlideSection,
-    sectionIdx: number
+    sectionIdx: number,
+    autosize: boolean
 }>()
 
 const parameters = ref<Parameters>(props.slideSection.parameters ?? {})
@@ -82,6 +83,19 @@ function addAutoSize(content: string) {
     }
     emit('contentUpdated', JSON.stringify(withAutoSize, null, 2))
     toast.add({ severity: 'success', summary: 'Autosize added', detail: 'Autosize property added.', life: 3000 })
+}
+
+// Funciton to remove autosize properties from the Vega spec JSON.
+function removeAutoSize(content: string) {
+    let parsed
+    try { parsed = JSON.parse(content) }
+    catch {
+        toast.add({ severity: 'warn', summary: 'Invalid JSON', detail: 'Could not parse the Vega spec.', life: 4000 })
+        return
+    }
+    const { width, height, autosize, ...withoutAutoSize } = parsed
+    emit('contentUpdated', JSON.stringify(withoutAutoSize, null, 2))
+    toast.add({ severity: 'success', summary: 'Autosize removed', detail: 'Autosize property removed.', life: 3000 })
 }
 
 // Helper to sanitize a provided URL by removing whitespace, leading/trailing slashes, and the content server base URL if present.
@@ -326,6 +340,15 @@ watch(parameters, (newParameters) => {
     props.slideSection.parameters = newParameters
     emit('sectionUpdated', props.slideSection)
 }, { deep: true })
+
+watch(() => props.autosize, (newAutosize) => {
+    
+    if (newAutosize) {
+        addAutoSize(props.slideSection.content)
+    } else {
+        removeAutoSize(props.slideSection.content)
+    }
+})
 
 </script>
 <template>

@@ -41,6 +41,7 @@ const showFrame = ref<boolean>(false) // Track whether to show the frame around 
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
+const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -265,7 +266,8 @@ watch(selectedTypes, (newTypes) => {
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)"
                             :progress="vegaProgress"
-                            :sectionIdx="index">
+                            :sectionIdx="index"
+                            :autosize="autosizeVega">
                         </component>
                     </TabPanel>
                 </TabPanels>
@@ -298,6 +300,7 @@ watch(selectedTypes, (newTypes) => {
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                     @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                     :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
+                    @autosize="autosizeVega = $event"
                    />
 
             </div>
