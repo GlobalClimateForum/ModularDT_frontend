@@ -23,20 +23,27 @@ const props = defineProps<{
     autosize: boolean
 }>()
 
+// Reactive reference to the parameters of the slide section, initialized from props.
 const parameters = ref<Parameters>(props.slideSection.parameters ?? {})
 
+// Emit events to notify parent components of content and section updates.
 const emit = defineEmits<{
     (e: 'contentUpdated', content: string): void,
     (e: 'sectionUpdated', content: SlideSection): void
 }>()
 
+// Reactive references for the Vega URL source, and URL validation error message.
 const vegaUrlSource = ref<string>("")
-const autosize = ref<boolean>(false)
 const urlError = ref<string>("")
+
+// reactive references for the "default URL"
+const defaultUrl = ref<string>("")
+const initialUrl = ref<string>("")
 
 // Per-parameter draft text for the "add option" inputs, keyed by param key.
 const draftOption = ref<Record<string, string>>({})
 
+/// Type definition for the Vega editor mode options
 interface ModeOption {
     label: string
     value: 'static' | 'url' | 'interactive'
@@ -53,6 +60,12 @@ onMounted(() => {
     if (mode === 'interactive') {
         props.slideSection.parameters = props.slideSection.parameters || {}
     }
+
+    Object.values(parameters.value).forEach((param) => {
+        if (param.type === 'number' && !param.range) {
+            param.range = { min: null, max: null }
+        }
+    })
 })
 
 // Define the available mode options for the SelectButton component.
@@ -100,18 +113,25 @@ function removeAutoSize(content: string) {
 
 // Helper to sanitize a provided URL by removing whitespace, leading/trailing slashes, and the content server base URL if present.
 function sanitizeURL(url: string): string {
-    // Remove any leading/trailing whitespace
     let sanitized = url.trim()
-    // Remove any trailing slashes and leading slashes
-    sanitized = sanitized.replace(/\/+$/, '').replace(/^\/+/, '')
-    // Remove content server base URL if present
+
+    // Strip content-server base URL if present
     if (settings.value.cs_url) {
         const baseURL = settings.value.cs_url.replace(/\/+$/, '')
         if (sanitized.startsWith(baseURL)) {
             sanitized = sanitized.slice(baseURL.length)
         }
     }
-    return sanitized
+
+    // Split off the query
+    const qIndex = sanitized.indexOf('?')
+    let path = qIndex === -1 ? sanitized : sanitized.slice(0, qIndex)
+    const query = qIndex === -1 ? '' : sanitized.slice(qIndex)
+
+    // Collapse duplicate slashes , then trim leading/trailing
+    path = path.replace(/\/{2,}/g, '/').replace(/^\/+/, '').replace(/\/+$/, '')
+
+    return path + query
 }
 
 // Helper function to validate a provided URL, checking for whitespace, leading/trailing slashes, and the content server base URL.
@@ -141,6 +161,9 @@ function parametersFromUrl(url: string) {
     // Reset the parameters ref
     parameters.value = {}
 
+    // Backup the initial URL for reference
+    initialUrl.value = sanitizeURL(url)
+
     // Use window.location.origin to handle relative URLs
     const url_ = new URL(url, window.location.origin)
     // Get parameters from the URL
@@ -157,6 +180,7 @@ function parametersFromUrl(url: string) {
         // Identify the type of the parameter based on its value
         const value = params.get(key)
         let type_: 'string' | 'number' | 'boolean' = 'string'
+
         if (value?.toLowerCase() === 'true' || value?.toLowerCase() === 'false') {
             type_ = 'boolean'
         } else if (!isNaN(Number(value))) {
@@ -164,7 +188,11 @@ function parametersFromUrl(url: string) {
         }
         // Filter out fixed paramters
         if (isfilter) {
-            parameters.value[key_] = { type: type_, default: null }
+            if (type_ === 'number') {
+                parameters.value[key_] = { type: type_, default: value, range: { min: null, max: null } }
+            } else {
+                parameters.value[key_] = { type: type_, default: value }
+            }
         }
     })
 
@@ -201,13 +229,6 @@ function getURLPattern(url: string) {
         })
     })
     return pattern;
-}
-
-// Helper function to convert the parameters object into an array of parameter objects, each containing the key and its associated properties.
-function parametersArray() {
-    return Object.entries(parameters.value).map(([key, param]) => {
-        return { key, ...param }
-    })
 }
 
 // --- Select-Parameter - Options Handling -------------------------------------------------
@@ -256,17 +277,18 @@ function removeParamOption(paramKey: string, option: string) {
 }
 
 // Handler to set the default option for a select parameter when an option chip is clicked.
-function setParamDefault(paramKey: string, option: string) {
+function setParamDefault(paramKey: string, option: string | null) {
     const param = parameters.value[paramKey]
     if (param && param.type === 'select') {
         param.default = option
     }
 }
 
-// Handler to change a parameter's type between 'string' and 'select', preserving options and default values as appropriate.
-function setStrType(param: Parameter & { key: string }, newType: 'string' | 'select') {
+function setStrType(key: string, newType: 'string' | 'select') {
+    const param = parameters.value[key]
+    if (!param) return
     if (newType === 'select') {
-        parameters.value[param.key] = {
+        parameters.value[key] = {
             ...param,
             type: 'select',
             options: param.options ?? [],
@@ -276,57 +298,54 @@ function setStrType(param: Parameter & { key: string }, newType: 'string' | 'sel
                 : null,
         }
     } else {
-        parameters.value[param.key] = {
+        parameters.value[key] = {
             ...param,
             type: 'string',
         }
     }
 }
 
-function updateParamValue(param: Parameter & { key: string }, field: 'min' | 'max' | 'default', event: Event) {
+function updateParamValue(key: string, field: 'min' | 'max' | 'default', event: Event) {
 
-    console.log(urlWithDefaults())
-    
-    // If the parameter is a number
-    if (param.type === 'number') {
+    const target = parameters.value[key]
+    if (!target || target.type !== 'number') return
 
-        // Convert the input value to a number, or null if the input is empty
-        const numValue = (event.target as HTMLInputElement).value === '' ? null : Number((event.target as HTMLInputElement).value)
-        
-        // Update the parameter's field with the new number value, preserving other properties
-        // if (field == 'default'){
-        //     parameters.value[param.key].default = numValue
-        // } else if (field == 'min') {
-        //     parameters.value[param.key].range.minimum = numValue
-        // } else if (field == 'max') {
-        //     parameters.value[param.key].range.maximum = numValue
-        // }
-        
-        
-  
+    // Convert the input value to a number, or null if the input is empty
+    const raw = (event.target as HTMLInputElement).value
+    const numValue = raw === '' ? null : Number(raw)
+
+    if (field === 'default') {
+        target.default = numValue
+    } else {
+        // if target range is not defined, initialize it
+        if (!target.range) {
+            target.range = { min: null, max: null }
+        }
+        // and update the min or max value
+        target.range[field] = numValue
     }
 }
 
 // Function to build a URL with current default values
 function urlWithDefaults() {
+    const url = new URL(initialUrl.value, settings.value.cs_url)
 
-    const url_ = new URL(vegaUrlSource.value)
-    const params = new URLSearchParams(url_.search)
-
-    Object.entries(parameters.value).forEach(([key, param]) => {
-        if (param.default != null) {
-            const value = String(param.default)
-            if (param.type === 'boolean') {
-                params.set(key, value.toLowerCase())
-            } else if (param.type === 'number') {
-                params.set(key, value)
-            } else if (param.type === 'string' || param.type === 'select') {
-                params.set(key, value)
+    // Overwrite each filter param in place; non-filter params in the URL are left untouched.
+    if (parameters.value) {
+        Object.entries(parameters.value).forEach(([key, param]) => {
+            if (param.default != null) {
+                const value = String(param.default)
+                url.searchParams.set(
+                    `filter[${key}]`,
+                    param.type === 'boolean' ? value.toLowerCase() : value
+                )
             }
-        }
-    })
-    url_.search = params.toString()
-    return url_.toString()
+        })
+    }
+    defaultUrl.value = sanitizeURL(url.toString())
+    props.slideSection.content_path = defaultUrl.value
+    vegaUrlSource.value = defaultUrl.value
+    emit('sectionUpdated', props.slideSection)
 }
 
 // ---------------------------------------------------------------------------
@@ -342,7 +361,6 @@ watch(parameters, (newParameters) => {
 }, { deep: true })
 
 watch(() => props.autosize, (newAutosize) => {
-    
     if (newAutosize) {
         addAutoSize(props.slideSection.content)
     } else {
@@ -383,7 +401,7 @@ watch(() => props.autosize, (newAutosize) => {
                         <div style="width: 100%; display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
                             <InputText v-model="vegaUrlSource" id="vega-url-input" placeholder="Enter url to fetch from"
                                 @input="onUrlInput();" :invalid="!!urlError" style="flex: 1; min-width: 0;"></InputText>
-                            <Button small rounded :disabled="!!urlError || !vegaUrlSource"
+                                <Button small rounded :disabled="!!urlError || !vegaUrlSource"
                                 @click="$emit('sectionUpdated', { ...slideSection, content_path: sanitizeURL(vegaUrlSource) })">
                                 <template #icon>
                                     <i class="material-symbols-outlined">download</i>
@@ -413,7 +431,7 @@ watch(() => props.autosize, (newAutosize) => {
             <div
                 style="display: flex; flex-direction: row; gap: 0.5rem; align-items: flex-end; width: 100%; min-width: 0;">
 
-                <div class="label-container" style="width: 100%; min-width: 0;">
+                <div class="label-container" style="flex: 1 1 auto; min-width: 0;">
                     <label>URL Pattern</label>
                     <InputText v-model="vegaUrlSource" placeholder="Enter a URL pattern" fluid
                         style="flex: 1; min-width: 0;">
@@ -425,6 +443,11 @@ watch(() => props.autosize, (newAutosize) => {
                         <i class="material-symbols-outlined">functions</i>
                     </template>
                 </Button>
+                <Button :disabled="vegaUrlSource == null || vegaUrlSource === ''"  @click="urlWithDefaults()" rounded>
+                    <template #icon>
+                        <i class="material-symbols-outlined">download</i>
+                    </template>
+                </Button>
             </div>
 
             <!-- parameter list -->
@@ -432,23 +455,23 @@ watch(() => props.autosize, (newAutosize) => {
 
                 <label>Parameters</label>
 
-                <div v-if="parametersArray().length === 0" class="param-empty">
+                <div v-if="Object.keys(parameters).length === 0" class="param-empty">
                     No parameters found. Enter a URL pattern and click Get Parameters.
                 </div>
 
                 <div v-else class="param-cards inset-control">
-                    <div v-for="param in parametersArray()" :key="param.key" class="param-card">
+                    <div v-for="(param, key) in parameters" :key="key" class="param-card">
 
                         <!-- Header: name + type chip, plus text/select toggle for strings -->
                         <div class="param-card-header">
                             <div class="param-id">
-                                <span class="parameter-item-name">{{ param.key }}</span>
+                                <span class="parameter-item-name">{{ key }}</span>
                                 <span class="parameter-item-type">{{ param.type }}</span>
                             </div>
 
                             <SelectButton v-if="param.type === 'string' || param.type === 'select'"
                                 :modelValue="param.type === 'select' ? 'select' : 'text'"
-                                @update:modelValue="(val: string) => setStrType(param, val as 'string' | 'select')"
+                                @update:modelValue="(val: string) => setStrType(String(key), val as 'string' | 'select')"
                                 :options="['text', 'select']" :allowEmpty="false" size="small" class="kind-toggle" />
                         </div>
 
@@ -459,22 +482,30 @@ watch(() => props.autosize, (newAutosize) => {
                             <div v-if="param.type === 'number'" class="param-grid-3">
                                 <div class="field">
                                     <label>Min</label>
-                                    <InputText @input="updateParamValue(param, 'min', $event)" type="number" placeholder="min" class="cell-input" />
+                                    <InputText :value="param.range?.min ?? ''"
+                                        @input="updateParamValue(String(key), 'min', $event)" type="number"
+                                        placeholder="min" class="cell-input" />
                                 </div>
                                 <div class="field">
                                     <label>Max</label>
-                                    <InputText @input="updateParamValue(param, 'max', $event)" type="number" placeholder="max" class="cell-input" />
+                                    <InputText :value="param.range?.max ?? ''"
+                                        @input="updateParamValue(String(key), 'max', $event)" type="number"
+                                        placeholder="max" class="cell-input" />
                                 </div>
                                 <div class="field">
                                     <label>Default</label>
-                                    <InputText @input="updateParamValue(param, 'default', $event)" type="number" placeholder="0" class="cell-input" />
+                                    <InputText :value="param.default ?? ''"
+                                        @input="updateParamValue(String(key), 'default', $event)" type="number"
+                                        placeholder="0" class="cell-input" />
                                 </div>
                             </div>
 
                             <!-- string: default value -->
                             <div v-else-if="param.type === 'string'" class="field">
                                 <label>Default</label>
-                                <InputText placeholder="default value" class="cell-input" />
+                                <InputText :value="param.default ?? ''"
+                                    @input="(e: Event) => param.default = (e.target as HTMLInputElement).value"
+                                    placeholder="default value" class="cell-input" />
                             </div>
 
                             <!-- select: option chips + add input -->
@@ -485,31 +516,23 @@ watch(() => props.autosize, (newAutosize) => {
                                 </label>
 
                                 <div v-if="param.options && param.options.length" class="option-list">
-                                    <Chip
-                                        v-for="option in param.options"
-                                        :key="option"
-                                        :label="option"
-                                        removable
+                                    <Chip v-for="option in param.options" :key="option" :label="option" removable
                                         class="option-chip"
                                         :class="{ 'option-chip--default': param.default === option }"
-                                        @click="setParamDefault(param.key, option)"
-                                        @remove="removeParamOption(param.key, option)"
-                                    />
+                                        @click="setParamDefault(String(key), option)"
+                                        @remove="removeParamOption(String(key), option)" />
                                 </div>
                                 <div v-else class="option-empty">No options yet.</div>
 
-                                <InputText
-                                    v-model="draftOption[param.key]"
-                                    placeholder="Add option…"
-                                    class="cell-input"
-                                    @keyup.enter="onAddOption(param.key)"
-                                />
+                                <InputText v-model="draftOption[key]" placeholder="Add option…" class="cell-input"
+                                    @keyup.enter="onAddOption(String(key))" />
                             </div>
 
                             <!-- boolean: default toggle -->
                             <div v-else-if="param.type === 'boolean'" class="field">
                                 <label>Default</label>
-                                <ToggleSwitch v-model="param.default" />
+                                <ToggleSwitch :modelValue="!!param.default"
+                                    @update:modelValue="(val: boolean) => param.default = val" />
                             </div>
                         </div>
                     </div>

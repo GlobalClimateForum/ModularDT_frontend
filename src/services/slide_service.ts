@@ -25,7 +25,7 @@ export interface SlideSection {
 export interface Parameter {
     type: 'string' | 'number' | 'boolean' | 'select'
     options?: string[]
-    range?: { min: number, max: number}
+    range?: { min: number | null, max: number | null }
     default?: unknown
 }
 
