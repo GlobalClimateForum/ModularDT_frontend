@@ -12,6 +12,7 @@ import SceneBuilder from '@/components/SceneBuilder.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
+import PresentationManager from '@/components/PresentationManager.vue';
 
 import '@/assets/main.css'
 
@@ -143,9 +144,9 @@ function handleSceneEdit(scene: Scene) {
 
     </SplitterPanel>
     <SplitterPanel :size="85">
-      <!--nsition name="fade" mode="out-in">
+      <Transition name="fade" mode="out-in">
         <PresentationManager v-if="currentDashboard === 'presentations'" />
-      </Transition>-->
+      </Transition>
       <Transition name="fade" mode="out-in">
         <PresentationControl v-if="currentDashboard === 'live'" />
       </Transition>

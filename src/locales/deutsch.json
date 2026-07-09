@@ -21,6 +21,8 @@
       "background_image": "Hintergrundbild"
     },
     "presentation": {
+      "new_presentation": "Neue Präsentation",
+      "create": "Erstellen",
       "next": "Vor",
       "previous": "Zurück"
     },
