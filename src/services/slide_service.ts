@@ -9,6 +9,7 @@ export interface Slide {
     width: number;
     height: number;
     sections?: SlideSection[];
+    mode?: string;
 }
 
 export interface SlideSection {
@@ -52,8 +53,9 @@ export type SlidePayload = Omit<Slide, "id" | "created_at" | "updated_at">;
 
 export const getSlides = () => api.get("/slides/");
 
-export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
+export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) => 
     api.post("/slides/", { ...slide, sections });
+
 
 export const updateSlide = (id: number, slide: Partial<SlidePayload>) =>
     api.patch(`/slides/${id}/`, slide);

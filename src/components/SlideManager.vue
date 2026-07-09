@@ -3,7 +3,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
-import type { Slide } from "@/services/slide_service"
+import type { Slide, SlideSection } from "@/services/slide_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
@@ -12,6 +12,7 @@ import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import { saveSlide } from '@/services/slide_service'
+import Tag from 'primevue/tag';
 
 import { getSlides, updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
 
@@ -33,9 +34,19 @@ const filters = ref({
 function fetchSlides() {
     getSlides().then(response => {
         slides.value = response.data;
+        response.data.forEach((slide: Slide) => {
+            if (slide.sections && slide.sections.length > 0) {
+                slide.mode = getSlideMode(slide.sections);
+            }
+        });
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
+}
+
+function getSlideMode(sections: SlideSection[]): string {
+     
+    return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
 
 onMounted(() => {
@@ -145,6 +156,11 @@ function onTagAdded(addedTag: string) {
                         <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
                         <span style="font-size: 0.875rem; color: #64748b;">Updated
                             {{ formatDate(slotProps.data.updated_at) }}</span>
+                        <div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
+                            <Tag :severity="slotProps.data.mode === 'interactive' ? 'success' : 'info'">
+                                {{ slotProps.data.mode }}
+                            </Tag>
+                        </div>
                     </template>
                 </Column>
 
@@ -167,7 +183,8 @@ function onTagAdded(addedTag: string) {
 
 
                 <template #header>
-                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')" type="text" />
+                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
+                        type="text" />
                     <Button class="button-reset-search" @click="filters.global.value = null" rounded
                         :disabled="!filters.global.value">
                         <i class="pi pi-times"></i>
@@ -180,8 +197,8 @@ function onTagAdded(addedTag: string) {
         <SplitterPanel class="sub-panel">
             <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
                 :sections="selectedSlide.sections ? selectedSlide.sections : []" class="slide-preview" />
-            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" :onRemoveTagApi="removeTagFromSlide"
-                @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
+            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide"
+                :onRemoveTagApi="removeTagFromSlide" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
         </SplitterPanel>
     </Splitter>
 </template>

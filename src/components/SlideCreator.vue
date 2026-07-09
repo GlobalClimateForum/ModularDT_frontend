@@ -62,7 +62,8 @@ function storeSlide() {
         content: section.content,
         content_path: section.content_path,
         width_fraction: sectionWidths.value[index],
-        parameters: section.parameters ?? {}
+        parameters: section.parameters ?? {},
+        mode: section.mode ?? 'static'
     }));
 
     const slide = {
