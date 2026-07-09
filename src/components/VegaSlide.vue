@@ -4,11 +4,21 @@ import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
 
+interface Layout {
+  width: number,
+  height: number,
+  top: number,
+  left: number,
+  scale: number,
+  bg: string
+}
+
 const props = defineProps<{
   slide: Slide | null,
   section: SlideSection,
   showframe?: boolean
-  progress: number | null
+  progress: number | null,
+  layout?: Layout
 }>()
 
 const container = ref<HTMLElement | null>(null)
@@ -52,15 +62,26 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="container" class="vega-container" :style="{
+  <div class="vega-layout" style="width: 100%; height: 100%;" :style="{
     border: props.showframe ? '3px solid var(--accent)' : 'none',
-  }"></div>
+    backgroundColor: props.layout?.bg || 'transparent',
+  }">
+    <div ref="container" class="vega-container" :style="{
+ 
+    }"></div>
+  </div>
 </template>
 
 <style scoped>
+.vega-layout {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+
 .vega-container {
   width: 100%;
   height: 100%;
-  background-color: white;
 }
 </style>
