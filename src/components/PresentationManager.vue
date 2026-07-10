@@ -194,10 +194,9 @@ function onPlayPresentation() {
         <SplitterPanel class="sub-panel" :size="60" :minSize="60" :maxSize="60">
             <div v-if="selectedPresentation">
                 <!-- <h2>Details für: {{ selectedPresentation.name }}</h2> -->
-                <PresentationEditing :presentation="selectedPresentation" />
+                <PresentationEditing :presentation="selectedPresentation" :scenes="scenes"/>
             </div>
             <div v-else>
-                <h2>Keine Präsentation ausgewählt</h2>
             </div>
         </SplitterPanel>
     </Splitter>
