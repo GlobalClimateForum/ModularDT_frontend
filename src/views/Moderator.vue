@@ -23,6 +23,8 @@ import type { Slide } from "@/services/slide_service"
 import type { Scene } from "@/services/scene_service"
 import { Transition } from "vue";
 import { useI18n } from 'vue-i18n';
+import ContentServerStatus from '@/components/ContentServerStatus.vue';
+import BackendServerStatus from '@/components/BackendServerStatus.vue';
 
 const { t } = useI18n();
 
@@ -41,12 +43,12 @@ const items = computed(() => [
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'presentations'; }
       },
-/*      {
-        key: 'presentationcreate',
-        label: t('moderator.nav.editor'),
-        materialIcon: 'code',
-        command: () => { currentDashboard.value = 'presentationcreate'; }
-      },*/
+      /*      {
+              key: 'presentationcreate',
+              label: t('moderator.nav.editor'),
+              materialIcon: 'code',
+              command: () => { currentDashboard.value = 'presentationcreate'; }
+            },*/
       {
         key: 'live',
         label: "Live",
@@ -76,7 +78,7 @@ const items = computed(() => [
     label: t('moderator.nav.slides'),
     items: [
       {
-        key: t('moderator.nav.slides'),
+        key: 'slides',
         label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'slides'; }
@@ -106,6 +108,7 @@ onMounted(() => {
   getGroups()
     .then(response => { groups.value = response.data.groups; })
     .catch(error => { console.error("Error fetching groups:", error); });
+  currentDashboard.value = 'slides';
 });
 
 function handleSlideEdit(slide: Slide) {
@@ -121,19 +124,23 @@ function handleSceneEdit(scene: Scene) {
 </script>
 
 <template>
-  <Splitter class="main-panel" :gutterSize="2">
+  <Splitter class="main-panel" :gutterSize="0">
 
     <SplitterPanel :size="15" :minSize="15" class="menu-panel">
 
-      <Menu :model="items">
+      <div class="menu-header panel">
+        <div class="content-title">{{ $t('moderator.nav.dashboard') }}</div>
+        <Button @click="router.push('/')" text style="color: white;">
+          <template #icon>
+            <span class="material-symbols-outlined">home</span>
+          </template>
+        </Button>
+      </div>
 
-        <template #start>
-          <div class="menu-header">
-            <div class="content-title">{{ $t('moderator.nav.dashboard') }}</div>
-            <Button icon="pi pi-home" @click="router.push('/')" />
-          </div>
+      <Menu :model="items" class="panel">
+        <template #submenulabel="{ item }">
+          <h2>{{ item.label }}</h2>
         </template>
-
         <template #item="{ item, props }">
           <a :class="{ 'p-menu-item-link': true, 'active-item': currentDashboard === item.key }" v-bind="props.action">
             <span class="material-symbols-outlined">{{ item.materialIcon }}</span>
@@ -142,8 +149,27 @@ function handleSceneEdit(scene: Scene) {
         </template>
       </Menu>
 
+      <div class="status-panel panel">
+        <ul>
+          <li class="label-container">
+            <label>Content Server</label>
+            <ContentServerStatus :size="'small'" />
+          </li>
+          <li class="label-container">
+            <label>Backend Server</label>
+            <BackendServerStatus :size="'small'" />
+          </li>
+        </ul>
+        <ul>
+          <li class="label-container">
+            <label>Presentation</label>
+            live
+          </li>
+        </ul>
+      </div>
+
     </SplitterPanel>
-    <SplitterPanel :size="85">
+    <SplitterPanel :size="85" class="panel">
       <Transition name="fade" mode="out-in">
         <PresentationManager v-if="currentDashboard === 'presentations'" />
       </Transition>
@@ -151,7 +177,7 @@ function handleSceneEdit(scene: Scene) {
         <PresentationControl v-if="currentDashboard === 'live'" />
       </Transition>
       <Transition name="fade" mode="out-in">
-        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" :inp_scene="currentScene"/>
+        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" :inp_scene="currentScene" />
       </Transition>
       <Transition name="fade" mode="out-in">
         <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleSlideEdit" />
@@ -192,21 +218,18 @@ function handleSceneEdit(scene: Scene) {
   flex: 1 1 auto;
   min-height: 0;
   border: none;
-  border-radius: 0;
-  padding: 1.5rem;
-  gap: 1rem;
+  padding: var(--space-large);
+  gap: var(--space-medium);
   height: 100vh;
   min-height: 100vh;
-
-  background-image:
-    linear-gradient(135deg, #eaeff6 0%, #d6dde8 100%);
+  background-color: var(--surface-dark);
 }
 
 :deep(.p-menu-item-link) {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-small);
 }
 
 :deep(.p-menu-item[data-p-focused="true"] .p-menu-item-content) {
@@ -215,8 +238,10 @@ function handleSceneEdit(scene: Scene) {
 }
 
 :deep(.p-menu) {
-  padding: 0.5rem;
+  padding: var(--space-small);
   border: none;
+  border-radius: var(--br-large);
+  background-color: var(--surface);
 }
 
 .active-item {
@@ -225,17 +250,33 @@ function handleSceneEdit(scene: Scene) {
 }
 
 .menu-header {
-  padding: 1rem;
+  padding: var(--space-medium);
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--surface);
+  background-color: var(--p-primary-500);
+  color: white;
+  font-size: var(--fs-xlarge);
 }
 
 .menu-panel {
-  border: 1px solid var(--surface-border, #e2e8f0);
-  background-color: var(--surface-card, #fff);
-  border-radius: var(--br-medium);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-large);
+}
+
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-small);
+  background-color: var(--surface);
+  padding: var(--space-medium);
+}
+
+.status-panel ul {
+  list-style: none;
+  margin: 0;
+  padding-left: var(--space-medium);
 }
 </style>
