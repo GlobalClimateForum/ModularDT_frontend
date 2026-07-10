@@ -11,6 +11,17 @@ import type { Scene } from "@/services/scene_service";
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
+const props = withDefaults(defineProps<{
+    scene: Scene | null,
+    preview: boolean,
+    showframe?: boolean,
+    shadow?: boolean
+}>(), {
+    scene: null,
+    showframe: false,
+    shadow: true
+});
+
 interface OrderedScenes extends Scene {
   uniqueId: string; // Wichtig für SQLite/Django, falls ein Element mehrfach vorkommt
   position: number;

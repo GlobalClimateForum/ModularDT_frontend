@@ -3,23 +3,25 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
-import type { Presentation } from "@/services/presentation_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
 import PresentationEditing from '@/components/PresentationEditor.vue';
 import { formatDate } from '@/utils/date_utils';
-import { savePresentation } from '@/services/presentation_service'
 
-import { getPresentations, updatePresentation, deletePresentation } from "@/services/presentation_service";
+import { getPresentations, updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
+import type { Presentation } from "@/services/presentation_service"
+import { getScenes } from "@/services/scene_service";
+import type { Scene } from "@/services/scene_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
+//import type { Scene } from 'vega';
 
 const { t } = useI18n();
 
-
 const presentations = ref<Presentation[]>([]);
+const scenes = ref<Scene[]>([]);
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
 const editingRows = ref<Presentation[]>([]);
@@ -34,8 +36,18 @@ function fetchPresentations() {
     });
 }
 
+function fetchScenes() {
+    getScenes().then(response => {
+        scenes.value = response.data.scenes;
+        //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
+    }).catch(error => {
+        console.error("Error fetching scenes:", error);
+    });
+}
+
 onMounted(() => {
     fetchPresentations();
+    fetchScenes();
 });
 
 function onRowEditSave(event: any) {
