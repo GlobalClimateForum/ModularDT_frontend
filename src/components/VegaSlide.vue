@@ -14,7 +14,7 @@ interface Layout {
 }
 
 const props = defineProps<{
-  slide: Slide | null,
+  slide: Slide,
   section: SlideSection,
   showframe?: boolean
   progress: number | null,
@@ -62,8 +62,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="vega-layout" style="width: 100%; height: 100%;" :style="{
+  <div class="vega-layout" :style="{
     border: props.showframe ? '3px solid var(--accent)' : 'none',
+    width: slide.width * section.width_fraction + 'px',
+    height: slide?.height + 'px',
     backgroundColor: props.layout?.bg || 'transparent',
   }">
     <div ref="container" class="vega-container" :style="{
@@ -74,8 +76,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .vega-layout {
-  width: 100%;
-  height: 100%;
   display: flex;
 }
 
