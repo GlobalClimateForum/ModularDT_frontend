@@ -2,6 +2,7 @@
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { defineAsyncComponent } from 'vue'
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { basemaps } from '@/utils/map_utils';
 
 // -- Inputs -- 
 // Props definition with default values for optional props
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<{
     preview: boolean,
     showframe?: boolean,
     shadow?: boolean
+    basemap?: keyof typeof basemaps
 }>(), {
     sections: () => [],
 })
@@ -31,7 +33,7 @@ watch(
 // Mapping of view types to their corresponding components for dynamic rendering - TODO: Get from Backend (db)
 const componentsMap: Record<string, any> = {
     markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue')),
-    map: defineAsyncComponent(() => import('@/components/MapSlide.vue')), 
+    map: defineAsyncComponent(() => import('@/components/MapSlide.vue')),
     vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue'))
 };
 
@@ -92,9 +94,11 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
             }">
 
                 <!-- dynamic component rendering slide sections based on their view_type -->
-                <component v-for="(section, index) in sectionContents" :key="`${sectionRenderKey}-${index}`"
+                <component v-for="(section, index) in sectionContents"
+                    :key="section.view_type === 'map' ? `map-${index}` : `${sectionRenderKey}-${index}`""
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
-                    :sectionWidth="sectionWidths[index]" :showframe="props.showframe" :shadow="props.shadow" />
+                    :sectionWidth="sectionWidths[index]" :showframe="props.showframe" :shadow="props.shadow"
+                    :basemap="props.basemap" />
             </div>
         </div>
 

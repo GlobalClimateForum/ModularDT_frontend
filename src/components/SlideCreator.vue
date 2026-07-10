@@ -20,7 +20,7 @@ import CodeEditor from '@/components/CodeEditor.vue'
 import '@/assets/main.css'
 import Select from 'primevue/select';
 import { streamVegaSpec } from '@/utils/vega_utils'
-
+import { basemaps } from '@/utils/map_utils'
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
 const DEFAULT_CONTENT = ''
@@ -42,13 +42,15 @@ const layout = ref<string>('fullscreen') // Track the current selected layout fo
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
+const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
 const editorMapping: Record<string, any> = {
     markdown: CodeEditor,
     map: defineAsyncComponent(() => import('@/components/MapEditor.vue')),
-    vega: defineAsyncComponent(() => import('@/components/VegaEditor.vue'))
+    vega: defineAsyncComponent(() => import('@/components/VegaEditor.vue')),
+    ipanel: defineAsyncComponent(() => import('@/components/InteractivePanelEditor.vue')),
 };
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
@@ -266,6 +268,7 @@ watch(selectedTypes, (newTypes) => {
                             :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)"
+                            @basemapUpdated="basemap = $event"
                             :progress="vegaProgress"
                             :sectionIdx="index"
                             :autosize="autosizeVega">
@@ -295,7 +298,9 @@ watch(selectedTypes, (newTypes) => {
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame"/>
+                    :showframe="showFrame"
+                    :basemap="basemap"
+                    />
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
