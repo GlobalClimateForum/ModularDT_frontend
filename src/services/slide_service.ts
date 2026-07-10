@@ -19,8 +19,9 @@ export interface SlideSection {
     width_fraction: number;
     content: string;
     content_path: string;
-    mode?: string;
+    mode?:  'static' | 'url' | 'interactive';
     parameters?: Parameters;
+    url_pattern?:string;
 }
 
 export interface Parameter {
