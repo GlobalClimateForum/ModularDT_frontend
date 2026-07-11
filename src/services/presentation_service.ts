@@ -13,6 +13,8 @@ export interface Presentation {
 export type PresentationPayload = Omit<Presentation, "id" | "created_at" | "updated_at">;
 
 export const getPresentations = () => api.get("/presentations/");
+export const getPresentation = (id: number) => api.get(`/presentations/${id}/`);
+
 export const savePresentation = (presentation: Omit<Presentation, "id" | "created_at" | "updated_at">) => {
     const payload = {
         ...presentation,

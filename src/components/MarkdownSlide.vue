@@ -56,7 +56,7 @@ watch(
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
         border: props.showframe ? '3px solid var(--accent)' : 'none',
-        boxShadow: props.shadow ? '-2px 5px 32px -1px rgba(0,0,0,0.48);' : 'none',
+        boxShadow: props.shadow ? '-2px 5px 32px -1px rgba(0,0,0,0.48)' : 'none',
 
     }">
         <Transition name="spinner">

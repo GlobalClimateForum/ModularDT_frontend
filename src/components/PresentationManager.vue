@@ -11,6 +11,7 @@ import { formatDate } from '@/utils/date_utils';
 
 import { getPresentations, updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
+import { updateLivePresentation } from "@/services/live_presentation_service";
 import { getScenes } from "@/services/scene_service";
 import type { Scene } from "@/services/scene_service";
 import { onMounted, ref } from 'vue';
@@ -134,8 +135,20 @@ function onAddPresentation() {
     });
 }
 
-function onPlayPresentation() {
+async function onPlayPresentation(presentation: Presentation) {
+    try {
+        // Wir senden die ID der Präsentation und setzen die Anzeige auf aktiv
+        const response = await updateLivePresentation({
+            presentation: presentation.id,
+            active: true,
+            current_scene: 0
+        });
+        
+        console.log("Live Presentation startet:", response.data);
 
+    } catch (error) {
+        console.error("Error starting presentation:", error);
+    }
 }
 </script>
 
@@ -169,8 +182,6 @@ function onPlayPresentation() {
                     <Column style="width: 12rem" bodyClass="flex justify-content-end white-space-nowrap"
                         editorClass="flex justify-content-end white-space-nowrap">
                         <template #body="slotProps">
-                            <Button size="small" rounded text icon="pi pi-code"
-                                @click="onEditPresentation(slotProps.data)" />
                             <Button size="small" rounded text icon="pi pi-clone"
                                 @click="onDuplicatePresentation(slotProps.data)" />
                             <Button size="small" rounded text icon="pi pi-pencil"
@@ -178,7 +189,7 @@ function onPlayPresentation() {
                             <Button size="small" rounded text icon="pi pi-trash"
                                 @click="onDeletePresentation(slotProps.data)" />
                             <Button size="small" rounded text icon="pi pi-play-circle"
-                                @click="onPlayPresentation()" />
+                                @click="onPlayPresentation(slotProps.data)" />
                         </template>
                         <template #editor="slotProps">
                             <Button size="small" rounded text icon="pi pi-check"
@@ -194,7 +205,7 @@ function onPlayPresentation() {
         <SplitterPanel class="sub-panel" :size="60" :minSize="60" :maxSize="60">
             <div v-if="selectedPresentation">
                 <!-- <h2>Details für: {{ selectedPresentation.name }}</h2> -->
-                <PresentationEditing :presentation="selectedPresentation" :scenes="scenes"/>
+                <PresentationEditing :key="selectedPresentation.id" :presentation="selectedPresentation" :scenes="scenes"/>
             </div>
             <div v-else>
             </div>

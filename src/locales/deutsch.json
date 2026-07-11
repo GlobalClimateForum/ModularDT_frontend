@@ -24,7 +24,9 @@
       "new_presentation": "Neue Präsentation",
       "create": "Erstellen",
       "next": "Vor",
-      "previous": "Zurück"
+      "previous": "Zurück",
+      "stop": "Beenden",
+      "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt"
     },
     "scene": "Szene",
     "available_scenes": "Verfügbare Szenen",
@@ -38,7 +40,8 @@
     "save": "Speichern",
     "copy": "Kopie",
     "search": "Suche",
-    "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen"
+    "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen",
+    "save_order": "Reihenfolge speichern"
   },
   "participant": {
     "name": "Teilnehmer"

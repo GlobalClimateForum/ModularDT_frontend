@@ -41,53 +41,60 @@ interface SelectedScene {
 const selectedOrder = ref<SelectedScene[]>([]);
 
 onMounted(() => {
-    if (props.presentation.scenes) { 
+    if (props.presentation.scenes) {
         selectedOrder.value = props.presentation.scenes.map(scene => ({
-                // Ensure id is a string to satisfy SelectedScene type
-                id: String(scene.id ?? ''),
-                name: scene.name,
-                description: scene.description,
-                // Wichtig: Auch beim initialen Laden eindeutige IDs generieren!
-                uniqueId: `${scene.id}-init-${Math.random().toString(36).substr(2, 9)}`
-            }));
+            // Ensure id is a string to satisfy SelectedScene type
+            id: String(scene.id ?? ''),
+            name: scene.name,
+            description: scene.description,
+            // Wichtig: Auch beim initialen Laden eindeutige IDs generieren!
+            uniqueId: `${scene.id}-init-${Math.random().toString(36).substr(2, 9)}`
+        }));
     }
 });
 
-const handleNativeDrop = (event: DragEvent) => {
-    if (!event.dataTransfer) return;
+const handleNativeDrop = async (event: DragEvent) => {
+  if (!event.dataTransfer) return;
 
-    // Daten aus dem Datenstrom der DataTable holen
-    const dataString = event.dataTransfer.getData('application/json');
-    if (!dataString) return;
+  const dataString = event.dataTransfer.getData('application/json');
+  if (!dataString) return;
 
-    try {
-        const rawScene = JSON.parse(dataString);
+  try {
+    const rawScene = JSON.parse(dataString);
 
-        // Wichtig: Neues Objekt mit einer uniqueId erstellen,
-        // damit dieselbe Szene mehrfach hinzugefügt und sortiert werden kann.
-        const newElement: SelectedScene = {
-            ...rawScene,
-            uniqueId: `${rawScene.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        };
+    // 1. Ein echtes Deep-Clone des Objekts erstellen.
+    // structuredClone löst alle reaktiven Referenzen und verschachtelten
+    // Arrays (slides, sections) sauber auf und kopiert sie frisch.
+    const deepClonedScene = structuredClone(rawScene);
 
-        // Element an die Liste anhängen
-        selectedOrder.value.push(newElement);
-    } catch (error) {
-        console.error('Fehler beim Verarbeiten des gedroppten Elements:', error);
-    }
+    // 2. Das entkoppelte Objekt mit der einzigartigen ID für vuedraggable versehen
+    const newElement: SelectedScene = {
+      ...deepClonedScene,
+      uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
+    };
+
+    // 3. Vue Zeit geben, das native Drag-Event zu beenden
+    await nextTick();
+    
+    // 4. Erst jetzt der Liste hinzufügen
+    selectedOrder.value.push(newElement);
+
+  } catch (error) {
+    console.error('Fehler beim Verarbeiten des gedroppten Elements:', error);
+  }
 };
 
 const isSaving = ref(false);
 
 const saveOrderToApi = async () => {
     if (selectedOrder.value.length === 0) return;
-    
+
     isSaving.value = true;
     try {
         // 1. Payload für das Backend vorbereiten
         const scenePayload = selectedOrder.value.map((item, index) => ({
             scene_id: item.id,
-            position: index+1
+            position: index + 1
         }));
 
         // 2. Ihren Service aufrufen. 
@@ -95,9 +102,9 @@ const saveOrderToApi = async () => {
         const response = await updatePresentation(props.presentation.id, {
             scenes: scenePayload as any // 'as any' fängt eventuelle TypeScript-Typkonflikte im Service ab
         });
-        
+
         console.log("Reihenfolge erfolgreich via Service gespeichert!");
-        
+
         // Da das Backend die aktualisierte Präsentation zurückgibt, 
         // können Sie die Daten hier bei Bedarf weiterverarbeiten:
         // console.log(response.data.presentation);
@@ -138,24 +145,21 @@ const removeItem = (index: number) => {
         </div>
 
         <!-- RECHTSEITE: Die Ziel-Reihenfolge (Sortierbar) -->
-        <!-- RECHTSEITE: Die Ziel-Reihenfolge (Sortierbar) -->
-        <!-- HIER DIE EVENTS HINZUFÜGEN: -->
         <div class="target-panel" @dragover.prevent @drop="handleNativeDrop">
             <h3>{{ t('moderator.order') }}</h3>
-            <Button label="Reihenfolge speichern" icon="pi pi-save" severity="success" size="small" :loading="isSaving"
+            <Button :label="$t('moderator.presentation.save_order')" icon="pi pi-save" severity="success" size="small" :loading="isSaving"
                 :disabled="selectedOrder.length === 0" @click="saveOrderToApi" />
 
-            <!-- vuedraggable bleibt sauber für das interne Sortieren zuständig -->
             <draggable v-model="selectedOrder" group="elements" item-key="uniqueId" class="drop-zone"
-                ghost-class="ghost-item" handle=".drag-handle-target">
+                ghost-class="ghost-item" handle=".drag-handle-target" tag="div">
                 <template #item="{ element, index }">
-                    <div class="ordered-item">
+                    <div class="ordered-item" :key="element.uniqueId">
                         <div class="item-meta">
                             <span class="badge-index">#{{ index + 1 }}</span>
                             <span class="item-name">{{ element.name }}</span>
                         </div>
                         <div class="item-actions">
-                            <!-- Das Handle steuert jetzt exakt das Umsortieren -->
+                        
                             <i class="pi pi-sort-alt drag-handle-target"></i>
                             <Button icon="pi pi-trash" severity="danger" text rounded size="small"
                                 @click="removeItem(index)" />
@@ -170,9 +174,7 @@ const removeItem = (index: number) => {
                     </div>
                 </template>
             </draggable>
-        </div>
-
-
+        </div> 
     </div>
 </template>
 

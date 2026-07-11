@@ -24,7 +24,9 @@
       "new_presentation": "New Presentation",
       "create": "Create",
       "next": "Next",
-      "previous": "Previous"
+      "previous": "Previous",
+      "stop": "Terminate",
+      "no_presentation_showing": "Currently no presentation playing"
     },
     "scene": "Scene",
     "available_scenes": "Available Scenes",
@@ -38,7 +40,8 @@
     "save": "Save",
     "copy": "Copy",
     "search": "Search",
-    "order_instruction": "Drag the scenes here to specify order"
+    "order_instruction": "Drag the scenes here to specify order",
+    "save_order": "Save order"
   },
   "participant": {
     "name": "Participant"
