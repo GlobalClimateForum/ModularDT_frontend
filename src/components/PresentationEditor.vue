@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 import draggable from 'vuedraggable';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -54,34 +54,34 @@ onMounted(() => {
 });
 
 const handleNativeDrop = async (event: DragEvent) => {
-  if (!event.dataTransfer) return;
+    if (!event.dataTransfer) return;
 
-  const dataString = event.dataTransfer.getData('application/json');
-  if (!dataString) return;
+    const dataString = event.dataTransfer.getData('application/json');
+    if (!dataString) return;
 
-  try {
-    const rawScene = JSON.parse(dataString);
+    try {
+        const rawScene = JSON.parse(dataString);
 
-    // 1. Ein echtes Deep-Clone des Objekts erstellen.
-    // structuredClone löst alle reaktiven Referenzen und verschachtelten
-    // Arrays (slides, sections) sauber auf und kopiert sie frisch.
-    const deepClonedScene = structuredClone(rawScene);
+        // 1. Ein echtes Deep-Clone des Objekts erstellen.
+        // structuredClone löst alle reaktiven Referenzen und verschachtelten
+        // Arrays (slides, sections) sauber auf und kopiert sie frisch.
+        const deepClonedScene = structuredClone(rawScene);
 
-    // 2. Das entkoppelte Objekt mit der einzigartigen ID für vuedraggable versehen
-    const newElement: SelectedScene = {
-      ...deepClonedScene,
-      uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
-    };
+        // 2. Das entkoppelte Objekt mit der einzigartigen ID für vuedraggable versehen
+        const newElement: SelectedScene = {
+            ...deepClonedScene,
+            uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
+        };
 
-    // 3. Vue Zeit geben, das native Drag-Event zu beenden
-    await nextTick();
-    
-    // 4. Erst jetzt der Liste hinzufügen
-    selectedOrder.value.push(newElement);
+        // 3. Vue Zeit geben, das native Drag-Event zu beenden
+        await nextTick();
 
-  } catch (error) {
-    console.error('Fehler beim Verarbeiten des gedroppten Elements:', error);
-  }
+        // 4. Erst jetzt der Liste hinzufügen
+        selectedOrder.value.push(newElement);
+
+    } catch (error) {
+        console.error('Fehler beim Verarbeiten des gedroppten Elements:', error);
+    }
 };
 
 const isSaving = ref(false);
@@ -104,10 +104,6 @@ const saveOrderToApi = async () => {
         });
 
         console.log("Reihenfolge erfolgreich via Service gespeichert!");
-
-        // Da das Backend die aktualisierte Präsentation zurückgibt, 
-        // können Sie die Daten hier bei Bedarf weiterverarbeiten:
-        // console.log(response.data.presentation);
 
     } catch (error) {
         console.error("Fehler beim Speichern über den Service:", error);
@@ -146,9 +142,15 @@ const removeItem = (index: number) => {
 
         <!-- RECHTSEITE: Die Ziel-Reihenfolge (Sortierbar) -->
         <div class="target-panel" @dragover.prevent @drop="handleNativeDrop">
-            <h3>{{ t('moderator.order') }}</h3>
-            <Button :label="$t('moderator.presentation.save_order')" icon="pi pi-save" severity="success" size="small" :loading="isSaving"
-                :disabled="selectedOrder.length === 0" @click="saveOrderToApi" />
+            <div class="header-container">
+                <h3>{{ t('moderator.order') }}</h3>
+                <!-- <Button :label="$t('moderator.save_order')" icon="pi pi-save" 
+                severity="success"
+                    size="small" :loading="isSaving" :disabled="selectedOrder.length === 0" 
+                    class="control-item nav-button"  @click="saveOrderToApi" /> -->
+            <Button class="button-add-presentation" :label="$t('moderator.save_order')" icon="pi pi-save"
+                    @click="saveOrderToApi" />
+            </div>
 
             <draggable v-model="selectedOrder" group="elements" item-key="uniqueId" class="drop-zone"
                 ghost-class="ghost-item" handle=".drag-handle-target" tag="div">
@@ -159,7 +161,7 @@ const removeItem = (index: number) => {
                             <span class="item-name">{{ element.name }}</span>
                         </div>
                         <div class="item-actions">
-                        
+
                             <i class="pi pi-sort-alt drag-handle-target"></i>
                             <Button icon="pi pi-trash" severity="danger" text rounded size="small"
                                 @click="removeItem(index)" />
@@ -174,7 +176,7 @@ const removeItem = (index: number) => {
                     </div>
                 </template>
             </draggable>
-        </div> 
+        </div>
     </div>
 </template>
 
@@ -223,6 +225,18 @@ const removeItem = (index: number) => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.header-container {
+    display: flex;                  
+    justify-content: space-between; 
+    align-items: center;            
+    width: 100%; 
+    margin-bottom: 1rem;                    
+}
+
+.header-container h3 {
+    margin: 0; 
 }
 
 /* Einzelnes gezogenes Element */
@@ -297,5 +311,20 @@ const removeItem = (index: number) => {
     color: #94a3b8;
     height: 200px;
     text-align: center;
+}
+
+.control-item {
+  flex: 1 1 0%;
+  max-width: 160px;
+  /* Alle 3 werden maximal so breit */
+  min-width: max-content;
+  /* Richtet sich nach dem breitesten Inhalt (z.B. langer Buttontext) */
+  white-space: nowrap;
+}
+
+/* Spezifisch für die Navigations-Buttons */
+.nav-button {
+  justify-content: center;
+  /* Zentriert Text und Icon im Button */
 }
 </style>

@@ -66,11 +66,13 @@ function onRowEditSave(event: any) {
     }
 }
 
+const emit = defineEmits(['live'])
+
 /*
 const emit = defineEmits<{ 'edit-presentation': [presentation: Presentation] }>()
 
 function onEditPresentation(presentation: Presentation) {
-    console.info('Emitting edit-presentation event with presentation:', JSON.parse(JSON.stringify(presentation)));
+    //console.info('Emitting edit-presentation event with presentation:', JSON.parse(JSON.stringify(presentation)));
     emit('edit-presentation', { ...presentation });
 }
 */
@@ -141,7 +143,7 @@ async function onPlayPresentation(presentation: Presentation) {
         const response = await updateLivePresentation({
             presentation: presentation.id,
             active: true,
-            current_scene: 0
+            current_scene: 1
         });
         
         console.log("Live Presentation startet:", response.data);
@@ -149,6 +151,7 @@ async function onPlayPresentation(presentation: Presentation) {
     } catch (error) {
         console.error("Error starting presentation:", error);
     }
+    emit('live')
 }
 </script>
 
@@ -157,7 +160,7 @@ async function onPlayPresentation(presentation: Presentation) {
     <Splitter class="dashboard" :gutterSize="2" stateKey="presentation-manager-splitter" stateStorage="local">
 
         <SplitterPanel class="sub-panel" :size="40" :minSize="40" :maxSize="40">
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; ">
                 <InputText class="name-input" v-model="presentationName"
                     :placeholder="$t('moderator.presentation.new_presentation')" type="text" />
                 <Button class="button-add-presentation" :label="$t('moderator.presentation.create')" icon="pi pi-save"

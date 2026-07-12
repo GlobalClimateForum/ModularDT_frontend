@@ -121,6 +121,9 @@ function handleSceneEdit(scene: Scene) {
   currentDashboard.value = 'scenecreate';
 }
 
+function handleLiveSwitch() {
+  currentDashboard.value = 'live' 
+}
 </script>
 
 <template>
@@ -171,7 +174,7 @@ function handleSceneEdit(scene: Scene) {
     </SplitterPanel>
     <SplitterPanel :size="85" class="panel">
       <Transition name="fade" mode="out-in">
-        <PresentationManager v-if="currentDashboard === 'presentations'" />
+        <PresentationManager v-if="currentDashboard === 'presentations'" @live="handleLiveSwitch" />
       </Transition>
       <Transition name="fade" mode="out-in">
         <PresentationControl v-if="currentDashboard === 'live'" />

@@ -5,7 +5,8 @@ import { onMounted, onBeforeMount, watch, ref } from 'vue'
 import { settings } from '@/utils/settings'
 import { getSettings } from "@/services/settings_service";
 import { registerContentServer } from '@/services/cs_service.ts';
-import { useI18n } from 'vue-i18n' 
+import { useI18n } from 'vue-i18n'
+import { updateLivePresentation, stopPresentation } from "@/services/live_presentation_service";
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -35,6 +36,8 @@ onMounted(async () => {
     // allow the App to render now, independet if the settings were read successfully or not
     isSettingsLoaded.value = true
   })
+
+  stopPresentation();
 })
 </script>
 
