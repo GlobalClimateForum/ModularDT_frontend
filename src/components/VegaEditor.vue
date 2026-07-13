@@ -15,6 +15,7 @@ import ProgressBar from 'primevue/progressbar';
 import Inplace from 'primevue/inplace';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Chip from 'primevue/chip';
+import { nextTick } from 'vue'
 
 const toast = useToast()
 const props = defineProps<{
@@ -76,11 +77,11 @@ watch(() => props.slideSection, (section) => {
 // --- Emit a full updated section -------------------------------------------
 
 function emitSection(patch: Partial<SlideSection>) {
-    syncing = true                         
+    syncing = true
     emit('sectionUpdated', {
         ...props.slideSection,
         mode: selectedMode.value.value,
-        parameters: structuredClone(toRaw(parameters.value)),   
+        parameters: structuredClone(toRaw(parameters.value)),
         url_pattern: urlPattern.value,
         ...patch,
     })
@@ -202,7 +203,10 @@ function updateParamValue(key: string, field: 'min' | 'max' | 'default', event: 
 
 // --- Watches ----------------------------------------------------------------
 
-watch(selectedMode, () => emitSection({}))
+watch(selectedMode, async () => {
+    await nextTick()
+    emitSection({})
+})
 
 watch(parameters, () => emitSection({}), { deep: true })
 
@@ -213,8 +217,11 @@ watch(parameters, () => emitSection({}), { deep: true })
         <!-- EDITOR TOOL BAR  -->
         <div class="editor-toolbar">
             <div class="mode-select label-container">
-                <SelectButton v-model="selectedMode" :options="modeOptions" optionLabel="label" id="vega-mode-select">
-                </SelectButton>
+                <div style="color:red;font-size:11px">
+                    DEBUG: {{ JSON.stringify(selectedMode) }}
+                </div>
+                <SelectButton v-model="selectedMode" :options="modeOptions" optionLabel="label" dataKey="value"
+                    :allowEmpty="false" id="vega-mode-select" />
             </div>
 
             <ContentServerStatus :size="'small'"
