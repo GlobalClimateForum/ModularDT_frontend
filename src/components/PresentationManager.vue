@@ -11,15 +11,17 @@ import { formatDate } from '@/utils/date_utils';
 
 import { getPresentations, updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
-import { updateLivePresentation } from "@/services/live_presentation_service";
+import { updateLivePresentation, startPresentation } from "@/services/live_presentation_service";
 import { getScenes } from "@/services/scene_service";
 import type { Scene } from "@/services/scene_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
-//import type { Scene } from 'vega';
+import { useLivePresentationState } from '@/utils/live_presentation';
+
 
 const { t } = useI18n();
+const livePresentationState = useLivePresentationState()
 
 const presentations = ref<Presentation[]>([]);
 const scenes = ref<Scene[]>([]);
@@ -67,15 +69,6 @@ function onRowEditSave(event: any) {
 }
 
 const emit = defineEmits(['live'])
-
-/*
-const emit = defineEmits<{ 'edit-presentation': [presentation: Presentation] }>()
-
-function onEditPresentation(presentation: Presentation) {
-    //console.info('Emitting edit-presentation event with presentation:', JSON.parse(JSON.stringify(presentation)));
-    emit('edit-presentation', { ...presentation });
-}
-*/
 
 function onDeletePresentation(presentation: Presentation) {
     if (presentation.id) {
@@ -138,19 +131,13 @@ function onAddPresentation() {
 }
 
 async function onPlayPresentation(presentation: Presentation) {
-    try {
-        // Wir senden die ID der Präsentation und setzen die Anzeige auf aktiv
-        const response = await updateLivePresentation({
-            presentation: presentation.id,
-            active: true,
-            current_scene: 1
-        });
-        
-        console.log("Live Presentation startet:", response.data);
-
-    } catch (error) {
-        console.error("Error starting presentation:", error);
+    const presentationId = presentation.id;
+    if (presentationId === undefined) {
+        console.error("Error starting presentation: no valid presentation id");
+        return;
     }
+    
+    startPresentation(presentationId)
     emit('live')
 }
 </script>
@@ -208,7 +195,8 @@ async function onPlayPresentation(presentation: Presentation) {
         <SplitterPanel class="sub-panel" :size="60" :minSize="60" :maxSize="60">
             <div v-if="selectedPresentation">
                 <!-- <h2>Details für: {{ selectedPresentation.name }}</h2> -->
-                <PresentationEditing :key="selectedPresentation.id" :presentation="selectedPresentation" :scenes="scenes"/>
+                <PresentationEditing :key="selectedPresentation.id" :presentation="selectedPresentation"
+                    :scenes="scenes" />
             </div>
             <div v-else>
             </div>
@@ -217,7 +205,6 @@ async function onPlayPresentation(presentation: Presentation) {
 </template>
 
 <style scoped>
-
 .presentation-preview {
     flex: 1;
     min-height: 0;

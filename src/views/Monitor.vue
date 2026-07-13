@@ -3,7 +3,9 @@ import { useRoute } from 'vue-router'
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/utils/settings'
+import { useLivePresentationState } from '@/utils/live_presentation';
 
+const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
@@ -16,24 +18,47 @@ const activeMonitor = computed(() => {
 
 let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
-const serverMessages = ref<string[]>([])
+const mySlideId = ref<number>()
 
 onMounted(() => {
   const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
 
+  console.log(socketUrl)
   socket = new WebSocket(socketUrl)
+  console.log('Success: !', socket)
+
   socket.onopen = (event) => {
     console.log('Success: connected to Django Channel!', event)
     connectionStatus.value = 'Connected'
   }
 
   socket.onmessage = (event) => {
-    console.log('Message received from server:', event.data)
+    console.log('Nachricht vom Django-Server empfangen:', event.data)
     try {
       const data = JSON.parse(event.data)
-      serverMessages.value.push(data.message || JSON.stringify(data))
+
+      console.log("My monitor data:", currentId)
+      console.log("settings.value.number_of_screens:", settings.value.number_of_screens)
+      if (data.event_type === 'presentation_start' || data.message) {
+        // Hier aktualisierst du den Zustand des Monitors!
+        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+          livePresentationState.value.active = true
+          livePresentationState.value.presentation = data.presentation_id || 1
+          livePresentationState.value.current_scene = data.current_scene || 1
+        }
+      }
+
+      if (data.event_type === 'presentation_stop' || data.message) {
+        // Hier aktualisierst du den Zustand des Monitors!
+        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+          livePresentationState.value.active = false
+          livePresentationState.value.presentation = -1
+          livePresentationState.value.current_scene = -1
+        }
+      }
+
     } catch (e) {
-      // ???
+      console.error('Fehler beim Verarbeiten der WebSocket-Nachricht:', e)
     }
   }
 
@@ -59,14 +84,18 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="welcome">
+  <div v-if="livePresentationState.active">
+    <h1>Presentation-mode!</h1>
+  </div>
+  <div v-else class="welcome">
     <h2>{{ t('monitor.greeting') }}</h2>
     <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
 
     <!-- Monitor ID is between 1 and the number of screens -->
     <div v-if="activeMonitor">
-      <p>{{ t('monitor.waiting') }}: /ws/monitor/{{currentId}}/ </p>
+      <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
       <p>Status: <strong>{{ connectionStatus }}</strong></p>
+      {{ livePresentationState }}
     </div>
 
     <!-- Monitor ID is 0 or exceeds the number of screens -->

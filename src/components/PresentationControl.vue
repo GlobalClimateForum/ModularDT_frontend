@@ -2,8 +2,6 @@
 import { onMounted, ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
 import { useI18n } from 'vue-i18n';
 import SceneView from '@/components/SceneView.vue';
 import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
@@ -11,6 +9,9 @@ import { getPresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service";
 import { getScenes } from "@/services/scene_service";
 import type { Scene } from "@/services/scene_service";
+import { useLivePresentationState } from '@/utils/live_presentation';
+
+const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
 
 const currentSceneNumber = ref(1);
