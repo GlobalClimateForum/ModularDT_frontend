@@ -94,8 +94,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
             }">
 
                 <!-- dynamic component rendering slide sections based on their view_type -->
-                <component v-for="(section, index) in sectionContents"
-                    :key="section.view_type === 'map' ? `map-${index}` : `${sectionRenderKey}-${index}`"
+                <component v-for="(section, index) in sectionContents" :key="`${section.view_type}-${index}`"
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
                     :sectionWidth="sectionWidths[index]" :showframe="props.showframe" :shadow="props.shadow"
                     :basemap="props.basemap" />

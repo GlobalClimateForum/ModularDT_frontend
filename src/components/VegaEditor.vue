@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import SelectButton from 'primevue/selectbutton';
 import '@/assets/main.css'
-import type { Slide, SlideSection, Parameters, Parameter } from '@/services/slide_service';
-import { ref, onMounted, watch } from 'vue';
+import type { SlideSection, Parameters } from '@/services/slide_service';
+import { ref, computed, watch, toRaw } from 'vue'
+import { extractParameters, buildVegaUrl, buildPattern, stripFilters, sanitizeURL } from '@/utils/vega_utils'
 import CodeEditor from '@/components/CodeEditor.vue';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast'
@@ -17,129 +18,79 @@ import Chip from 'primevue/chip';
 
 const toast = useToast()
 const props = defineProps<{
-    slide: Slide | null,
-    slideSection: SlideSection,
-    sectionIdx: number,
-    autosize: boolean
+    slideSection: SlideSection
 }>()
 
-// Reactive reference to the parameters of the slide section, initialized from props.
-const parameters = ref<Parameters>(props.slideSection.parameters ?? {})
-
-// Emit events to notify parent components of content and section updates.
 const emit = defineEmits<{
     (e: 'contentUpdated', content: string): void,
     (e: 'sectionUpdated', content: SlideSection): void
 }>()
 
-// Reactive references for the Vega URL source, and URL validation error message.
-const vegaUrlSource = ref<string>("")
-const urlError = ref<string>("")
+let syncing = false
 
-// reactive references for the "default URL"
-const defaultUrl = ref<string>("")
-const initialUrl = ref<string>("")
+// --- Local working state (never mutate props directly) ---------------------
 
-// Per-parameter draft text for the "add option" inputs, keyed by param key.
+const parameters = ref<Parameters>({})
+const baseUrl = ref<string>('')          // path + non-filter query params
+const vegaUrlSource = ref<string>('')    // what the user types / sees
+const urlError = ref<string>('')
 const draftOption = ref<Record<string, string>>({})
 
-/// Type definition for the Vega editor mode options
 interface ModeOption {
     label: string
     value: 'static' | 'url' | 'interactive'
 }
 
-// On component mount, set the selected mode based on the slideSection's mode,
-// and initialize parameters if in interactive mode.
-onMounted(() => {
-    const mode = props.slideSection?.mode
-    if (mode) {
-        const modeOption = modeOptions.find(o => o.value === mode)
-        if (modeOption) selectedMode.value = modeOption
-    }
-    if (mode === 'interactive') {
-        props.slideSection.parameters = props.slideSection.parameters || {}
-    }
-
-    Object.values(parameters.value).forEach((param) => {
-        if (param.type === 'number' && !param.range) {
-            param.range = { min: null, max: null }
-        }
-    })
-})
-
-// Define the available mode options for the SelectButton component.
 const modeOptions: ModeOption[] = [
     { label: 'Static JSON', value: 'static' },
     { label: 'Static URL', value: 'url' },
     { label: 'Interactive', value: 'interactive' }
-];
+]
 
-// Initialize the selected mode to 'static' by default.
 const selectedMode = ref<ModeOption>(modeOptions.find(o => o.value === 'static')!)
 
-// Function to add autosize properties to the Vega spec JSON.
-function addAutoSize(content: string) {
-    let parsed
-    try { parsed = JSON.parse(content) }
-    catch {
-        toast.add({ severity: 'warn', summary: 'Invalid JSON', detail: 'Could not parse the Vega spec.', life: 4000 })
-        return
+// The pattern is DERIVED from baseUrl + the current parameter list.
+// Adding a parameter manually will therefore show up in the pattern automatically.
+const urlPattern = computed(() => baseUrl.value ? buildPattern(baseUrl.value, parameters.value) : '')
+
+// --- Sync FROM the section (runs on mount and whenever the section changes) --
+
+watch(() => props.slideSection, (section) => {
+    if (!section) return
+    if (syncing) { syncing = false; return }
+
+    const modeOption = modeOptions.find(o => o.value === section.mode)
+    if (modeOption) selectedMode.value = modeOption
+
+    parameters.value = section.parameters ? structuredClone(toRaw(section.parameters)) : {}
+
+    if (section.url_pattern) {
+        baseUrl.value = stripFilters(section.url_pattern)
+        vegaUrlSource.value = section.url_pattern
+    } else {
+        baseUrl.value = ''
+        vegaUrlSource.value = section.content_path ?? ''
     }
-    // To guarantee that autosize properties are at the beginning.
-    // Splat the parsed object after the autosize properties to ensure they are applied first.
-    const withAutoSize = {
-        width: "container",
-        height: "container",
-        autosize: { type: "fit", contains: "padding" },
-        ...parsed,
-    }
-    emit('contentUpdated', JSON.stringify(withAutoSize, null, 2))
-    toast.add({ severity: 'success', summary: 'Autosize added', detail: 'Autosize property added.', life: 3000 })
+}, { immediate: true, deep: false })
+
+// --- Emit a full updated section -------------------------------------------
+
+function emitSection(patch: Partial<SlideSection>) {
+    syncing = true                         
+    emit('sectionUpdated', {
+        ...props.slideSection,
+        mode: selectedMode.value.value,
+        parameters: structuredClone(toRaw(parameters.value)),   
+        url_pattern: urlPattern.value,
+        ...patch,
+    })
 }
 
-// Funciton to remove autosize properties from the Vega spec JSON.
-function removeAutoSize(content: string) {
-    let parsed
-    try { parsed = JSON.parse(content) }
-    catch {
-        toast.add({ severity: 'warn', summary: 'Invalid JSON', detail: 'Could not parse the Vega spec.', life: 4000 })
-        return
-    }
-    const { width, height, autosize, ...withoutAutoSize } = parsed
-    emit('contentUpdated', JSON.stringify(withoutAutoSize, null, 2))
-    toast.add({ severity: 'success', summary: 'Autosize removed', detail: 'Autosize property removed.', life: 3000 })
-}
+// --- URL validation ---------------------------------------------------------
 
-// Helper to sanitize a provided URL by removing whitespace, leading/trailing slashes, and the content server base URL if present.
-function sanitizeURL(url: string): string {
-    let sanitized = url.trim()
-
-    // Strip content-server base URL if present
-    if (settings.value.cs_url) {
-        const baseURL = settings.value.cs_url.replace(/\/+$/, '')
-        if (sanitized.startsWith(baseURL)) {
-            sanitized = sanitized.slice(baseURL.length)
-        }
-    }
-
-    // Split off the query
-    const qIndex = sanitized.indexOf('?')
-    let path = qIndex === -1 ? sanitized : sanitized.slice(0, qIndex)
-    const query = qIndex === -1 ? '' : sanitized.slice(qIndex)
-
-    // Collapse duplicate slashes , then trim leading/trailing
-    path = path.replace(/\/{2,}/g, '/').replace(/^\/+/, '').replace(/\/+$/, '')
-
-    return path + query
-}
-
-// Helper function to validate a provided URL, checking for whitespace, leading/trailing slashes, and the content server base URL.
 function urlIsValid(url: string): [boolean, string] {
     const errors: string[] = []
-    if (/\s/.test(url)) {
-        errors.push('URL should not contain whitespace.')
-    }
+    if (/\s/.test(url)) errors.push('URL should not contain whitespace.')
     if (settings.value.cs_url && url.startsWith(settings.value.cs_url)) {
         errors.push('URL should not contain the base URL of the content server.')
     }
@@ -149,91 +100,42 @@ function urlIsValid(url: string): [boolean, string] {
     return [errors.length === 0, errors.join(' ')]
 }
 
-// Function to handle input changes in the URL field, validating the URL and updating the error message accordingly.
 function onUrlInput() {
     const [, message] = urlIsValid(vegaUrlSource.value)
     urlError.value = message
 }
 
-// Helper function to extract parameters from a given URL and populate the parameters object accordingly.
-function parametersFromUrl(url: string) {
+// --- Interactive mode: seed parameters from the typed URL --------------------
 
-    // Reset the parameters ref
-    parameters.value = {}
+function seedParametersFromUrl(url: string) {
+    baseUrl.value = stripFilters(url)
+    parameters.value = extractParameters(url)
 
-    // Backup the initial URL for reference
-    initialUrl.value = sanitizeURL(url)
-
-    // Use window.location.origin to handle relative URLs
-    const url_ = new URL(url, window.location.origin)
-    // Get parameters from the URL
-    const params = new URLSearchParams(url_.search)
-
-    // For each parameter in the URL
-    Array.from(params.keys()).forEach(key => {
-
-        // Check if the keys matches the filter pattern (filter[<key>])
-        const isfilter = key.match(/^(\w+)\[(\w+)\]$/)
-        // If the key matches the filter pattern, use the inner key (<key>), otherwise the original key
-        const key_ = isfilter ? isfilter[2] : key
-
-        // Identify the type of the parameter based on its value
-        const value = params.get(key)
-        let type_: 'string' | 'number' | 'boolean' = 'string'
-
-        if (value?.toLowerCase() === 'true' || value?.toLowerCase() === 'false') {
-            type_ = 'boolean'
-        } else if (!isNaN(Number(value))) {
-            type_ = 'number'
-        }
-        // Filter out fixed paramters
-        if (isfilter) {
-            if (type_ === 'number') {
-                parameters.value[key_] = { type: type_, default: value, range: { min: null, max: null } }
-            } else {
-                parameters.value[key_] = { type: type_, default: value }
-            }
-        }
-    })
-
-    if (Object.keys(parameters.value).length === 0) {
+    const count = Object.keys(parameters.value).length
+    if (count === 0) {
         toast.add({ severity: 'info', summary: 'No parameters found', detail: 'No parameters were found in the URL.', life: 3000 })
     } else {
-        toast.add({ severity: 'success', summary: 'Parameters extracted', detail: `${Object.keys(parameters.value).length} parameters were extracted from the URL.`, life: 3000 })
+        toast.add({ severity: 'success', summary: 'Parameters extracted', detail: `${count} parameters were extracted from the URL.`, life: 3000 })
     }
 
-    vegaUrlSource.value = sanitizeURL(url) // Update the URL field with the sanitized URL
+    vegaUrlSource.value = urlPattern.value
+    emitSection({})
 }
 
-// Helper function to extract the base URL and parameters from a given URL, returning an array of parameter objects with their names, values, and filter status.
-function getURLPattern(url: string) {
-    const url_ = new URL(url, window.location.origin)
-    const params = new URLSearchParams(url_.search)
-    const baseURL = url_.origin + url_.pathname
+// --- Interactive mode: resolve the pattern with current defaults and fetch ----
 
-    const pattern: { name: string, value: string, isFilter: boolean }[] = []
+function fetchWithDefaults() {
+    const values: Record<string, unknown> = {}
+    Object.entries(parameters.value).forEach(([name, param]) => {
+        values[name] = param.default
+    })
 
-    pattern.push({
-        name: 'baseURL',
-        value: baseURL,
-        isFilter: false
-    })
-    params.forEach((value, key) => {
-        const isfilter = key.match(/^(\w+)\[(\w+)\]$/)
-        const key_ = isfilter ? isfilter[2] : key
-        const value_ = isfilter ? `<${key_}>` : value
-        pattern.push({
-            name: key_,
-            value: value_,
-            isFilter: !!isfilter
-        })
-    })
-    return pattern;
+    const resolved = buildVegaUrl(urlPattern.value, values)
+    emitSection({ content_path: resolved })
 }
 
-// --- Select-Parameter - Options Handling -------------------------------------------------
+// --- Select-parameter option handling ---------------------------------------
 
-// function to add a parameter option to a select parameter, ensuring no duplicates and setting the default if it's the first option added.
 function addParamOption(paramKey: string, option: string) {
     const value = option.trim()
     if (!value) return
@@ -241,132 +143,68 @@ function addParamOption(paramKey: string, option: string) {
     const param = parameters.value[paramKey]
     if (!param || param.type !== 'select') return
 
-    if (!param.options) param.options = []
     if (param.options.includes(value)) {
         toast.add({ severity: 'info', summary: 'Duplicate', detail: `"${value}" is already an option.`, life: 2500 })
         return
     }
 
     param.options.push(value)
-
-    // First option added becomes the default automatically.
-    if (param.default == null) {
-        param.default = value
-    }
+    if (param.default == null) param.default = value
 }
 
-// Handler for the "add option" input field, which adds the option to the parameter and clears the draft input.
 function onAddOption(paramKey: string) {
-    const value = draftOption.value[paramKey] ?? ''
-    addParamOption(paramKey, value)
+    addParamOption(paramKey, draftOption.value[paramKey] ?? '')
     draftOption.value[paramKey] = ''
 }
 
-// Handler to remove an option from a select parameter, updating the default if necessary.
 function removeParamOption(paramKey: string, option: string) {
     const param = parameters.value[paramKey]
-    if (!param || param.type !== 'select' || !param.options) return
+    if (!param || param.type !== 'select') return
 
     const idx = param.options.indexOf(option)
     if (idx !== -1) param.options.splice(idx, 1)
 
-    // If we removed the current default, fall back to the first remaining option (or null).
     if (param.default === option) {
-        setParamDefault(paramKey, param.options[0] ?? null)
+        param.default = param.options[0] ?? null
     }
 }
 
-// Handler to set the default option for a select parameter when an option chip is clicked.
 function setParamDefault(paramKey: string, option: string | null) {
     const param = parameters.value[paramKey]
-    if (param && param.type === 'select') {
-        param.default = option
-    }
+    if (param && param.type === 'select') param.default = option
 }
 
 function setStrType(key: string, newType: 'string' | 'select') {
     const param = parameters.value[key]
     if (!param) return
-    if (newType === 'select') {
-        parameters.value[key] = {
-            ...param,
-            type: 'select',
-            options: param.options ?? [],
-            // Keep an existing default only if it's still a valid option; otherwise reset.
-            default: (param.options && param.default != null && param.options.includes(String(param.default)))
-                ? param.default
-                : null,
-        }
-    } else {
-        parameters.value[key] = {
-            ...param,
-            type: 'string',
-        }
+
+    if (newType === 'select' && param.type !== 'select') {
+        parameters.value[key] = { type: 'select', options: [], default: null }
+    } else if (newType === 'string' && param.type !== 'string') {
+        parameters.value[key] = { type: 'string', default: null }
     }
 }
 
 function updateParamValue(key: string, field: 'min' | 'max' | 'default', event: Event) {
-
     const target = parameters.value[key]
     if (!target || target.type !== 'number') return
 
-    // Convert the input value to a number, or null if the input is empty
     const raw = (event.target as HTMLInputElement).value
     const numValue = raw === '' ? null : Number(raw)
 
     if (field === 'default') {
         target.default = numValue
     } else {
-        // if target range is not defined, initialize it
-        if (!target.range) {
-            target.range = { min: null, max: null }
-        }
-        // and update the min or max value
+        if (!target.range) target.range = { min: null, max: null }
         target.range[field] = numValue
     }
 }
 
-// Function to build a URL with current default values
-function urlWithDefaults() {
-    const url = new URL(initialUrl.value, settings.value.cs_url)
+// --- Watches ----------------------------------------------------------------
 
-    // Overwrite each filter param in place; non-filter params in the URL are left untouched.
-    if (parameters.value) {
-        Object.entries(parameters.value).forEach(([key, param]) => {
-            if (param.default != null) {
-                const value = String(param.default)
-                url.searchParams.set(
-                    `filter[${key}]`,
-                    param.type === 'boolean' ? value.toLowerCase() : value
-                )
-            }
-        })
-    }
-    defaultUrl.value = sanitizeURL(url.toString())
-    props.slideSection.content_path = defaultUrl.value
-    vegaUrlSource.value = defaultUrl.value
-    emit('sectionUpdated', props.slideSection)
-}
+watch(selectedMode, () => emitSection({}))
 
-// ---------------------------------------------------------------------------
-
-watch(selectedMode, (newMode) => {
-    props.slideSection.mode = newMode.value
-    emit('sectionUpdated', props.slideSection)
-})
-
-watch(parameters, (newParameters) => {
-    props.slideSection.parameters = newParameters
-    emit('sectionUpdated', props.slideSection)
-}, { deep: true })
-
-watch(() => props.autosize, (newAutosize) => {
-    if (newAutosize) {
-        addAutoSize(props.slideSection.content)
-    } else {
-        removeAutoSize(props.slideSection.content)
-    }
-})
+watch(parameters, () => emitSection({}), { deep: true })
 
 </script>
 <template>
@@ -401,7 +239,7 @@ watch(() => props.autosize, (newAutosize) => {
                         <div style="width: 100%; display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
                             <InputText v-model="vegaUrlSource" id="vega-url-input" placeholder="Enter url to fetch from"
                                 @input="onUrlInput();" :invalid="!!urlError" style="flex: 1; min-width: 0;"></InputText>
-                                <Button small rounded :disabled="!!urlError || !vegaUrlSource"
+                            <Button small rounded :disabled="!!urlError || !vegaUrlSource"
                                 @click="$emit('sectionUpdated', { ...slideSection, content_path: sanitizeURL(vegaUrlSource) })">
                                 <template #icon>
                                     <i class="material-symbols-outlined">download</i>
@@ -438,12 +276,12 @@ watch(() => props.autosize, (newAutosize) => {
                     </InputText>
                 </div>
 
-                <Button @click="parametersFromUrl(vegaUrlSource)" rounded>
+                <Button @click="seedParametersFromUrl(vegaUrlSource)" rounded>
                     <template #icon>
                         <i class="material-symbols-outlined">functions</i>
                     </template>
                 </Button>
-                <Button :disabled="vegaUrlSource == null || vegaUrlSource === ''"  @click="urlWithDefaults()" rounded>
+                <Button :disabled="!urlPattern" @click="fetchWithDefaults()" rounded>
                     <template #icon>
                         <i class="material-symbols-outlined">download</i>
                     </template>

@@ -60,12 +60,12 @@ const toast = useToast()
 function storeSlide() {
 
     const sections = slideSections.value.map((section, index) => ({
-        view_type: section.view_type,
-        content: section.content,
-        content_path: section.content_path,
+        ...section,
         width_fraction: sectionWidths.value[index],
         parameters: section.parameters ?? {},
-        mode: section.mode ?? 'static'
+        mode: section.mode ?? 'static',
+        url_pattern: section.url_pattern ?? '',
+        properties: section.properties ?? {},
     }));
 
     const slide = {
@@ -140,7 +140,7 @@ function updateSection(index: number, updatedSection: SlideSection) {
     const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
 
     // Create a shallow copy of the current sections
-    const updatedSections = [...slideSections.value] 
+    const updatedSections = [...slideSections.value]
     // Update the section at the specified index with the new data
     updatedSections[index] = { ...updatedSections[index], ...updatedSection }
     // Update the reactive slideSections reference with the modified sections
@@ -170,6 +170,7 @@ async function fetchVegaForSection(index: number) {
         const spec = await streamVegaSpec(section.content_path, (progress) => {
             vegaProgress.value = progress
         })
+
         // Write the fetched spec to the section's content and update the section
         const updatedSections = [...slideSections.value]
         updatedSections[index] = { ...updatedSections[index], content: spec }
@@ -177,7 +178,6 @@ async function fetchVegaForSection(index: number) {
         currentSlide.value = { ...currentSlide.value }
         vegaProgress.value = null
     } catch (error) {
-        console.log('Vega spec fetch failed for section', index, 'with error:', error)
         toast.add({ severity: 'error', summary: 'Error', detail: `Failed to fetch Vega spec for section ${index + 1}`, life: 3000 })
     }
 }
@@ -208,6 +208,25 @@ watch(selectedTypes, (newTypes) => {
     }))
 }, { deep: true })
 
+// Watch for changes in the autosizeVega ref and update the section's render properties
+watch(autosizeVega, (on) => {
+    const i = currentSectionIndex.value
+    const section = slideSections.value[i]
+    if (section.view_type !== 'vega') return
+
+    const updatedSections = [...slideSections.value]
+    updatedSections[i] = {
+        ...section,
+        properties: { ...section.properties, autosize: on },
+    }
+    slideSections.value = updatedSections
+    currentSlide.value = { ...currentSlide.value }
+})
+
+watch(currentSectionIndex, (i) => {
+    autosizeVega.value = !!slideSections.value[i]?.properties?.autosize
+})
+
 </script>
 
 <template>
@@ -221,7 +240,7 @@ watch(selectedTypes, (newTypes) => {
                 <!-- For every section in the slide, create a tab with an editor -->
                 <TabList class="tab-header">
                     <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab"
-                    @click="currentSectionIndex = index">
+                        @click="currentSectionIndex = index">
                         <div class="tab-title">
                             <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
                                 <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
@@ -242,7 +261,7 @@ watch(selectedTypes, (newTypes) => {
                                             <div>
                                                 <p style="margin: 0; font-size: var(--fs-medium)"> {{
                                                     slotProps.option.label
-                                                    }}</p>
+                                                }}</p>
                                                 <p style="margin: 0; font-size: var(--fs-small)">{{
                                                     slotProps.option.description }}</p>
                                             </div>
@@ -267,11 +286,8 @@ watch(selectedTypes, (newTypes) => {
                         <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
                             :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
                             @contentUpdated="updateSectionContent(index, $event)"
-                            @sectionUpdated="updateSection(index, $event)"
-                            @basemapUpdated="basemap = $event"
-                            :progress="vegaProgress"
-                            :sectionIdx="index"
-                            :autosize="autosizeVega">
+                            @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
+                            :progress="vegaProgress" :sectionIdx="index" :autosize="autosizeVega">
                         </component>
                     </TabPanel>
                 </TabPanels>
@@ -298,16 +314,13 @@ watch(selectedTypes, (newTypes) => {
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame"
-                    :basemap="basemap"
-                    />
+                    :showframe="showFrame" :basemap="basemap" />
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                     @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                     :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                    @autosize="autosizeVega = $event"
-                   />
+                    @autosize="autosizeVega = $event" />
 
             </div>
         </SplitterPanel>

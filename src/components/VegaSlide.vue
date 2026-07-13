@@ -1,49 +1,65 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onBeforeUnmount, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
-
-interface Layout {
-  width: number,
-  height: number,
-  top: number,
-  left: number,
-  scale: number,
-  bg: string
-}
+import { computed } from 'vue'
+import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
 
 const props = defineProps<{
   slide: Slide,
   section: SlideSection,
-  showframe?: boolean
-  progress: number | null,
-  layout?: Layout
+  showframe?: boolean,
+  progress?: number | null,
 }>()
-
 const container = ref<HTMLElement | null>(null)
 
 let view: any = null
 let renderToken = 0
+let fetchToken = 0
+
+// is this section interactive?
+const isInteractive = computed(() =>
+  props.section.mode === 'interactive' && !!props.section.url_pattern
+)
+
+const spec = ref<string>(props.section.content ?? '')
+
+// The URL this section currently resolves to
+const currentUrl = computed(() => {
+  if (!isInteractive.value) return ''
+  const values: Record<string, unknown> = {}
+  Object.entries(props.section.parameters ?? {}).forEach(([name, param]) => {
+    values[name] = param.default ?? null
+  })
+  return buildVegaUrl(props.section.url_pattern!, values)
+})
+
+async function fetchSpec() {
+  if (!currentUrl.value) return
+  const token = ++fetchToken
+  try {
+    const fetched = await streamVegaSpec(currentUrl.value, () => {})
+    if (token === fetchToken) spec.value = fetched
+  } catch (err) {
+    console.error('fetchSpec: failed', err)
+  }
+}
 
 async function renderContent() {
-
-  if (!container.value || !props.section.content) return
-
-  if (!container.value) return
+  if (!container.value || !spec.value) return
   const token = ++renderToken
 
   try {
-    const spec = JSON.parse(props.section.content)
-    const result = await embed(container.value, spec, {
-      actions: false
-    })
+    const parsed = JSON.parse(spec.value)
 
-    if (token !== renderToken) {
-      result.view.finalize()
-      return
-    }
+    const finalSpec = props.section.properties?.autosize
+      ? { width: 'container', height: 'container',
+          autosize: { type: 'fit', contains: 'padding' }, ...parsed }
+      : parsed
 
+    const result = await embed(container.value, finalSpec, { actions: false })
+    if (token !== renderToken) { result.view.finalize(); return }
     view?.finalize()
     view = result.view
   } catch (err) {
@@ -51,10 +67,20 @@ async function renderContent() {
   }
 }
 
-onMounted(renderContent)
+// Refetch only when the resolved URL genuinely changes
+watchDebounced(currentUrl, (url) => {
+  if (url) fetchSpec()
+}, { debounce: 400, immediate: true })
 
 // Re-render whenever the section content changes (debounced while typing)
-watchDebounced(() => props.section.content, renderContent, { debounce: 400 })
+watchDebounced(
+  () => [spec.value, props.section.properties],
+  renderContent,
+  { debounce: 400, deep: true }
+)
+watch(() => props.section.content, (content) => {
+  if (!isInteractive.value) spec.value = content ?? ''
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   view?.finalize()
@@ -66,10 +92,9 @@ onBeforeUnmount(() => {
     border: props.showframe ? '3px solid var(--accent)' : 'none',
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
-    backgroundColor: props.layout?.bg || 'transparent',
   }">
     <div ref="container" class="vega-container" :style="{
- 
+
     }"></div>
   </div>
 </template>

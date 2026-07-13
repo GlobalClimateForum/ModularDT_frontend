@@ -1,4 +1,4 @@
-import {api, marpApi} from "./api";
+import { api, marpApi } from "./api";
 
 export interface Slide {
     id?: number;
@@ -12,6 +12,12 @@ export interface Slide {
     mode?: string;
 }
 
+export interface SectionProperties {
+    autosize?: boolean;
+    bg?: string;
+    [key: string]: unknown;   // room to grow without a type change every time
+}
+
 export interface SlideSection {
     id?: number | null;
     slide?: number | null;
@@ -19,17 +25,43 @@ export interface SlideSection {
     width_fraction: number;
     content: string;
     content_path: string;
-    mode?:  'static' | 'url' | 'interactive';
+    mode?: 'static' | 'url' | 'interactive';
     parameters?: Parameters;
-    url_pattern?:string;
+    url_pattern?: string;
+    properties?: SectionProperties;
 }
 
-export interface Parameter {
-    type: 'string' | 'number' | 'boolean' | 'select'
-    options?: string[]
-    range?: { min: number | null, max: number | null }
-    default?: unknown
+export interface StringParameter {
+    type: 'string'
+    description?: string
+    default?: string | null
 }
+
+export interface BooleanParameter {
+    type: 'boolean'
+    description?: string
+    default?: boolean | null
+}
+
+export interface NumberParameter {
+    type: 'number'
+    description?: string
+    range?: { min: number | null, max: number | null }
+    default?: number | null
+}
+
+export interface SelectParameter {
+    type: 'select'
+    description?: string
+    options: string[]
+    default?: string | null
+}
+
+export type Parameter =
+    | StringParameter
+    | BooleanParameter
+    | NumberParameter
+    | SelectParameter
 
 export interface Parameters {
     [key: string]: Parameter
@@ -56,7 +88,7 @@ export const getSlides = () => api.get("/slides/");
 
 export const getISlides = () => api.get("/slides/interactive/");
 
-export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) => 
+export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
     api.post("/slides/", { ...slide, sections });
 
 
@@ -72,7 +104,7 @@ export const nearestAspectRatio = (width: number, height: number): AspectRatio =
     return Math.abs(ratio - 4 / 3) <= Math.abs(ratio - 16 / 9) ? "4:3" : "16:9";
 };
 
-export const renderSlide = (content: string, width: number, height: number) => marpApi.post("/render/", { content,  width, height });
+export const renderSlide = (content: string, width: number, height: number) => marpApi.post("/render/", { content, width, height });
 
 export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
 export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
