@@ -217,9 +217,6 @@ watch(parameters, () => emitSection({}), { deep: true })
         <!-- EDITOR TOOL BAR  -->
         <div class="editor-toolbar">
             <div class="mode-select label-container">
-                <div style="color:red;font-size:11px">
-                    DEBUG: {{ JSON.stringify(selectedMode) }}
-                </div>
                 <SelectButton v-model="selectedMode" :options="modeOptions" optionLabel="label" dataKey="value"
                     :allowEmpty="false" id="vega-mode-select" />
             </div>
