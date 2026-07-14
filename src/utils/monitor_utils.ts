@@ -1,9 +1,14 @@
+import type { Scene } from "@/services/scene_service";
+import { settings } from '@/utils/settings'
+import { api } from "@/services/api";
+
 async function sendMonitorUpdate(monitorId: number, message: string) {
   // Die ID wandert direkt in den Pfad
-  const url = `/monitor/${monitorId}/update/`; 
-  
+  const url = `/monitor/${monitorId}/`;
+
   // Der Payload enthält nur noch die Nutzdaten
   const payload = {
+    event_type: "slide_update",
     text: message
   };
 
@@ -43,4 +48,26 @@ function getCookie(name) {
     }
   }
   return cookieValue;
+}
+
+
+export function updateMonitorStates(scene: Scene) {
+  const grid = Array(settings.value.number_of_screens).fill(null)
+
+  scene.slides.forEach(slide => {
+    if (slide && slide.position && slide.position <= settings.value.number_of_screens) {
+      grid[slide.position - 1] = slide
+    }
+  })
+
+  for (let index in grid) {
+    if (grid[index]) {
+      console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])
+      sendMonitorUpdate((Number(index) + 1), grid[index]) 
+    } else {
+      console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
+      sendMonitorUpdate((Number(index) + 1), "NULL") 
+    }
+
+  }
 }

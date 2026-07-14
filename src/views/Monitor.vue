@@ -57,6 +57,13 @@ onMounted(() => {
         }
       }
 
+      if (data.event_type === 'slide_update' || data.message) {
+        // Hier aktualisierst du den Zustand des Monitors!
+        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+          console.log("I should show slide ",data.text, " now.")
+        }
+      }
+
     } catch (e) {
       console.error('Fehler beim Verarbeiten der WebSocket-Nachricht:', e)
     }

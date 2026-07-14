@@ -11,6 +11,7 @@ import type { Scene } from "@/services/scene_service";
 import { useLivePresentationState } from '@/utils/live_presentation';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
+import { updateMonitorStates } from '@/utils/monitor_utils'
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
@@ -18,8 +19,6 @@ import SceneView from '@/components/SceneView.vue';
 const { t } = useI18n();
 import '@/assets/main.css';
 
-const currentSceneNumber = ref(1);
-const activePresentation = ref(false);
 const currentPresentation = ref<Presentation | null>(null);
 const loading = ref(false);
 const scenes = ref<Scene[]>([]);
@@ -33,7 +32,7 @@ const scenesMap = computed(() => {
 });
 
 const activeSceneIdFromPresentation = computed(() => {
-  const index = currentSceneNumber.value - 1;
+  const index = livePresentationState.value.current_scene - 1;
   return currentPresentation.value?.scenes?.[index]?.id || null;
 });
 
@@ -64,8 +63,8 @@ onMounted(() => {
       const live_presentation_read = response.data.live_presentation;
 
       if (live_presentation_read && Object.keys(live_presentation_read).length > 0) {
-        currentSceneNumber.value = live_presentation_read.current_scene || 1;
-        activePresentation.value = live_presentation_read.active;
+        livePresentationState.value.current_scene = live_presentation_read.current_scene || 1;
+        livePresentationState.value.active = live_presentation_read.active;
 
         const presentationId = live_presentation_read.presentation;
         if (presentationId) {
@@ -84,14 +83,23 @@ onMounted(() => {
     })
     .finally(() => {
       loading.value = false;
+      updateMonitors();
     });
 });
 
+async function updateMonitors() {
+  if (currentScene.value) {
+    updateMonitorStates(currentScene.value)
+  }
+}
+
 async function updatePresentationState() {
+  currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
   try {
     // Wir senden die ID der Präsentation und setzen die Anzeige auf aktiv
     const response = await updateLivePresentation({
-      current_scene: currentSceneNumber.value
+      active: livePresentationState.value.active,
+      current_scene: livePresentationState.value.current_scene
     });
   } catch (error) {
     console.error("Error controlling presentation:", error);
@@ -99,24 +107,24 @@ async function updatePresentationState() {
 }
 
 const previousScene = () => {
-  if (currentSceneNumber.value > 1) {
-    currentSceneNumber.value--;
+  if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
+    livePresentationState.value.current_scene--;
     updatePresentationState();
+    updateMonitors();
   }
 };
 
 const nextScene = () => {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
-  if (currentSceneNumber.value < maxScenes) {
-    currentSceneNumber.value++;
+  if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
+    livePresentationState.value.current_scene++;
     updatePresentationState();
+    updateMonitors();
   }
 };
 
 const abortPresentation = () => {
   stopPresentation();
-  activePresentation.value = false;
-  currentSceneNumber.value = 1;
 };
 
 
@@ -136,7 +144,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 </script>
 
 <template>
-
   <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;
   padding: var(--space-large); overflow: hidden;">
     <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
@@ -153,7 +160,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
           </template>
         </Button>
 
-        <InputNumber v-model="currentSceneNumber" :min="1" class="scene_indicator" />
+        <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
 
         <Button @click="nextScene" rounded>
           <template #icon>
