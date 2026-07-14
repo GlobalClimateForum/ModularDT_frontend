@@ -131,6 +131,7 @@ function onAddPresentation() {
 }
 
 async function onPlayPresentation(presentation: Presentation) {
+    console.log("presentation:",presentation);
     const presentationId = presentation.id;
     if (presentationId === undefined) {
         console.error("Error starting presentation: no valid presentation id");

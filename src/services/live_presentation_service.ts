@@ -16,11 +16,11 @@ export const updateLivePresentation = (live: Partial<LivePresentation>) => api.p
 export const stopPresentation = async () => {
     livePresentationState.value.active = false;
     livePresentationState.value.presentation = -1;
-    livePresentationState.value.current_scene = -1;
+    livePresentationState.value.current_scene = 1;
 
     try {
         const response = await updateLivePresentation({
-            active: false,
+            active: false
         });
         console.log("Live Presentation stoped.");
     } catch (error) {
