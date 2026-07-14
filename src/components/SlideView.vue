@@ -91,12 +91,13 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
                 height: props.slide?.height + 'px',
                 transform: `scale(${autoScale})`,
                 transformOrigin: 'top left',
+                boxShadow: props.shadow 
             }">
 
                 <!-- dynamic component rendering slide sections based on their view_type -->
                 <component v-for="(section, index) in sectionContents" :key="`${section.view_type}-${index}`"
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
-                    :sectionWidth="sectionWidths[index]" :showframe="props.showframe" :shadow="props.shadow"
+                    :sectionWidth="sectionWidths[index]" :showframe="props.showframe"
                     :basemap="props.basemap" />
             </div>
         </div>

@@ -197,12 +197,17 @@ function emptyScreens() {
                     <!-- Monitor Info: Name, Index, and Clear Button -->
                     <div class="monitor-info">
                         <div class="monitor-label-container">
-                            <h3 class="monitor-label"><i class="material-symbols-outlined">desktop_windows</i>
+                            <h3 class="monitor-label">
+                                <i class="material-symbols-outlined">desktop_windows</i>
                                 {{ index + 1 }}
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button icon="pi pi-times" small rounded @click="scene[index] = null" />
+                        <Button small rounded @click="scene[index] = null">
+                            <template #icon>
+                                <i class="material-symbols-outlined">close</i>
+                            </template>
+                        </Button>
                     </div>
 
                     <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
@@ -320,6 +325,7 @@ function emptyScreens() {
     width: 100%;
     height: 200px;
     position: relative;
+    overflow: hidden;
 }
 
 .monitor-info {
@@ -339,6 +345,7 @@ function emptyScreens() {
     display: flex;
     flex-direction: row;
     gap: 1.0rem;
+    align-items: center;
 }
 
 .monitor-label {
