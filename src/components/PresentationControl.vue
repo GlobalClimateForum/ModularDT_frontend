@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { useI18n } from 'vue-i18n';
-import SceneView from '@/components/SceneView.vue';
 import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
 import { getPresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service";
 import { getScenes } from "@/services/scene_service";
 import type { Scene } from "@/services/scene_service";
 import { useLivePresentationState } from '@/utils/live_presentation';
+import InputText from 'primevue/inputtext';
+import { useNow, useDateFormat } from '@vueuse/core'
 
 const livePresentationState = useLivePresentationState()
+import SceneView from '@/components/SceneView.vue';
+
 const { t } = useI18n();
+import '@/assets/main.css';
 
 const currentSceneNumber = ref(1);
 const activePresentation = ref(false);
@@ -20,6 +24,9 @@ const currentPresentation = ref<Presentation | null>(null);
 const loading = ref(false);
 const scenes = ref<Scene[]>([]);
 const currentScene = ref<Scene>();
+
+const now = useNow({ interval: 1000 })
+const time = useDateFormat(now, 'HH:mm:ss')
 
 const scenesMap = computed(() => {
   return new Map(scenes.value.map(scene => [scene.id, scene]));
@@ -111,140 +118,115 @@ const abortPresentation = () => {
   activePresentation.value = false;
   currentSceneNumber.value = 1;
 };
+
+
+function handleKey(e: KeyboardEvent) {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft') previousScene();
+  else if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    nextScene()
+  };
+}
+
+onMounted(() => window.addEventListener('keydown', handleKey));
+onUnmounted(() => window.removeEventListener('keydown', handleKey));
+
 </script>
 
 <template>
-  <div class="presentation_control_container">
 
-    <div v-if="activePresentation" class="top-content-area">
-      <div class="preview-safe-bounds">
-        <SceneView v-if="currentScene" :preview="true" :key="currentScene.id" :scene="currentScene" :showframe="false"
-          class="scene-preview" />
+  <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: var(--space-large); overflow: hidden;">
+    <div class="presentation_container" @keydown.left="previousScene" @keydown.right="nextScene">
+
+      <div class="scene-container">
+        <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
+          :showframe="false" />
+      </div>
+
+      <div class="controls glass">
+        <Button @click="previousScene" rounded>
+          <template #icon>
+            <i class="material-symbols-outlined">chevron_left</i>
+          </template>
+        </Button>
+
+        <InputNumber v-model="currentSceneNumber" :min="1" class="scene_indicator" />
+
+        <Button @click="nextScene" rounded>
+          <template #icon>
+            <i class="material-symbols-outlined">chevron_right</i>
+          </template>
+        </Button>
+
+        <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
+          <template #icon>
+            <i class="material-symbols-outlined">stop_circle</i>
+          </template>
+        </Button>
+
+        <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
+        <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
       </div>
     </div>
-
-    <div v-else class="top-content-area">
-      <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
-    </div>
-
-    <!-- Control bar -->
-    <div class="bottom-control-bar">
-      <div v-if="activePresentation" class="spacer-left">Presentation: {{ currentPresentation?.name }}</div>
-      <div v-else class="spacer-left"></div>
-      <Button :label="$t('moderator.presentation.previous')" icon="pi pi-chevron-left" @click="previousScene"
-        class="control-item nav-button" />
-      <InputNumber v-model="currentSceneNumber" :min="1" class="control-item number-input" />
-      <Button :label="$t('moderator.presentation.next')" icon="pi pi-chevron-right" iconPos="right" @click="nextScene"
-        class="control-item nav-button" />
-      <Button :label="$t('moderator.presentation.stop')" icon="pi pi-stop-circle" @click="abortPresentation"
-        class="control-item nav-button push-right" />
-    </div>
   </div>
+
 </template>
 
 <style scoped>
-.top-content-area {
-  flex-grow: 1;
+.scene-container {
   display: flex;
-  align-items: center;     /* Zentriert vertikal, wenn genug Platz ist */
-  justify-content: center;   /* Zentriert horizontal */
-  background-color: #f3f4f6; /* bg-gray-100 */
-  width: 100%;       
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   height: 100%;
-  overflow: hidden;          /* Verhindert Scrollbalken */
-  
-  /* WICHTIG: Das sorgt dafür, dass sich der Container bei Platzmangel */
-  align-items: safe center;  
+  overflow: hidden;
+  padding: var(--space-large);
 }
 
-/* Die Scene-Preview darf maximal 90% der Breite ODER Höhe einnehmen */
-.scene-preview {
-  max-width: 90% !important;
-  max-height: 90% !important;
-  width: auto !important;
-  height: auto !important;
-  aspect-ratio: 16 / 9; 
+.controls {
+  position: absolute;
+  bottom: var(--space-large);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  border-radius: var(--br-large);
+  padding: var(--space-medium);
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-medium);
+  align-items: center;
 }
-.presentation_control_container {
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-family: sans-serif;
-  height: 100%;
+
+.presentation_container {
   width: 100%;
+  height: 100%;
+  position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background-color: var(--p-content-background, #f8f9fa);
-  box-sizing: border-box;
-}
-
-.preview-safe-bounds {
-  width: 100%;
-  height: 100%;
-  display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: center;
+  background: var(--bg-main);
+  border-radius: var(--br-medium);
+  overflow: auto;
 }
 
-
-.center-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #374151;
-  /* Entspricht text-gray-700 */
-  display: block;
+.controls:deep(.p-inputtext) {
+  background: color-mix(in srgb, var(--p-primary-900) 80%, transparent);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4.3px);
+  -webkit-backdrop-filter: blur(4.3px);
+  color: var(--p-primary-50);
+  font-family: 'Fira Code', monospace;
+  border: 1px solid rgba(255, 255, 255, 0.31);
   text-align: center;
-  margin-bottom: 1rem;
 }
 
-
-/* Untere Kontrollleiste bleibt fixiert am Boden */
-.bottom-control-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Zentriert die mittleren Elemente */
-  gap: 1rem;
-  padding: 1rem;
-  background-color: #ffffff;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* Drückt den Button ganz nach rechts */
-.push-right {
-  margin-left: auto;
-}
-
-/* Hält die Mitte in Waage (muss dieselbe Breite wie der rechte Button haben) */
-.spacer-left {
-  margin-right: auto;
-  width: 3rem;
-  /* Passen Sie diesen Wert an die tatsächliche Breite Ihres Buttons an */
-}
-
-/* Gemeinsame Basis für alle 3 Elemente in der Kontrollleiste:
-   Sie teilen sich den Platz absolut gleichmäßig auf. */
-.control-item {
-  flex: 1 1 0%;
-  max-width: 160px;
-  /* Alle 3 werden maximal so breit */
-  min-width: max-content;
-  /* Richtet sich nach dem breitesten Inhalt (z.B. langer Buttontext) */
-  white-space: nowrap;
-}
-
-/* Spezifisch für die Navigations-Buttons */
-.nav-button {
-  justify-content: center;
-  /* Zentriert Text und Icon im Button */
-}
-
-/* Spezifisch für das PrimeVue InputNumber-Feld */
-.number-input :deep(.p-inputnumber-input) {
-  width: 100%;
-  /* Zwingt das innere Textfeld, die volle Breite auszufüllen */
-  text-align: center;
-  /* Zentriert die Zahl im Eingabefeld für eine schönere Optik */
+.scene_indicator:deep(.p-inputtext) {
+  font-weight: 900;
+  max-width: 5rem;
 }
 </style>

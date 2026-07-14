@@ -30,6 +30,9 @@
   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-dark: 0 2px 4px rgba(0, 0, 0, 0.2);
   --shadow-controls-inset: inset 0 0 5px 2px var(--p-primary-200);
+
+  --bg-main: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+
 }
 
 @font-face {
@@ -171,4 +174,15 @@ h6 {
   font-size: var(--fs-small);
   margin: 0;
   margin-bottom: var(--space-small);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4.3px);
+  -webkit-backdrop-filter: blur(4.3px);
+
+  border: 1px solid rgba(255, 255, 255, 0.31);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  color: var(--p-primary-50);
 }
