@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount, watch } from 'vue'
+import { ref, onBeforeUnmount, watch, onMounted, computed } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
-import { computed } from 'vue'
 import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
 
 const props = defineProps<{
@@ -12,29 +11,31 @@ const props = defineProps<{
   showframe?: boolean,
   progress?: number | null,
 }>()
+
+// Containter for the Vega chart. We use a ref so that we can pass it to vega-embed.
 const container = ref<HTMLElement | null>(null)
+// The current values of the parameters for this section.
+const paramValues = ref<Record<string, unknown>>(seedValues())
 
-let view: any = null
-let renderToken = 0
-let fetchToken = 0
+let view: any = null // The current Vega view
+let renderToken = 0 // Token to track the latest render request. If a new render is requested before the previous one finishes, we cancel the previous one.
+let fetchToken = 0 // Token to track the latest fetch request. If a new fetch is requested before the previous one finishes, we cancel the previous one.
 
-// is this section interactive?
+// Whether this section is interactive (i.e. has a URL pattern and is in interactive mode)
 const isInteractive = computed(() =>
   props.section.mode === 'interactive' && !!props.section.url_pattern
 )
 
+// The current Vega spec for this section. This is either the content of the section (if not interactive) or the fetched spec from the URL (if interactive).
 const spec = ref<string>(props.section.content ?? '')
 
 // The URL this section currently resolves to
 const currentUrl = computed(() => {
   if (!isInteractive.value) return ''
-  const values: Record<string, unknown> = {}
-  Object.entries(props.section.parameters ?? {}).forEach(([name, param]) => {
-    values[name] = param.default ?? null
-  })
-  return buildVegaUrl(props.section.url_pattern!, values)
+  return buildVegaUrl(props.section.url_pattern!, paramValues.value)
 })
 
+// Function to fetch the Vega spec from the current URL. We use a token to ensure that we only update the spec if this is the latest fetch request.
 async function fetchSpec() {
   if (!currentUrl.value) return
   const token = ++fetchToken
@@ -46,6 +47,16 @@ async function fetchSpec() {
   }
 }
 
+// Function to initialize the parameter values for this section.
+function seedValues(): Record<string, unknown> {
+  const seeded: Record<string, unknown> = {}
+  Object.entries(props.section.parameters ?? {}).forEach(([name, param]) => {
+    seeded[name] = param.default ?? null
+  })
+  return seeded
+}
+
+// Function to render the Vega spec in the container. We use a token to ensure that we only update the view if this is the latest render request.
 async function renderContent() {
   if (!container.value || !spec.value) return
   const token = ++renderToken
@@ -73,17 +84,20 @@ watchDebounced(currentUrl, (url) => {
 }, { debounce: 400, immediate: true })
 
 // Re-render whenever the section content changes (debounced while typing)
-watchDebounced(
-  () => [spec.value, props.section.properties],
-  renderContent,
-  { debounce: 400, deep: true }
-)
+watchDebounced(spec, renderContent, { debounce: 400 })
+watch(() => props.section.properties, renderContent, { deep: true })
+watch(() => props.section.parameters, () => { paramValues.value = seedValues() }, { deep: true })
+
 watch(() => props.section.content, (content) => {
   if (!isInteractive.value) spec.value = content ?? ''
 }, { immediate: true })
 
 onBeforeUnmount(() => {
   view?.finalize()
+})
+
+onMounted(() => {
+  renderContent()
 })
 </script>
 
@@ -93,9 +107,7 @@ onBeforeUnmount(() => {
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
   }">
-    <div ref="container" class="vega-container" :style="{
-
-    }"></div>
+    <div ref="container" class="vega-container"></div>
   </div>
 </template>
 
