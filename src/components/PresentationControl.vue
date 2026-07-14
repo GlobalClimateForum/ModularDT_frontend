@@ -139,7 +139,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 
   <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;
   padding: var(--space-large); overflow: hidden;">
-    <div class="presentation_container" @keydown.left="previousScene" @keydown.right="nextScene">
+    <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
       <div class="scene-container">
         <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
@@ -209,13 +209,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: var(--bg-main);
   border-radius: var(--br-medium);
   overflow: auto;
 }
 
 .controls:deep(.p-inputtext) {
-  background: color-mix(in srgb, var(--p-primary-900) 80%, transparent);
+  background: color-mix(in srgb, var(--p-primary-500) 80%, transparent);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(4.3px);
   -webkit-backdrop-filter: blur(4.3px);

@@ -57,7 +57,7 @@ const gridStyle = computed(() => {
 </script>
 
 <template>
-    <div class="monitor_container" :style="gridStyle">
+    <div :class="'monitor_container' + (props.preview ? ' inset-control' : '')" :style="gridStyle">
         <div v-for="(slot, index) in gridedSlides" :key="index" class="screen monitor-item">
             <SlideView v-if="slot" :preview="false" :slide="slot" :sections="slot.sections ?? []" :showFrame="false" />
             <div v-else class="empty-screen">
@@ -98,8 +98,6 @@ const gridStyle = computed(() => {
     gap: var(--space-medium);
     padding: var(--space-medium);
     border-radius: var(--br-medium);
-
-    background:  var(--bg-main);
 }
 
 .monitor-item {

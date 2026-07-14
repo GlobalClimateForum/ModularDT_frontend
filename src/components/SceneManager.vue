@@ -126,7 +126,7 @@ function onTagAdded(addedTag: string) {
 <template>
     <Splitter class="dashboard" :gutterSize="2" stateKey="scene-manager-splitter" stateStorage="local">
 
-        <SplitterPanel class="sub-panel" :size="30">
+        <SplitterPanel class="sub-panel" :size="50">
 
             <DataTable :value="scenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                 @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="scene-table"
@@ -173,7 +173,7 @@ function onTagAdded(addedTag: string) {
             </DataTable>
         </SplitterPanel>
 
-        <SplitterPanel class="sub-panel">
+        <SplitterPanel class="sub-panel" :size="50">
             <!--{{ selectedScene }}-->
             <SceneView v-if="selectedScene" :preview="true" :key="selectedScene.id"  :scene="selectedScene" :showframe="false" class="scene-preview" />
             <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null" :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene"
@@ -187,16 +187,12 @@ function onTagAdded(addedTag: string) {
     flex: 1;
     min-height: 0;
     width: 100%;
-    max-height: 500px
 }
-
 
 .scene-table {
     flex: 1;
     min-height: 0;
-    /* the critical line */
 }
-
 
 .marp-output {
     flex: 1;
