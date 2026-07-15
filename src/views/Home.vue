@@ -71,6 +71,10 @@ import '@/assets/main.css'
       </div>
     </div>
 
+    <Button @click="router.push('/participant/1')" v-if="selectedRole === 'participant'" text>
+      <span class="material-symbols-outlined">person</span>
+    </Button>
+
   </div>
 
 </template>

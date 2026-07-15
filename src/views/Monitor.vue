@@ -99,7 +99,7 @@ onBeforeUnmount(() => {
     <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
 
     <!-- Monitor ID is between 1 and the number of screens -->
-    <div v-if="activeMonitor">
+    <div v-if="activeMonitor" >
       <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
       <p>Status: <strong>{{ connectionStatus }}</strong></p>
       {{ livePresentationState }}
