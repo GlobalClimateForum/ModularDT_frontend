@@ -27,8 +27,6 @@ const emit = defineEmits<{
     (e: 'sectionUpdated', content: SlideSection): void
 }>()
 
-let syncing = false
-
 // --- Local working state (never mutate props directly) ---------------------
 
 const parameters = ref<Parameters>({})
@@ -58,12 +56,23 @@ const urlPattern = computed(() => baseUrl.value ? buildPattern(baseUrl.value, pa
 
 watch(() => props.slideSection, (section) => {
     if (!section) return
-    if (syncing) { syncing = false; return }
+    console.log('SYNC incoming:', JSON.stringify(section.parameters))
+
+    const incoming = section.parameters
+        ? structuredClone(toRaw(section.parameters))
+        : {}
+
+    // Only overwrite local params if they actually changed.
+    if (JSON.stringify(incoming) !== JSON.stringify(toRaw(parameters.value))) {
+        parameters.value = incoming
+        console.log('SYNC applied')
+
+    } else {
+        console.log('SYNC skipped (equal)')
+    }
 
     const modeOption = modeOptions.find(o => o.value === section.mode)
     if (modeOption) selectedMode.value = modeOption
-
-    parameters.value = section.parameters ? structuredClone(toRaw(section.parameters)) : {}
 
     if (section.url_pattern) {
         baseUrl.value = stripFilters(section.url_pattern)
@@ -77,14 +86,15 @@ watch(() => props.slideSection, (section) => {
 // --- Emit a full updated section -------------------------------------------
 
 function emitSection(patch: Partial<SlideSection>) {
-    syncing = true
-    emit('sectionUpdated', {
+    const payload = {
         ...props.slideSection,
         mode: selectedMode.value.value,
         parameters: structuredClone(toRaw(parameters.value)),
         url_pattern: urlPattern.value,
         ...patch,
-    })
+    }
+    console.log('EMIT parameters:', JSON.stringify(payload.parameters))
+    emit('sectionUpdated', payload)
 }
 
 // --- URL validation ---------------------------------------------------------
@@ -156,6 +166,7 @@ function addParamOption(paramKey: string, option: string) {
 function onAddOption(paramKey: string) {
     addParamOption(paramKey, draftOption.value[paramKey] ?? '')
     draftOption.value[paramKey] = ''
+    console.log('after add, local param:', structuredClone(toRaw(parameters.value[paramKey])))
 }
 
 function removeParamOption(paramKey: string, option: string) {

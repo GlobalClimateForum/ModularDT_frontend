@@ -43,6 +43,7 @@ const selectedTypes = ref<Object[]>([]) // Track the selected view types for eac
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
+const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -136,22 +137,25 @@ function updateSectionContent(index: number, newContent: string) {
 
 // Handler to update the entire section (view_type, content, content_path, width_fraction) when the editor emits a sectionUpdated event
 function updateSection(index: number, updatedSection: SlideSection) {
+    console.log('PARENT received:', JSON.stringify(updatedSection.parameters))
 
     const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
-
-    // Create a shallow copy of the current sections
     const updatedSections = [...slideSections.value]
-    // Update the section at the specified index with the new data
     updatedSections[index] = { ...updatedSections[index], ...updatedSection }
-    // Update the reactive slideSections reference with the modified sections
     slideSections.value = updatedSections
-
-    // Refresh current slide to trigger re-render of SlideView with updated content
     currentSlide.value = { ...currentSlide.value }
+
+    console.log('PARENT stored:', JSON.stringify(slideSections.value[index].parameters))
 
     if (pathChanged && (updatedSection.mode === 'url' || updatedSection.mode === 'interactive')) {
         fetchVegaForSection(index)
     }
+}
+function sectionWithWidth(index: number) {
+    const s = slideSections.value[index]
+    return s.width_fraction === sectionWidths.value[index]
+        ? s
+        : { ...s, width_fraction: sectionWidths.value[index] }
 }
 
 // Helper to fetch Vega specifications
@@ -284,9 +288,10 @@ watch(currentSectionIndex, (i) => {
 
                         <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
                         <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
-                            :slideSection="{ ...section, width_fraction: sectionWidths[index] }"
+                            :slideSection="sectionWithWidth(index)"
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
+                            @targetSlideUpdated="targetSlide = $event" :basemap="basemap"
                             :progress="vegaProgress" :sectionIdx="index" :autosize="autosizeVega">
                         </component>
                     </TabPanel>
@@ -314,7 +319,7 @@ watch(currentSectionIndex, (i) => {
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame" :basemap="basemap" />
+                    :showframe="showFrame" :basemap="basemap" :targetSlide = "targetSlide" />
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"

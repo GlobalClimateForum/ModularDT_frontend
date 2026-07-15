@@ -8,6 +8,7 @@ import { basemaps } from '@/utils/map_utils';
 // Props definition with default values for optional props
 const props = withDefaults(defineProps<{
     slide: Slide | null,
+    targetSlide?: Slide | null,
     sections: SlideSection[],
     preview: boolean,
     showframe?: boolean,
@@ -34,7 +35,8 @@ watch(
 const componentsMap: Record<string, any> = {
     markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue')),
     map: defineAsyncComponent(() => import('@/components/MapSlide.vue')),
-    vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue'))
+    vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue')), 
+    ipanel: defineAsyncComponent(() => import('@/components/IPSlide.vue')),
 };
 
 // -- Auto scaling --
@@ -98,7 +100,8 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
                 <component v-for="(section, index) in sectionContents" :key="`${section.view_type}-${index}`"
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
                     :sectionWidth="sectionWidths[index]" :showframe="props.showframe"
-                    :basemap="props.basemap" />
+                    :basemap="props.basemap" 
+                    :targetSlide="props.targetSlide"/>
             </div>
         </div>
 
