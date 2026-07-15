@@ -4,11 +4,15 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/utils/settings'
 import { useLivePresentationState } from '@/utils/live_presentation';
+import type { Slide } from '@/services/slide_service';
+import { getSlide } from '@/services/slide_service';
+import SlideView from '@/components/SlideView.vue';
 
 const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
+const currentSlide = ref<Slide | null>(null)
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -19,6 +23,22 @@ const activeMonitor = computed(() => {
 let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
 const mySlideId = ref<number>()
+
+function getSlideMode(sections: SlideSection[]): string {
+  return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
+}
+
+function fetchSlide(id: number) {
+  getSlide(id).then(response => {
+    currentSlide.value = response.data;
+    if (currentSlide.value)
+      if (currentSlide.value.sections && currentSlide.value.sections.length > 0) {
+        currentSlide.value.mode = getSlideMode(currentSlide.value.sections);
+      }
+  }).catch(error => {
+    console.error("Error fetching slide ", id, ":", error);
+  });
+}
 
 onMounted(() => {
   const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
@@ -60,7 +80,12 @@ onMounted(() => {
       if (data.event_type === 'slide_update' || data.message) {
         // Hier aktualisierst du den Zustand des Monitors!
         if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-          console.log("I should show slide ",data.text, " now.")
+          console.log("I should show slide ", data.slide, " now.")
+        }
+        if (data.slide != "null") {
+          currentSlide.value = data.slide
+        } else {
+          currentSlide.value = null
         }
       }
 
@@ -91,15 +116,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="livePresentationState.active">
-    <h1>Presentation-mode!</h1>
+  <div v-if="livePresentationState.active" class="slideshow">
+    <div v-if="currentSlide === null">
+
+    </div>
+    <div v-else>
+      <SlideView :preview="true" :slide="currentSlide" :showframe="false"
+        :sections="currentSlide.sections ? currentSlide.sections : []" class="slide-preview" />
+    </div>
   </div>
   <div v-else class="welcome">
     <h2>{{ t('monitor.greeting') }}</h2>
     <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
 
     <!-- Monitor ID is between 1 and the number of screens -->
-    <div v-if="activeMonitor" >
+    <div v-if="activeMonitor">
       <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
       <p>Status: <strong>{{ connectionStatus }}</strong></p>
       {{ livePresentationState }}
@@ -123,5 +154,15 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   text-align: center;
   background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+}
+
+.slideshow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 100vh;
+  text-align: center;
 }
 </style>

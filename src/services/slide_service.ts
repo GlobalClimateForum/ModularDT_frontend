@@ -85,6 +85,7 @@ export const getSlideSectionType = (value: string) => {
 export type SlidePayload = Omit<Slide, "id" | "created_at" | "updated_at">;
 
 export const getSlides = () => api.get("/slides/");
+export const getSlide = (id: number) => api.get(`/slides/${id}/`);
 
 export const getISlides = () => api.get("/slides/interactive/");
 

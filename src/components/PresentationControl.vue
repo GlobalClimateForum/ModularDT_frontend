@@ -11,7 +11,7 @@ import type { Scene } from "@/services/scene_service";
 import { useLivePresentationState } from '@/utils/live_presentation';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
-import { updateMonitorStates } from '@/utils/monitor_utils'
+import { updateMonitorStates } from '@/services/monitor_service'
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
@@ -83,6 +83,7 @@ onMounted(() => {
     })
     .finally(() => {
       loading.value = false;
+      currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
       updateMonitors();
     });
 });
@@ -148,9 +149,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   padding: var(--space-large); overflow: hidden;">
     <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
-      <div class="scene-container">
-        <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
-          :showframe="false" />
+        <div  v-if="livePresentationState.active" class="scene-container">
+          <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
+            :showframe="false" />
+        </div>
+
+      <div v-else>
+        <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
       </div>
 
       <div class="controls glass">
