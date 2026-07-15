@@ -16,6 +16,8 @@ const props = defineProps<{
 const container = ref<HTMLElement | null>(null)
 // The current values of the parameters for this section.
 const paramValues = ref<Record<string, unknown>>(seedValues())
+// Background Color
+const bgColor = computed(() => props.section.properties?.bg ?? 'transparent')
 
 let view: any = null // The current Vega view
 let renderToken = 0 // Token to track the latest render request. If a new render is requested before the previous one finishes, we cancel the previous one.
@@ -40,7 +42,7 @@ async function fetchSpec() {
   if (!currentUrl.value) return
   const token = ++fetchToken
   try {
-    const fetched = await streamVegaSpec(currentUrl.value, () => {})
+    const fetched = await streamVegaSpec(currentUrl.value, () => { })
     if (token === fetchToken) spec.value = fetched
   } catch (err) {
     console.error('fetchSpec: failed', err)
@@ -65,8 +67,10 @@ async function renderContent() {
     const parsed = JSON.parse(spec.value)
 
     const finalSpec = props.section.properties?.autosize
-      ? { width: 'container', height: 'container',
-          autosize: { type: 'fit', contains: 'padding' }, ...parsed }
+      ? {
+        width: 'container', height: 'container',
+        autosize: { type: 'fit', contains: 'padding' }, ...parsed
+      }
       : parsed
 
     const result = await embed(container.value, finalSpec, { actions: false })
@@ -92,6 +96,9 @@ watch(() => props.section.content, (content) => {
   if (!isInteractive.value) spec.value = content ?? ''
 }, { immediate: true })
 
+watch(() => props.section.properties, renderContent, { deep: true })
+
+
 onBeforeUnmount(() => {
   view?.finalize()
 })
@@ -106,7 +113,9 @@ onMounted(() => {
     border: props.showframe ? '3px solid var(--accent)' : 'none',
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
-  }">
+      backgroundColor: '#' + bgColor,
+  }"
+>
     <div ref="container" class="vega-container"></div>
   </div>
 </template>

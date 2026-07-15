@@ -2,12 +2,16 @@
 import Toolbar from 'primevue/toolbar'
 import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button'
+import ColorPicker from 'primevue/colorpicker';
+
 import { ref, watch } from 'vue'
+import { Color } from 'maplibre-gl';
 
 const emit = defineEmits<{
     (e: 'sectionWidths', layout: number[]): void,
     (e: 'showframe', show: boolean): void,  // emits a boolean value indicating whether to show the frame or not
     (e: 'autosize', autoSize: boolean): void // emits a boolean value indicating whether to auto size or not
+    (e: 'bgcolor', color: string): void // emits a Color object representing the selected background color
 }>()
 
 const props = defineProps<{
@@ -15,6 +19,7 @@ const props = defineProps<{
     widths?: number[],
     showFrame?: boolean,
     autoSizeButton?: boolean
+    bgSelection?: boolean
 }>()
 
 const currentLayout = ref<string>(props.layout || 'fullscreen');
@@ -101,6 +106,12 @@ watch(() => props.layout, (newLayout) => {
                             </template>
                         </Button>
                     </div>
+
+                    <div class="label-container" center>
+                        <label>Background</label>
+                        <ColorPicker @change="emit('bgcolor', $event.value)"></ColorPicker>
+                    </div>
+
                 </div>
             </template>
         </Toolbar>

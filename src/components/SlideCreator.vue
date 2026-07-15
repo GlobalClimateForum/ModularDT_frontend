@@ -42,6 +42,7 @@ const layout = ref<string>('fullscreen') // Track the current selected layout fo
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
+const bgColor = ref<string>('#ffffff') // Track the selected background color for the slide preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 
@@ -227,6 +228,19 @@ watch(autosizeVega, (on) => {
     currentSlide.value = { ...currentSlide.value }
 })
 
+// Watch for changes in the background color and update the slide's background color accordingly
+watch(bgColor, (newColor) => {
+    const i = currentSectionIndex.value
+    const section = slideSections.value[i]
+    const updatedSections = [...slideSections.value]
+    updatedSections[i] = {
+        ...section,
+        properties: { ...section.properties, bg: newColor },
+    }
+    slideSections.value = updatedSections
+    currentSlide.value = { ...currentSlide.value }
+})
+
 watch(currentSectionIndex, (i) => {
     autosizeVega.value = !!slideSections.value[i]?.properties?.autosize
 })
@@ -325,7 +339,9 @@ watch(currentSectionIndex, (i) => {
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                     @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                     :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                    @autosize="autosizeVega = $event" />
+                    @autosize="autosizeVega = $event"
+                    @bgcolor="bgColor = $event"
+                 />
 
             </div>
         </SplitterPanel>
