@@ -4,6 +4,7 @@ import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
 import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
+import { parameterStore } from '@/services/parameter_service'
 
 const props = defineProps<{
   slide: Slide,
@@ -105,6 +106,11 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   renderContent()
+  const unsubscribe = parameterStore.subscribe((change) => {
+    if (change.section === props.section.id) {
+      console.log(change);
+    }
+  })
 })
 </script>
 
@@ -113,9 +119,8 @@ onMounted(() => {
     border: props.showframe ? '3px solid var(--accent)' : 'none',
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
-      backgroundColor: '#' + bgColor,
-  }"
->
+    backgroundColor: '#' + bgColor,
+  }">
     <div ref="container" class="vega-container"></div>
   </div>
 </template>
