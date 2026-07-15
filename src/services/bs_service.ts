@@ -10,7 +10,7 @@ export async function getBackendServerStatus(): Promise<{ message: string }> {
         return { message: 'VITE_API_BASE_URL not configured' }
     }
     try {
-        const res = await fetch(`${API_BASE_URL}/health`, { method: 'GET' })
+        const res = await fetch(`${API_BASE_URL}health`, { method: 'GET' })
         if (res.ok) {
             backendServerStatusClass.value = 'success'
             return { message: 'Connected' }
