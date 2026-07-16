@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, onUnmounted,  ref } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/utils/settings'
 import { useLivePresentationState } from '@/utils/live_presentation';
-import type { Slide } from '@/services/slide_service';
+import type { Slide, SlideSection } from '@/services/slide_service';
 import SlideView from '@/components/SlideView.vue';
+import { parameterStore, type ParameterChange } from '@/services/parameter_service'
 
 const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
@@ -23,8 +24,45 @@ let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
 const mySlideId = ref<number>()
 
+// The slide to be displayed, which is the currentSlide with the latest parameter changes applied
+const displaySlide = computed(() => {
+  if (!currentSlide.value) return null
+  const lastChange = parameterChanges.value[parameterChanges.value.length - 1]
+  const updatedSlide = applyParameterChange(currentSlide.value, lastChange)
+  console.log('Display slide updated:', updatedSlide)
+  return updatedSlide
+})
+
 function getSlideMode(sections: SlideSection[]): string {
   return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
+}
+
+// -- Parameter Changes --
+const parameterChanges = ref<ParameterChange[]>([])
+// Subscribe to parameter changes when the component is mounted
+onMounted(() => {
+  stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
+})
+// Function to stop the subscription to parameter changes
+let stop: (() => void) | undefined 
+// Clean up the subscription when the component is unmounted
+onUnmounted(() => stop?.()) 
+
+// Function to apply a parameter change to a slide, returning a new slide object with the updated parameters
+function applyParameterChange(slide: Slide, change: ParameterChange | undefined): Slide {
+  if (!change) return slide // If no change is provided, return the original slide
+  const updatedSections = slide.sections?.map(section => {
+    if (section.id !== change.section) return section // If the section ID does not match, return the original section
+    const existing = section.parameters?.[change.parameter] // Get the existing parameter value for the section
+    const updated = existing && typeof existing === 'object'
+        ? { ...existing, default: change.value }
+        : change.value
+    return {
+      ...section,
+      parameters: { ...section.parameters, [change.parameter]: updated },
+    }
+  })
+  return { ...slide, sections: updatedSections }
 }
 
 /*
@@ -40,6 +78,7 @@ function fetchSlide(id: number) {
   });
 }
 */
+
 
 onMounted(() => {
   const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
@@ -108,12 +147,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="livePresentationState.active" class="slideshow">
+
     <div v-if="currentSlide === null">
 
     </div>
-    <div v-else>
-      <SlideView :preview="true" :slide="currentSlide" :showframe="false"
-        :sections="currentSlide.sections ? currentSlide.sections : []" class="slide-preview" />
+    <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
+      <SlideView :preview="false" :slide="displaySlide" :showframe="false"
+        :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
     </div>
   </div>
   <div v-else class="welcome">
