@@ -37,11 +37,7 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
         height: props.slide.height + 'px',
         border: props.showframe ? '3px solid var(--accent)' : 'none',
     }">
-        <div v-for="(section, index) in props.targetSlide?.sections ?? []" :key="index" class="controls-container"
-            :style="{
-                width: props.sectionWidth + 'px',
-                height: props.slide.height + 'px',
-            }">
+        <div v-for="(section, index) in props.targetSlide?.sections ?? []" :key="index" class="controls-container">
             <div v-for="(field, key) in section?.parameters ?? {}" :key="key" class="controls">
                 <div class="label-container" v-if="field && (field.type === 'number' || field.type === 'string')"
                     style="width: 100%;">
@@ -49,7 +45,7 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
                     <InputText :value="field.default" :type="field.type" @change="onParameterChange(section, key, $event)" />
                 </div>
 
-                <div v-else-if="field && field.type === 'select'" class="label-container" style="width: 100%;">
+                <div v-else-if="field && field.type === 'select'" class="label-container">
                     <label>{{ key }}</label>
                     <Select :options="field?.options" @change="onParameterChange(section, key, $event)" />
                 </div>
@@ -64,19 +60,17 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
 <style scoped>
 .section-wrapper {
     position: relative;
-    flex-shrink: 0;
     box-sizing: border-box;
     overflow: hidden;
     padding: var(--space-large);
     background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .controls-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: var(--space-medium);
     border-radius: var(--br-large);
 }
@@ -88,4 +82,23 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
     width: 100%;
     padding: var(--space-medium);
 }
+
+.controls :deep(.p-inputtext) {
+    width: 100%;
+    height: 50px; 
+    font-size: var(--fs-large);
+}
+
+.controls :deep(.p-select) {
+    height: 50px;
+    font-size: var(--fs-large);
+}
+.controls :deep(.p-select-label) {
+    display: flex;
+    align-items: center;
+    font-size: var(--fs-large);
+}
+
+
+
 </style>
