@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 
 import type { Slide, SlideSection } from '@/services/slide_service'
+import { getSlide } from '@/services/slide_service'
 import { type ParameterChange } from '@/services/parameter_service'
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import { parameterStore } from '@/services/parameter_service'
-
+import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
     slide: Slide,
@@ -14,6 +15,9 @@ const props = defineProps<{
     sectionWidth: number,
     showframe?: boolean,
 }>()
+
+const localTargetSlide = ref<Slide | null>(props.targetSlide ?? null)
+
 
 const emit = defineEmits<{
     (e: 'parameterChanged', changePayload: ParameterChange): void
@@ -27,22 +31,40 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
         value,
     })
 }
+
+onMounted(() => {
+    if (!props.targetSlide && props.section.content) {
+        const targetSlideId = JSON.parse(props.section.content).targetSlide
+        getSlide(targetSlideId).then((slide) => {
+            localTargetSlide.value = slide.data as Slide
+        })
+    } else {
+        localTargetSlide.value = props.targetSlide
+    }
+})
+
+watch(() => props.targetSlide, (newSlide) => {
+    localTargetSlide.value = newSlide
+})
 </script>
 
 
 <template>
+
 
     <div class="section-wrapper" :style="{
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
         border: props.showframe ? '3px solid var(--accent)' : 'none',
     }">
-        <div v-for="(section, index) in props.targetSlide?.sections ?? []" :key="index" class="controls-container">
+
+        <div v-for="(section, index) in localTargetSlide?.sections ?? []" :key="index" class="controls-container">
             <div v-for="(field, key) in section?.parameters ?? {}" :key="key" class="controls">
                 <div class="label-container" v-if="field && (field.type === 'number' || field.type === 'string')"
                     style="width: 100%;">
                     <label>{{ key }}</label>
-                    <InputText :value="field.default" :type="field.type" @change="onParameterChange(section, key, $event)" />
+                    <InputText :value="field.default" :type="field.type"
+                        @change="onParameterChange(section, key, $event)" />
                 </div>
 
                 <div v-else-if="field && field.type === 'select'" class="label-container">
@@ -85,7 +107,7 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
 
 .controls :deep(.p-inputtext) {
     width: 100%;
-    height: 50px; 
+    height: 50px;
     font-size: var(--fs-large);
 }
 
@@ -93,12 +115,10 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
     height: 50px;
     font-size: var(--fs-large);
 }
+
 .controls :deep(.p-select-label) {
     display: flex;
     align-items: center;
     font-size: var(--fs-large);
 }
-
-
-
 </style>

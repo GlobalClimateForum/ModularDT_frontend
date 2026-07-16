@@ -11,12 +11,16 @@ const selectedSlide = ref<Slide | null>(null)
 
 const emit = defineEmits<{
     (e: 'targetSlideUpdated', value: Slide | null): void
+    (e: 'contentUpdated', content: string): void
 }>()
 
-function onTargetSlideChange(slideId: string) {
-    const id = parseInt(slideId)
-    const slide = islides.value.find(s => s.id === id) ?? null
+function onTargetSlideChange(slideId: number) {
+    const slide = islides.value.find(s => s.id === slideId) ?? null
     emit('targetSlideUpdated', slide)
+    emit('contentUpdated', JSON.stringify({
+        targetSlide: slide?.id ?? null,
+        targetSection: slide?.sections?.find(s => s.mode === 'interactive')?.id ?? null
+    }))
 }
 
 onMounted(async () => {
