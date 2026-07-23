@@ -12,7 +12,8 @@
       "builder": "Builder",
       "editor": "Editor",
       "dashboard": "Dashboard",
-      "globalsettings": "DT Settings"
+      "globalsettings": "DT Settings",
+      "participants": "Participants"
     },
     "settings": {
       "numberscreens": "Number of Screens",

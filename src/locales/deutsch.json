@@ -12,7 +12,8 @@
       "builder": "Erstellen",
       "editor": "Editor",
       "dashboard": "Kontrollzentrum",
-      "globalsettings": "DT Einstellungen"
+      "globalsettings": "DT Einstellungen",
+      "participants": "Teilnehmer"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",

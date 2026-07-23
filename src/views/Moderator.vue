@@ -111,6 +111,17 @@ const items = computed(() => [
     ],
   },
   {
+    label: t('moderator.nav.participants'),
+    items: [
+      {
+        key: 'groups',
+        label: t('moderator.nav.overview'),
+        materialIcon: "group",
+        command: () => { currentDashboard.value = 'groups'; }
+      },
+    ],
+  },
+  {
     label: t('moderator.nav.settings'),
     items: [
       {
