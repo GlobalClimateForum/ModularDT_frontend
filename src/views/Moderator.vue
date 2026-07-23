@@ -17,7 +17,7 @@ import PresentationManager from '@/components/PresentationManager.vue';
 import '@/assets/main.css'
 
 import { PrimeIcons } from '@primevue/core/api';
-import { getGroups } from "@/services/group_service";
+import { getParticipants } from "@/services/participant_service";
 import { onMounted, ref, computed } from 'vue';
 import type { Slide } from "@/services/slide_service"
 import type { Scene } from "@/services/scene_service"
@@ -135,9 +135,9 @@ const items = computed(() => [
 ]);
 
 onMounted(() => {
-  getGroups()
-    .then(response => { participants.value = response.data.groups; })
-    .catch(error => { console.error("Error fetching groups:", error); });
+  getParticipants()
+    .then(response => { participants.value = response.data.participants; })
+    .catch(error => { console.error("Error fetching participants:", error); });
   currentDashboard.value = 'slides';
 });
 
