@@ -33,6 +33,28 @@ const groups = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
+const dashboardViews = {
+  slides: SlideManager,
+  slidecreate: SlideCreator,
+  scenes: SceneManager,
+  scenecreate: SceneBuilder,
+  live: PresentationControl,
+  presentations: PresentationManager,
+  globalsettings: GlobalSettings,
+  groups: GroupManager
+}
+
+const currentView = computed(() => dashboardViews[currentDashboard.value])
+
+const viewProps = computed(() => {
+  switch (currentDashboard.value) {
+    case 'slidecreate': return { slide: currentSlide.value };
+    case 'scenecreate': return { nMonitors: 4, inp_scene: currentScene.value };
+    case 'groups': return { groups: groups.value };
+    default: return {};
+  }
+});
+
 const items = computed(() => [
   {
     label: t('moderator.nav.presentations'),
@@ -43,12 +65,6 @@ const items = computed(() => [
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'presentations'; }
       },
-      /*      {
-              key: 'presentationcreate',
-              label: t('moderator.nav.editor'),
-              materialIcon: 'code',
-              command: () => { currentDashboard.value = 'presentationcreate'; }
-            },*/
       {
         key: 'live',
         label: "Live",
@@ -70,7 +86,10 @@ const items = computed(() => [
         key: 'scenecreate',
         label: t('moderator.nav.builder'),
         materialIcon: 'slide_library',
-        command: () => { currentDashboard.value = 'scenecreate'; }
+        command: () => {
+          currentScene.value = null;
+          currentDashboard.value = 'scenecreate';
+        }
       },
     ],
   },
@@ -122,7 +141,7 @@ function handleSceneEdit(scene: Scene) {
 }
 
 function handleLiveSwitch() {
-  currentDashboard.value = 'live' 
+  currentDashboard.value = 'live'
 }
 </script>
 
@@ -173,47 +192,59 @@ function handleLiveSwitch() {
 
     </SplitterPanel>
     <SplitterPanel :size="85" class="panel">
-      <Transition name="fade" mode="out-in">
-        <PresentationManager v-if="currentDashboard === 'presentations'" @live="handleLiveSwitch" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <PresentationControl v-if="currentDashboard === 'live'" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <SceneBuilder v-if="currentDashboard === 'scenecreate'" :n-monitors="4" :inp_scene="currentScene" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <SlideManager v-if="currentDashboard === 'slides'" @edit-slide="handleSlideEdit" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <SceneManager v-if="currentDashboard === 'scenes'" @edit-scene="handleSceneEdit" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <GroupManager v-if="currentDashboard === 'groups'" :groups="groups" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <SlideCreator v-if="currentDashboard === 'slidecreate'" :slide="currentSlide" />
-      </Transition>
-      <Transition name="fade" mode="out-in">
-        <GlobalSettings v-if="currentDashboard === 'globalsettings'" />
+      <Transition name="fade">
+        <component :is="currentView" v-bind="viewProps" :key="currentDashboard" @edit-slide="handleSlideEdit"
+          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" />
       </Transition>
     </SplitterPanel>
   </Splitter>
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 180ms ease;
+
+.panel {
+  position: relative;
+  overflow: hidden;
 }
 
-.fade-enter-from,
+.fade-leave-active {
+  position: absolute;
+  inset: 0;
+}
+
+.fade-enter-active {
+  transition: opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-leave-active {
+  transition: opacity 140ms ease-in, transform 140ms ease-in;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(-4px);
+}
+
+@keyframes main-in {
+  from {
+    transform: scale(0.99);
+    opacity: 0.9;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .content-title {
-  font-size: 1.0rem;
+  font-size: var(--fs-large);
   font-weight: 600;
 }
 
