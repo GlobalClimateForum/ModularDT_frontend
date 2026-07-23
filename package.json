@@ -13,6 +13,7 @@
     "@codemirror/lang-markdown": "^6.5.0",
     "@dicebear/collection": "^9.4.2",
     "@dicebear/core": "^9.4.3",
+    "@dicebear/styles": "^10.2.0",
     "@marp-team/marp-core": "^4.4.0",
     "@primeuix/themes": "^2.0.3",
     "@primevue/core": "^4.5.5",
