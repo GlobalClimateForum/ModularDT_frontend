@@ -8,12 +8,12 @@ interface Group {
 }
 
 const props = defineProps<{
-  groups: Group[];
+  participants: Group[];
 }>();
 </script>
 
 <template>
-  <DataTable :value="props.groups">
+  <DataTable :value="props.participants">
     <Column field="id" header="ID" />
     <Column field="name" header="Name" />
   </DataTable>

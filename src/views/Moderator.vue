@@ -6,7 +6,7 @@ import Menu from 'primevue/menu';
 import router from '@/router';
 
 import SlideManager from '@/components/SlideManager.vue';
-import GroupManager from '@/components/GroupManager.vue';
+import ParticipantsManager from '@/components/ParticipantsManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
 import SceneBuilder from '@/components/SceneBuilder.vue';
 import SceneManager from '@/components/SceneManager.vue';
@@ -28,8 +28,8 @@ import BackendServerStatus from '@/components/BackendServerStatus.vue';
 
 const { t } = useI18n();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'globalsettings' | 'groups'>('slides');
-const groups = ref<any[]>([]);
+const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'globalsettings' | 'participants'>('slides');
+const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
@@ -41,7 +41,7 @@ const dashboardViews = {
   live: PresentationControl,
   presentations: PresentationManager,
   globalsettings: GlobalSettings,
-  groups: GroupManager
+  participants: ParticipantsManager
 }
 
 const currentView = computed(() => dashboardViews[currentDashboard.value])
@@ -50,7 +50,7 @@ const viewProps = computed(() => {
   switch (currentDashboard.value) {
     case 'slidecreate': return { slide: currentSlide.value };
     case 'scenecreate': return { nMonitors: 4, inp_scene: currentScene.value };
-    case 'groups': return { groups: groups.value };
+    case 'participants': return { participants: participants.value };
     default: return {};
   }
 });
@@ -114,10 +114,10 @@ const items = computed(() => [
     label: t('moderator.nav.participants'),
     items: [
       {
-        key: 'groups',
+        key: 'participants',
         label: t('moderator.nav.overview'),
         materialIcon: "group",
-        command: () => { currentDashboard.value = 'groups'; }
+        command: () => { currentDashboard.value = 'participants'; }
       },
     ],
   },
@@ -136,7 +136,7 @@ const items = computed(() => [
 
 onMounted(() => {
   getGroups()
-    .then(response => { groups.value = response.data.groups; })
+    .then(response => { participants.value = response.data.groups; })
     .catch(error => { console.error("Error fetching groups:", error); });
   currentDashboard.value = 'slides';
 });
