@@ -7,6 +7,7 @@ import { getSettings } from "@/services/settings_service";
 import { registerContentServer } from '@/services/cs_service.ts';
 import { useI18n } from 'vue-i18n'
 import { updateLivePresentation, stopPresentation } from "@/services/live_presentation_service";
+import ConfirmDialog from "primevue/confirmdialog";
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -43,10 +44,11 @@ onMounted(async () => {
 
 <template>
   <Toast position="bottom-right" />
-  <RouterView v-if="isSettingsLoaded" />
+  <RouterView v-if="isSettingsLoaded" /> 
   <div v-else class="loading-screen">
     Load Settings...
   </div>
+  <ConfirmDialog /> 
 </template>
 
 <style scoped>
@@ -61,3 +63,4 @@ onMounted(async () => {
   background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
 }
 </style>
+

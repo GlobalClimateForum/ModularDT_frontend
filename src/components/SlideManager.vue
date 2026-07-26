@@ -19,7 +19,9 @@ import { getSlides, updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide 
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
+import { useConfirm } from "primevue/useconfirm";
 
+const confirm = useConfirm();
 const { t } = useI18n();
 
 const slides = ref<Slide[]>([]);
@@ -74,7 +76,7 @@ function onEditSlide(slide: Slide) {
     emit('edit-slide', { ...slide, sections: slide.sections || [] });
 }
 
-function onDeleteSlide(slide: Slide) {
+function deleteSlide(slide: Slide) {
     if (slide.id) {
         deleteSlide(slide.id).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
@@ -91,6 +93,20 @@ function onDeleteSlide(slide: Slide) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
         console.error("Error deleting slide: no valid slide.id");
     }
+}
+
+function onConfirmDeleteSlide(slide: Slide) {
+    confirm.require({
+        header: "Confirmation", 
+        message: "Are you sure you want to delete this item?", 
+        acceptLabel: "OK", 
+        rejectLabel: "Cancel", 
+        accept: async () => {    
+            await deleteSlide(slide);
+        }, reject: () => {      
+            // nothing to do    
+        },
+    });
 }
 
 function onDuplicateSlide(slide: Slide) {
@@ -171,7 +187,7 @@ function onTagAdded(addedTag: string) {
                             @click="onDuplicateSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
-                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-trash" @click="onConfirmDeleteSlide(slotProps.data)" />
                     </template>
                     <template #editor="slotProps">
                         <Button size="small" rounded text icon="pi pi-check"

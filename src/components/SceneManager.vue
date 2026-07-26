@@ -17,8 +17,10 @@ import { getScenes, updateScene, deleteScene, addTagToScene, removeTagFromScene 
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
+import { useConfirm } from "primevue/useconfirm";
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const scenes = ref<Scene[]>([]);
 const selectedScene = ref<Scene | null>(null);
@@ -64,7 +66,7 @@ function onEditScene(scene: Scene) {
     emit('edit-scene', { ...scene });
 }
 
-function onDeleteScene(scene: Scene) {
+function deleteScene(scene: Scene) {
     if (scene.id) {
         deleteScene(scene.id).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Scene deleted successfully', life: 3000 });
@@ -83,11 +85,25 @@ function onDeleteScene(scene: Scene) {
     }
 }
 
+function onConfirmDeleteScene(scene: Scene) {
+    confirm.require({
+        header: "Confirmation", 
+        message: "Are you sure you want to delete this item?", 
+        acceptLabel: "OK", 
+        rejectLabel: "Cancel", 
+        accept: async () => {    
+            await deleteScene(scene);
+        }, reject: () => {      
+            // nothing to do    
+        },
+    });
+}
+
 function onDuplicateScene(scene: Scene) {
     if (scene.id) {
 
         const new_scene = {
-            name:  `${scene.name} (${t('moderator.copy')})`,
+            name: `${scene.name} (${t('moderator.copy')})`,
             description: scene.description,
             slides: scene.slides,
             tags: scene.tags
@@ -144,14 +160,15 @@ function onTagAdded(addedTag: string) {
                     </template>
                 </Column>
 
-                <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap" editorClass="flex justify-content-end white-space-nowrap">
+                <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap"
+                    editorClass="flex justify-content-end white-space-nowrap">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditScene(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-clone"
                             @click="onDuplicateScene(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
-                        <Button size="small" rounded text icon="pi pi-trash" @click="onDeleteScene(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-trash" @click="onConfirmDeleteScene(slotProps.data)" />
                     </template>
                     <template #editor="slotProps">
                         <Button size="small" rounded text icon="pi pi-check"
@@ -163,7 +180,8 @@ function onTagAdded(addedTag: string) {
 
 
                 <template #header>
-                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')" type="text" />
+                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
+                        type="text" />
                     <Button class="button-reset-search" @click="filters.global.value = null" rounded
                         :disabled="!filters.global.value">
                         <i class="pi pi-times"></i>
@@ -175,9 +193,10 @@ function onTagAdded(addedTag: string) {
 
         <SplitterPanel class="sub-panel" :size="50">
             <!--{{ selectedScene }}-->
-            <SceneView v-if="selectedScene" :preview="true" :key="selectedScene.id"  :scene="selectedScene" :showframe="false" class="scene-preview" />
-            <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null" :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene"
-                @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
+            <SceneView v-if="selectedScene" :preview="true" :key="selectedScene.id" :scene="selectedScene"
+                :showframe="false" class="scene-preview" />
+            <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null" :onAddTagApi="addTagToScene"
+                :onRemoveTagApi="removeTagFromScene" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
         </SplitterPanel>
     </Splitter>
 </template>

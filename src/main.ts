@@ -11,6 +11,7 @@ import 'animate.css';
 import ToastService from 'primevue/toastservice';
 import { definePreset } from '@primeuix/themes';
 import i18n from './i18n/index.ts';
+import ConfirmationService from "primevue/confirmationservice";
 
 const primecolors = definePreset(Aura, {
   semantic: {
@@ -40,5 +41,6 @@ app.use(ToastService)
 app.use(PrimeVue, {
   theme: { preset: primecolors }
 })
+app.use(ConfirmationService)
 app.mount('#app')
 

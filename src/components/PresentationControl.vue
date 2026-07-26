@@ -12,6 +12,8 @@ import { useLivePresentationState } from '@/utils/live_presentation';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
 import { updateMonitorStates } from '@/services/monitor_service'
+import Splitter from 'primevue/splitter'
+import SplitterPanel from 'primevue/splitterpanel'
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
@@ -145,84 +147,138 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 </script>
 
 <template>
-  <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;
-  padding: var(--space-large); overflow: hidden;">
-    <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
+  <Splitter :gutter-size="2" class="dashboard">
+    <!-- Available Slides -->
+    <SplitterPanel :size="25" class="sub-panel">
+      <h2 class="dashboard_label">{{ $t('moderator.available_scenes') }}</h2>
+      <div class="slide_gallery_container">
+      </div>
+    </SplitterPanel>
+    
+    <!-- Zweites Panel -->
+    <SplitterPanel :size="75" :minSize="15" class="sub-panel">
+      <h2 class="dashboard_label">Test!</h2>
+      
+      <!-- DIREKTE ÄNDERUNG: Kein stauchendes Zwischen-Div mehr. 
+           Der Container wächst jetzt kontrolliert und nimmt den vollen Platz ein -->
+      <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
-        <div  v-if="livePresentationState.active" class="scene-container">
+        <div v-if="livePresentationState.active" class="scene-container">
           <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
             :showframe="false" />
         </div>
 
-      <div v-else>
-        <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
+        <div v-else class="fallback-container">
+          <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
+        </div>
+
+        <div class="controls glass">
+          <Button @click="previousScene" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">chevron_left</i>
+            </template>
+          </Button>
+
+          <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
+
+          <Button @click="nextScene" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">chevron_right</i>
+            </template>
+          </Button>
+
+          <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">stop_circle</i>
+            </template>
+          </Button>
+
+          <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
+          <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
+        </div>
       </div>
-
-      <div class="controls glass">
-        <Button @click="previousScene" rounded>
-          <template #icon>
-            <i class="material-symbols-outlined">chevron_left</i>
-          </template>
-        </Button>
-
-        <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
-
-        <Button @click="nextScene" rounded>
-          <template #icon>
-            <i class="material-symbols-outlined">chevron_right</i>
-          </template>
-        </Button>
-
-        <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
-          <template #icon>
-            <i class="material-symbols-outlined">stop_circle</i>
-          </template>
-        </Button>
-
-        <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
-        <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
-      </div>
-    </div>
-  </div>
-
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <style scoped>
-.scene-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+/* Das Dashboard füllt das gesamte Browserfenster/Elternelement */
+.dashboard {
   height: 100%;
-  overflow: hidden;
-  padding: var(--space-large);
 }
 
-.controls {
-  position: absolute;
-  bottom: var(--space-large);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-
-  border-radius: var(--br-large);
-  padding: var(--space-medium);
-  display: flex;
-  flex-direction: row;
-  gap: var(--space-medium);
-  align-items: center;
+/* WICHTIG: Erzwingt, dass PrimeVues interne Panel-Struktur das Flex-Layout akzeptiert */
+.dashboard :deep(.p-splitter-panel) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  height: 100% !important;
 }
 
+/* Erhält die Flex-Spalten-Struktur für beide Panels aufrecht */
+.sub-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  height: 100%;
+}
+
+/* KORREKTUR: Der Präsentationscontainer ist das Kind des Panels.
+   Er bekommt 'flex: 1' und 'min-height: 0', um den gesamten Platz unter dem h2 einzunehmen. */
 .presentation_container {
   width: 100%;
-  height: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   border-radius: var(--br-medium);
-  overflow: auto;
+  padding: var(--space-large);
+  overflow: hidden;
+  flex: 1;          /* Zwingt den Container, den Rest des Panels auszufüllen */
+  min-height: 0;    /* Verhindert das Kollabieren von Flexbox-Kindern */
+}
+
+/* Die Szene dehnt sich innerhalb des Präsentationscontainers maximal aus */
+.scene-container, .fallback-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.slide_gallery_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  overflow-y: auto !important;
+  padding: 1rem;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.slide_gallery_container :deep(> div) {
+  width: 100%;
+}
+
+/* Steuerung dockt dank position: absolute sicher im presentation_container unten an */
+.controls {
+  position: absolute;
+  bottom: var(--space-large);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  border-radius: var(--br-large);
+  padding: var(--space-medium);
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-medium);
+  align-items: center;
 }
 
 .controls:deep(.p-inputtext) {
