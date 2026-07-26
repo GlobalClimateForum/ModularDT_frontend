@@ -22,6 +22,9 @@
       "background_image": "Hintergrundbild"
     },
     "presentation": {
+      "presentation": "Präsentation",
+      "presentation_szenes": "Präsentationsszenen",
+      "presentation_control": "Präsentationssteuerung",
       "new_presentation": "Neue Präsentation",
       "create": "Erstellen",
       "next": "Vor",
@@ -30,6 +33,7 @@
       "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt"
     },
     "scene": "Szene",
+    "slide": "Folie",
     "available_scenes": "Verfügbare Szenen",
     "available_slides": "Verfügbare Folien",
     "duplicate_slides": "Doppelte Folien",
@@ -42,7 +46,12 @@
     "copy": "Kopie",
     "search": "Suche",
     "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen",
-    "save_order": "Reihenfolge speichern"
+    "save_order": "Reihenfolge speichern",
+    "confirmation": "Bestätigung",
+    "confirmation-message-head": "Diese ",
+    "confirmation-message-tail": " wirklich löschen?",
+    "confirmation-ok": "OK", 
+    "confirmation-cancel": "Abbrechen"
   },
   "participant": {
     "name": "Teilnehmer"
@@ -53,5 +62,9 @@
     "waiting": "Ich warte auf den Start der Präsentation und lausche dafür auf einem Django-Channel.",
     "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv.",
     "name": "Monitor"
-  }
+  },
+  "submit": "absenden",
+  "select_monitor": "Monitor wählen:",
+  "please_select": "-- bitte wählen --",
+  "pin-message": "Pin eingeben um zum Kontrollzentrum zu gelangen."
 }

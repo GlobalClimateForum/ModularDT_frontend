@@ -66,7 +66,7 @@ function onEditScene(scene: Scene) {
     emit('edit-scene', { ...scene });
 }
 
-function deleteScene(scene: Scene) {
+function onDeleteScene(scene: Scene) {
     if (scene.id) {
         deleteScene(scene.id).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Scene deleted successfully', life: 3000 });
@@ -87,12 +87,12 @@ function deleteScene(scene: Scene) {
 
 function onConfirmDeleteScene(scene: Scene) {
     confirm.require({
-        header: "Confirmation", 
-        message: "Are you sure you want to delete this item?", 
-        acceptLabel: "OK", 
-        rejectLabel: "Cancel", 
+        header: t('moderator.confirmation'), 
+        message: t('moderator.confirmation-message-head') + t('moderator.scene') + " (" + scene.name + ")" + t('moderator.confirmation-message-tail'), 
+        acceptLabel: `${t('moderator.confirmation-ok')}`,
+        rejectLabel: t('moderator.confirmation-cancel'),
         accept: async () => {    
-            await deleteScene(scene);
+            await onDeleteScene(scene);
         }, reject: () => {      
             // nothing to do    
         },

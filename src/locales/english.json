@@ -22,6 +22,9 @@
       "background_image": "Background image"
     },
     "presentation": {
+      "presentation": "Presentation",
+      "presentation_szenes": "Presentation scenes",
+      "presentation_control": "Presentation control",
       "new_presentation": "New Presentation",
       "create": "Create",
       "next": "Next",
@@ -30,6 +33,7 @@
       "no_presentation_showing": "Currently no presentation playing"
     },
     "scene": "Scene",
+    "slide": "Slide",
     "available_scenes": "Available Scenes",
     "available_slides": "Available Slides",
     "duplicate_slides": "Duplicate Slides",
@@ -42,7 +46,12 @@
     "copy": "Copy",
     "search": "Search",
     "order_instruction": "Drag the scenes here to specify order",
-    "save_order": "Save order"
+    "save_order": "Save order",
+    "confirmation": "Confirmation",
+    "confirmation-message-head": "Are you sure you want to delete this ",
+    "confirmation-message-tail": "?",
+    "confirmation-ok": "OK",
+    "confirmation-cancel": "Cancel"
   },
   "participant": {
     "name": "Participant"
@@ -53,5 +62,9 @@
     "waiting": "I'm waiting for the presentation to start and listening for it on a Django channel.",
     "invalid": "My instance ID is invalid. I'm staying inactive.",
     "name": "Monitor"
-  }
+  },
+  "submit": "submit",
+  "select_monitor": "Select monitor:",
+  "please_select": "-- please select --",
+  "pin-message": "Enter pin to acces moderator dashboard."
 }

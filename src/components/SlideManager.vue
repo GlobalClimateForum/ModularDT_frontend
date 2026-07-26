@@ -76,7 +76,7 @@ function onEditSlide(slide: Slide) {
     emit('edit-slide', { ...slide, sections: slide.sections || [] });
 }
 
-function deleteSlide(slide: Slide) {
+function onDeleteSlide(slide: Slide) {
     if (slide.id) {
         deleteSlide(slide.id).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
@@ -97,12 +97,12 @@ function deleteSlide(slide: Slide) {
 
 function onConfirmDeleteSlide(slide: Slide) {
     confirm.require({
-        header: "Confirmation", 
-        message: "Are you sure you want to delete this item?", 
-        acceptLabel: "OK", 
-        rejectLabel: "Cancel", 
+        header: t('moderator.confirmation'), 
+        message: t('moderator.confirmation-message-head') + t('moderator.slide') + " (" + slide.name + ")" + t('moderator.confirmation-message-tail'), 
+        acceptLabel: `${t('moderator.confirmation-ok')}`,
+        rejectLabel: t('moderator.confirmation-cancel'), 
         accept: async () => {    
-            await deleteSlide(slide);
+            await onDeleteSlide(slide);
         }, reject: () => {      
             // nothing to do    
         },

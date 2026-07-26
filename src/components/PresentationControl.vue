@@ -55,10 +55,9 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   }
 }, { immediate: true }); // immediate sorgt dafür, dass es auch direkt beim Start prüft
 
-// 3. Ihr aufgeräumtes onMounted (loadCurrentScene() und fetchScenes() am Ende fliegen hier raus!)
 onMounted(() => {
   loading.value = true;
-  fetchScenes(); // Kann sofort parallel starten
+  fetchScenes(); 
 
   getLivePresentation()
     .then(response => {
@@ -128,6 +127,7 @@ const nextScene = () => {
 
 const abortPresentation = () => {
   stopPresentation();
+  livePresentationState.value.current_scene = -1;
 };
 
 
@@ -143,24 +143,20 @@ function handleKey(e: KeyboardEvent) {
 
 onMounted(() => window.addEventListener('keydown', handleKey));
 onUnmounted(() => window.removeEventListener('keydown', handleKey));
-
 </script>
 
 <template>
   <Splitter :gutter-size="2" class="dashboard">
     <!-- Available Slides -->
     <SplitterPanel :size="25" class="sub-panel">
-      <h2 class="dashboard_label">{{ $t('moderator.available_scenes') }}</h2>
+      <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
       <div class="slide_gallery_container">
       </div>
     </SplitterPanel>
     
     <!-- Zweites Panel -->
     <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-      <h2 class="dashboard_label">Test!</h2>
-      
-      <!-- DIREKTE ÄNDERUNG: Kein stauchendes Zwischen-Div mehr. 
-           Der Container wächst jetzt kontrolliert und nimmt den vollen Platz ein -->
+      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>      
       <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
         <div v-if="livePresentationState.active" class="scene-container">
@@ -207,7 +203,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   height: 100%;
 }
 
-/* WICHTIG: Erzwingt, dass PrimeVues interne Panel-Struktur das Flex-Layout akzeptiert */
 .dashboard :deep(.p-splitter-panel) {
   display: flex !important;
   flex-direction: column !important;
@@ -223,8 +218,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   height: 100%;
 }
 
-/* KORREKTUR: Der Präsentationscontainer ist das Kind des Panels.
-   Er bekommt 'flex: 1' und 'min-height: 0', um den gesamten Platz unter dem h2 einzunehmen. */
 .presentation_container {
   width: 100%;
   position: relative;

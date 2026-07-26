@@ -7,8 +7,10 @@ import Select from 'primevue/select'
 import { ref } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
+import { settings } from '@/utils/settings'
 
 const { t } = useI18n();
+const selected = ref('')
 
 const selectedRole = ref<string | null>(null)
 import '@/assets/main.css'
@@ -54,7 +56,7 @@ import '@/assets/main.css'
       </Card>
     </div>
 
-    <Button class="home-btn" v-if="selectedRole !== null" @click="selectedRole = null"  >
+    <Button class="home-btn" v-if="selectedRole !== null" @click="selectedRole = null">
       <i class="material-symbols-outlined">home</i>
     </Button>
 
@@ -62,12 +64,28 @@ import '@/assets/main.css'
       <p v-if="selectedRole !== null && selectedRole === 'moderator'"
         style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
         <i class="material-symbols-outlined">lock</i>
-        Enter pin to acces moderator dashboard.
+        {{ t('pin-message') }}
       </p>
 
       <div v-if="selectedRole == 'moderator'">
         <InputOtp :length="6" />
-        <Button style="margin-top: 1rem;" label="Submit" @click="router.push('/moderator')" />
+        <Button style="margin-top: 1rem;" :label="t('submit')" @click="router.push('/moderator')" />
+      </div>
+
+      <p v-if="selectedRole !== null && selectedRole === 'monitor'"
+        style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+        <i class="material-symbols-outlined">monitor</i>
+      </p>
+
+      <div v-if="selectedRole == 'monitor'">
+        <label class="monitor_select_label">{{ t('select_monitor') }}<select class="monitor_select" v-model="selected">
+            <option disabled value="">{{ t('please_select') }}</option>
+            <option v-for="i in settings.number_of_screens" :key="i" :value="i"> Monitor{{ i }} </option>
+          </select> </label>
+        <p>Aktiv: {{ selected }}</p>
+
+        <Button style="margin-top: 1rem;" :disabled="!selected" :label="t('submit')"
+          @click="router.push('/monitor/' + String(selected));" />
       </div>
     </div>
 
@@ -81,7 +99,7 @@ import '@/assets/main.css'
 
 
 <style scoped>
-.home-btn{
+.home-btn {
   position: absolute;
   top: 1rem;
   left: 1rem;
@@ -121,16 +139,16 @@ import '@/assets/main.css'
 }
 
 :deep(.p-card-body) {
-    padding: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 :deep(.p-card-content) {
-    padding: 0;
-    height: 100%;
-    flex: 1;
+  padding: 0;
+  height: 100%;
+  flex: 1;
 }
 
 .role_option_card_content {
@@ -140,7 +158,7 @@ import '@/assets/main.css'
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  flex: 1; 
+  flex: 1;
 }
 
 .role_option_card:hover {
@@ -169,5 +187,19 @@ import '@/assets/main.css'
   font-weight: 700;
   font-family: 'Fira Code', monospace;
   border: 1px solid rgba(255, 255, 255, 0.31);
+}
+
+.monitor_select_label {
+  font-size: 1.2rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white !important;
+}
+
+.monitor_select {
+  font-size: 1.2rem;
+  padding: 0.5rem 0.75rem;
+  min-width: 14rem;
 }
 </style>
