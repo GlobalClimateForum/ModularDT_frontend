@@ -4,16 +4,37 @@ import Button from 'primevue/button'
 import InputOtp from 'primevue/inputotp'
 import Select from 'primevue/select'
 
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
-import { settings } from '@/utils/settings'
+import { settings } from '@/utils/settings';
+
+import { type Participant, getParticipants } from '@/services/participant_service'
+import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
+
 
 const { t } = useI18n();
 const selected = ref('')
 
 const selectedRole = ref<string | null>(null)
+const selectedParticipant = ref<Participant | null>(null)
+const participants = ref<Participant[]>([])
+const seatedParticipants = computed(() => participants.value.filter(p => p.seat !== null));
+
 import '@/assets/main.css'
+
+onMounted(() => {
+  getParticipants().then(response => {
+    participants.value = response.data.participants;
+  }).catch(error => {
+    console.error("Error fetching participants:", error);
+  });
+})
+
+function avatarUri(seed: string) {
+  return buildAvatarUri(makeStyle('glyphs'), seed);
+}
+
 </script>
 
 <template>
@@ -89,16 +110,59 @@ import '@/assets/main.css'
       </div>
     </div>
 
-    <Button @click="router.push('/participant/1')" v-if="selectedRole === 'participant'" text>
-      <span class="material-symbols-outlined">person</span>
-    </Button>
-
+    <!-- Participant Menu -->
+    <div v-if="selectedRole !== null && selectedRole === 'participant'">
+      <p style="text-align: center;">Who are you?</p>
+      <div class="participant-select-container">
+        <div v-for="participant in seatedParticipants" :key="participant.id" class="participant-option"
+        @click="router.push('/participant/' + participant.seat)">
+          <img :src="avatarUri(participant.name)" width="88" height="88" />
+          <span>{{ participant.name }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 
 </template>
 
 
 <style scoped>
+
+
+.participant-select-container {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-large);
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 500px;
+  overflow-y: auto;
+  max-height: 500px;
+  padding: var(--space-medium);
+}
+
+.participant-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-medium);
+  font-weight: bold;
+}
+
+.participant-option img {
+  border-radius: 50%;
+  border: 3px solid var(--p-primary-200);
+  box-shadow: var(--shadow-light);
+}
+
+.participant-option:hover {
+  cursor: pointer;
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+  box-shadow: var(--shadow-medium);
+
+}
+
 .home-btn {
   position: absolute;
   top: 1rem;

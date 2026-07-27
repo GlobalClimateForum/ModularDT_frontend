@@ -6,27 +6,15 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button';
 import Select from 'primevue/select';
 import "@/assets/main.css";
-import type { Participant } from "@/services/participant_service";
+import { type Participant, updateParticipant, createParticipant } from "@/services/participant_service";
 import { ref, watch, computed } from 'vue';
-import { Style, Avatar } from '@dicebear/core';
 
-import glyphs from '@dicebear/styles/glyphs.json' with { type: 'json' };
-import icons from '@dicebear/styles/icons.json' with { type: 'json' };
-import shapes from '@dicebear/styles/shapes.json' with { type: 'json' };
-import initials from '@dicebear/styles/initials.json' with { type: 'json' };
-import identicon from '@dicebear/styles/identicon.json' with { type: 'json' };
-import pixelArt from '@dicebear/styles/pixel-art.json' with { type: 'json' };
-import notionists from '@dicebear/styles/notionists.json' with { type: 'json' };
+import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
 
 type DraftParticipant = Participant & { isNew?: boolean };
 
 const props = defineProps<{
   participants: Participant[];
-}>();
-
-const emit = defineEmits<{
-  'update-participant': [participant: Participant];
-  'create-participant': [participant: Participant];
 }>();
 
 /* ---------- rows ---------- */
@@ -38,36 +26,11 @@ const editingRows = ref<DraftParticipant[]>([]);
 
 /* ---------- avatar styles ---------- */
 
-const styleDefs = {
-  glyphs, icons, shapes, initials, identicon,
-  'pixel-art': pixelArt,
-  notionists,
-} as const;
-
-type StyleName = keyof typeof styleDefs;
-
-const styleNames = Object.keys(styleDefs) as StyleName[];
 const selectedStyle = ref<StyleName>('glyphs');
-const avatarStyle = computed(() => new Style(styleDefs[selectedStyle.value]));
+const avatarStyle = computed(() => makeStyle(selectedStyle.value));
 
 function avatarUri(seed: string) {
-  const s = (seed ?? '').toLowerCase().trim().replace(/\s+/g, '') || 'preview';
-  return new Avatar(avatarStyle.value, { seed: s, size: 88 }).toDataUri();
-}
-
-const previewCache = new Map<StyleName, string>();
-function previewUri(name: StyleName) {
-  if (!previewCache.has(name)) {
-    previewCache.set(
-      name,
-      new Avatar(new Style(styleDefs[name]), { seed: 'preview', size: 32 }).toDataUri()
-    );
-  }
-  return previewCache.get(name)!;
-}
-
-function prettyName(name: string) {
-  return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return buildAvatarUri(avatarStyle.value, seed);
 }
 
 /* ---------- seats ---------- */
@@ -84,9 +47,17 @@ function seatOptions(current: number | null) {
 
 /* ---------- persistence ---------- */
 
+// Persist a participant row to the backend, either creating or updating as necessary.
 function persist(row: DraftParticipant) {
   const { isNew, ...data } = row;
-  emit(isNew ? 'create-participant' : 'update-participant', data as Participant);
+  if (isNew) {
+    createParticipant(data as Participant).then(p => {
+      Object.assign(row, p);
+      delete row.isNew;
+    });
+  } else {
+    updateParticipant(data as Participant);
+  }
 }
 
 function onRowEditSave(event: { newData: DraftParticipant; index: number }) {
@@ -106,9 +77,20 @@ function onAddParticipant() {
     interactions: false,
     isNew: true,
   };
-  rows.value.push(draft);
+  rows.value = [draft, ...rows.value];
   editingRows.value = [...editingRows.value, draft];
 }
+
+function onClearSeats() {
+  rows.value.forEach(p => p.seat = null);
+  rows.value.forEach(p => persist(p));
+}
+
+function onHandsOff() {
+  rows.value.forEach(p => p.interactions = false);
+  rows.value.forEach(p => persist(p));
+}
+
 </script>
 
 <template>
@@ -134,7 +116,19 @@ function onAddParticipant() {
           </template>
         </Select>
 
-        <Button label="Add Participant" @click="onAddParticipant">
+        <Button rounded  @click="onHandsOff">
+          <template #icon>
+            <i class="material-symbols-outlined">do_not_touch</i>
+          </template>
+        </Button>
+
+        <Button rounded @click="onClearSeats">
+          <template #icon>
+            <i class="material-symbols-outlined">chair</i>
+          </template>
+        </Button>
+
+        <Button label="Add" @click="onAddParticipant">
           <template #icon>
             <i class="material-symbols-outlined">add</i>
           </template>
@@ -146,7 +140,7 @@ function onAddParticipant() {
       scrollHeight="flex" tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
       :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table">
 
-      <Column field="seat" header="Seat" style="width: 120px">
+      <Column field="seat" header="Seat" style="width: 150px">
         <template #body="{ data }">
           <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
             @change="persist(data)">
@@ -164,7 +158,7 @@ function onAddParticipant() {
         </template>
       </Column>
 
-      <Column header="" style="width: 72px" bodyStyle="text-align: center">
+      <Column header="" style="width: 72px" bodyStyle="text-align: center" >
         <template #body="{ data }">
           <img :src="avatarUri(data.name)" width="44" height="44"
             :class="['avatar', data.seat == null ? 'avatar-unseated' : 'avatar-seated']" />
