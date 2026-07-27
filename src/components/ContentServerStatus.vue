@@ -2,7 +2,7 @@
 
 import { contentServerStatusClass, getContentServerStatus } from '@/services/cs_service.ts';
 import Message from 'primevue/message';
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import Button from 'primevue/button';
 import Badge from 'primevue/badge';
 import { ref, onMounted } from 'vue';

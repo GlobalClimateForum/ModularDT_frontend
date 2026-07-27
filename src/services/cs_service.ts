@@ -1,4 +1,4 @@
-import { settings } from "@/utils/settings";
+import { settings } from "@/globals/settings";
 import { computed, shallowRef } from "vue";
 import axios from "axios";
 

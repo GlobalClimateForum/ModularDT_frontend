@@ -2,12 +2,11 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputOtp from 'primevue/inputotp'
-import Select from 'primevue/select'
 
 import { ref, onMounted, computed } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
-import { settings } from '@/utils/settings';
+import { settings } from '@/globals/settings'
 
 import { type Participant, getParticipants } from '@/services/participant_service'
 import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
@@ -103,7 +102,6 @@ function avatarUri(seed: string) {
             <option disabled value="">{{ t('please_select') }}</option>
             <option v-for="i in settings.number_of_screens" :key="i" :value="i"> Monitor{{ i }} </option>
           </select> </label>
-        <p>Aktiv: {{ selected }}</p>
 
         <Button style="margin-top: 1rem;" :disabled="!selected" :label="t('submit')"
           @click="router.push('/monitor/' + String(selected));" />

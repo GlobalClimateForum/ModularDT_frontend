@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { useLivePresentationState } from '@/utils/live_presentation';
+import { useLivePresentationState } from '@/globals/live_presentation';
 
 const livePresentationState = useLivePresentationState()
 

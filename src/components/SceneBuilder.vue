@@ -12,7 +12,7 @@ import { ref, onMounted, watch } from 'vue';
 import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service';
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import { useToast } from 'primevue/usetoast'
 import type { Scene } from '@/services/scene_service';
 //import type { Scene } from 'vega'

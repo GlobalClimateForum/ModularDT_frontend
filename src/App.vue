@@ -2,7 +2,7 @@
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import { onMounted, onBeforeMount, watch, ref } from 'vue'
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import { getSettings } from "@/services/settings_service";
 import { registerContentServer } from '@/services/cs_service.ts';
 import { useI18n } from 'vue-i18n'

@@ -8,7 +8,7 @@ import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 

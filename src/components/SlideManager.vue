@@ -126,7 +126,7 @@ function onDuplicateSlide(slide: Slide) {
             tags: slide.tags
         };
 
-        saveSlide(new_slide, new_sections).then(response => {
+        saveSlide(new_slide, new_sections).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
             fetchSlides();
         }).catch(error => {

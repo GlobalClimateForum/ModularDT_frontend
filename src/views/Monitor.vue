@@ -2,8 +2,8 @@
 import { useRoute } from 'vue-router'
 import { computed, onMounted, onBeforeUnmount, onUnmounted,  ref } from 'vue'
 import { useI18n } from 'vue-i18n';
-import { settings } from '@/utils/settings'
-import { useLivePresentationState } from '@/utils/live_presentation';
+import { settings } from '@/globals/settings'
+import { useLivePresentationState } from '@/globals/live_presentation';
 import type { Slide, SlideSection } from '@/services/slide_service';
 import SlideView from '@/components/SlideView.vue';
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'

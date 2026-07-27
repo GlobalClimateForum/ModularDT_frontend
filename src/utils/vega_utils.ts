@@ -1,4 +1,4 @@
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import type { Parameter, Parameters } from '@/services/slide_service'
 
 

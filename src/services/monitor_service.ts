@@ -1,6 +1,6 @@
 import { api } from "./api";
 import type { Scene } from "@/services/scene_service";
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 
 
 export const sendMonitorUpdate = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);

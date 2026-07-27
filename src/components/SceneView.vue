@@ -2,7 +2,7 @@
 import type { Scene } from '@/services/scene_service';
 import SlideView from '@/components/SlideView.vue';
 import { computed } from 'vue';
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import Tag from 'primevue/tag';
 
 const props = withDefaults(defineProps<{

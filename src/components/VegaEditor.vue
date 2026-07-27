@@ -9,7 +9,7 @@ import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast'
 import ContentServerStatus from '@/components/ContentServerStatus.vue'
 import Button from 'primevue/button';
-import { settings } from '@/utils/settings';
+import { settings } from '@/globals/settings';
 import TextArea from 'primevue/textarea';
 import ProgressBar from 'primevue/progressbar';
 import Inplace from 'primevue/inplace';

@@ -9,22 +9,18 @@ import Button from 'primevue/button';
 import PresentationEditing from '@/components/PresentationEditor.vue';
 import { formatDate } from '@/utils/date_utils';
 
+import { scenes, fetchScenes } from '@/globals/scenes';
 import { getPresentations, updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
-import { updateLivePresentation, startPresentation } from "@/services/live_presentation_service";
-import { getScenes } from "@/services/scene_service";
-import type { Scene } from "@/services/scene_service";
+import { startPresentation } from "@/services/live_presentation_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
-import { useLivePresentationState } from '@/utils/live_presentation';
 
 
 const { t } = useI18n();
-const livePresentationState = useLivePresentationState()
 
 const presentations = ref<Presentation[]>([]);
-const scenes = ref<Scene[]>([]);
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
 const editingRows = ref<Presentation[]>([]);
@@ -36,15 +32,6 @@ function fetchPresentations() {
         console.info('fetched presentations:', JSON.parse(JSON.stringify(presentations.value)))
     }).catch(error => {
         console.error("Error fetching presentations:", error);
-    });
-}
-
-function fetchScenes() {
-    getScenes().then(response => {
-        scenes.value = response.data.scenes;
-        //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
-    }).catch(error => {
-        console.error("Error fetching scenes:", error);
     });
 }
 
@@ -98,7 +85,7 @@ function onDuplicatePresentation(presentation: Presentation) {
             scenes: presentation.scenes
         };
 
-        savePresentation(new_presentation).then(response => {
+        savePresentation(new_presentation).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation saved successfully', life: 3000 })
             fetchPresentations();
         }).catch(error => {

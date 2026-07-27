@@ -13,16 +13,17 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import { saveScene } from '@/services/scene_service'
 
-import { getScenes, updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
+import { scenes, fetchScenes } from '@/globals/scenes';
+import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
 
+
 const { t } = useI18n();
 const confirm = useConfirm();
 
-const scenes = ref<Scene[]>([]);
 const selectedScene = ref<Scene | null>(null);
 //const previewScene = ref('');
 const editingRows = ref<Scene[]>([]);
@@ -30,15 +31,6 @@ const toast = useToast();
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
-
-function fetchScenes() {
-    getScenes().then(response => {
-        scenes.value = response.data.scenes;
-        //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
-    }).catch(error => {
-        console.error("Error fetching scenes:", error);
-    });
-}
 
 onMounted(() => {
     fetchScenes();
@@ -109,7 +101,7 @@ function onDuplicateScene(scene: Scene) {
             tags: scene.tags
         };
 
-        saveScene(new_scene).then(response => {
+        saveScene(new_scene).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Scene saved successfully', life: 3000 })
             fetchScenes();
         }).catch(error => {

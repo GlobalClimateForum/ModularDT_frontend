@@ -6,14 +6,14 @@ import { useI18n } from 'vue-i18n';
 import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
 import { getPresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service";
-import { getScenes } from "@/services/scene_service";
 import type { Scene } from "@/services/scene_service";
-import { useLivePresentationState } from '@/utils/live_presentation';
+import { useLivePresentationState } from '@/globals/live_presentation';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
 import { updateMonitorStates } from '@/services/monitor_service'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
+import { scenes, fetchScenes } from '@/globals/scenes';
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
@@ -23,7 +23,6 @@ import '@/assets/main.css';
 
 const currentPresentation = ref<Presentation | null>(null);
 const loading = ref(false);
-const scenes = ref<Scene[]>([]);
 const currentScene = ref<Scene>();
 
 const now = useNow({ interval: 1000 })
@@ -38,15 +37,6 @@ const activeSceneIdFromPresentation = computed(() => {
   return currentPresentation.value?.scenes?.[index]?.id || null;
 });
 
-function fetchScenes() {
-  getScenes().then(response => {
-    scenes.value = response.data.scenes;
-    //console.info('fetched scenes:', JSON.parse(JSON.stringify(scenes.value)))
-  }).catch(error => {
-    console.error("Error fetching scenes:", error);
-  });
-}
-
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   if (newSceneId) {
     currentScene.value = scenesMap.value.get(newSceneId);
@@ -57,7 +47,7 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 
 onMounted(() => {
   loading.value = true;
-  fetchScenes(); 
+  fetchScenes();
 
   getLivePresentation()
     .then(response => {
@@ -99,7 +89,7 @@ async function updatePresentationState() {
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
   try {
     // Wir senden die ID der Präsentation und setzen die Anzeige auf aktiv
-    const response = await updateLivePresentation({
+    await updateLivePresentation({
       active: livePresentationState.value.active,
       current_scene: livePresentationState.value.current_scene
     });
@@ -151,12 +141,23 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
     <SplitterPanel :size="25" class="sub-panel">
       <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
       <div class="slide_gallery_container">
+        <!-- WORK HERE!! -->
+        <!-- <div v-for="slide in slides" :key="slide.id" class="slide-card">
+          <div class="slide-info">
+            <p class="slide-label">{{ slide.name }}</p>
+            <p class="slide-date">{{ formatDate(slide.created_at) }}</p>
+          </div>
+          <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)" @dragend="onDragEnd($event)">
+            <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []" :showFrame="false"
+              style="pointer-events: none;" :shadow="true" />
+          </div>
+        </div> -->
       </div>
     </SplitterPanel>
-    
+
     <!-- Zweites Panel -->
     <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>      
+      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
       <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
         <div v-if="livePresentationState.active" class="scene-container">
@@ -228,12 +229,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   border-radius: var(--br-medium);
   padding: var(--space-large);
   overflow: hidden;
-  flex: 1;          /* Zwingt den Container, den Rest des Panels auszufüllen */
-  min-height: 0;    /* Verhindert das Kollabieren von Flexbox-Kindern */
+  flex: 1;
+  /* Zwingt den Container, den Rest des Panels auszufüllen */
+  min-height: 0;
+  /* Verhindert das Kollabieren von Flexbox-Kindern */
 }
 
 /* Die Szene dehnt sich innerhalb des Präsentationscontainers maximal aus */
-.scene-container, .fallback-container {
+.scene-container,
+.fallback-container {
   display: flex;
   align-items: center;
   justify-content: center;

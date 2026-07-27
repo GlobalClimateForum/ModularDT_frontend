@@ -1,5 +1,5 @@
 import type { Scene } from "@/services/scene_service";
-import { settings } from '@/utils/settings'
+import { settings } from '@/globals/settings'
 import { api } from "@/services/api";
 
 async function sendMonitorUpdate(monitorId: number, message: string) {
