@@ -14,6 +14,8 @@ import { updateMonitorStates } from '@/services/monitor_service'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import { scenes, fetchScenes } from '@/globals/scenes';
+import { formatDate } from '@/utils/date_utils';
+import SlideView from '@/components/SlideView.vue';
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
@@ -141,17 +143,19 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
     <SplitterPanel :size="25" class="sub-panel">
       <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
       <div class="slide_gallery_container">
-        <!-- WORK HERE!! -->
-        <!-- <div v-for="slide in slides" :key="slide.id" class="slide-card">
-          <div class="slide-info">
-            <p class="slide-label">{{ slide.name }}</p>
-            <p class="slide-date">{{ formatDate(slide.created_at) }}</p>
+        <div v-if="currentPresentation && livePresentationState.active">
+          <div v-for="scene in currentPresentation.scenes" :key="scene.id" class="scene-card">
+            <div class="scene-info">
+              <p class="scene-label">{{ scene.name }}</p>
+              <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
+            </div>
+            <div v-if="scenesMap.get(scene.id)?.slides[0]" class="scene-item">
+              <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
+                :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
+                style="pointer-events: none;" :shadow="true" />
+            </div>
           </div>
-          <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)" @dragend="onDragEnd($event)">
-            <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []" :showFrame="false"
-              style="pointer-events: none;" :shadow="true" />
-          </div>
-        </div> -->
+        </div>
       </div>
     </SplitterPanel>
 
@@ -289,8 +293,53 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   text-align: center;
 }
 
+.scene-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .scene_indicator:deep(.p-inputtext) {
   font-weight: 900;
   max-width: 5rem;
+}
+
+.scene-card {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.scene-label {
+  font-weight: bold;
+  font-size: var(--fs-medium);
+  color: var(--p-primary-500);
+}
+
+.scene-date {
+  font-size: var(--fs-small);
+  color: var(--p-primary-500);
+}
+
+.scene-item {
+
+  flex: 1;
+  /* fill remaining height after slide-info */
+  min-height: 0;
+  /* allow shrinking */
+  width: 100%;
+
+  cursor: grab;
+  transition: opacity 0.2s, outline 0.2s;
+  width: 100%;
+
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
