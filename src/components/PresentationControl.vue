@@ -133,6 +133,12 @@ function handleKey(e: KeyboardEvent) {
   };
 }
 
+function clickScene(index: number) {
+    livePresentationState.value.current_scene = index+1;
+    updatePresentationState();
+    updateMonitors();
+}
+
 onMounted(() => window.addEventListener('keydown', handleKey));
 onUnmounted(() => window.removeEventListener('keydown', handleKey));
 </script>
@@ -144,7 +150,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
       <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
       <div class="slide_gallery_container">
         <div v-if="currentPresentation && livePresentationState.active">
-          <div v-for="scene in currentPresentation.scenes" :key="scene.id" class="scene-card">
+          <div v-for="(scene,index) in currentPresentation.scenes" :key="scene.id" class="scene-card" @click="clickScene(index)">
             <div class="scene-info">
               <p class="scene-label">{{ scene.name }}</p>
               <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
@@ -153,6 +159,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
               <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
                 :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
                 style="pointer-events: none;" :shadow="true" />
+              <!--<SceneView v-if="scenesMap.get(scene.id)" :preview="true" :key="scenesMap.get(scene.id).id" :scene="scenesMap.get(scene.id)"
+            :showframe="false" />-->
             </div>
           </div>
         </div>
