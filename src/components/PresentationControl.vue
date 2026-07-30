@@ -16,12 +16,17 @@ import SplitterPanel from 'primevue/splitterpanel'
 import { scenes, fetchScenes } from '@/globals/scenes';
 import { formatDate } from '@/utils/date_utils';
 import SlideView from '@/components/SlideView.vue';
+import { toRaw } from 'vue'
 
 const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
 
 const { t } = useI18n();
 import '@/assets/main.css';
+
+const previewItem = ref<Scene | null>(null)
+const posLeft = ref(0)
+const posTop = ref(0)
 
 const currentPresentation = ref<Presentation | null>(null);
 const loading = ref(false);
@@ -134,9 +139,22 @@ function handleKey(e: KeyboardEvent) {
 }
 
 function clickScene(index: number) {
-    livePresentationState.value.current_scene = index+1;
-    updatePresentationState();
-    updateMonitors();
+  livePresentationState.value.current_scene = index + 1;
+  updatePresentationState();
+  updateMonitors();
+}
+
+function showPreview(item, e) {
+  previewItem.value = toRaw(item);
+  const rect = e.currentTarget.getBoundingClientRect();
+  posLeft.value = rect.right + 12;
+  posTop.value = rect.top + rect.height / 2;
+  //console.log("posLeft:", posLeft)
+  //console.log("posTop:", posTop)
+}
+
+function hidePreview() {
+  previewItem.value = null;
 }
 
 onMounted(() => window.addEventListener('keydown', handleKey));
@@ -144,74 +162,80 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 </script>
 
 <template>
-  <Splitter :gutter-size="2" class="dashboard">
-    <!-- Available Slides -->
-    <SplitterPanel :size="25" class="sub-panel">
-      <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
-      <div class="slide_gallery_container">
-        <div v-if="currentPresentation && livePresentationState.active">
-          <div v-for="(scene,index) in currentPresentation.scenes" :key="scene.id" class="scene-card" @click="clickScene(index)">
-            <div class="scene-info">
-              <p class="scene-label">{{ scene.name }}</p>
-              <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
-            </div>
-            <div v-if="scenesMap.get(scene.id)?.slides[0]" class="scene-item">
-              <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
-                :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
-                style="pointer-events: none;" :shadow="true" />
-              <!--<SceneView v-if="scenesMap.get(scene.id)" :preview="true" :key="scenesMap.get(scene.id).id" :scene="scenesMap.get(scene.id)"
+    <Splitter :gutter-size="2" class="dashboard">
+      <!-- Available Slides -->
+      <SplitterPanel :size="25" class="sub-panel">
+        <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
+        <div class="slide_gallery_container">
+          <div v-if="currentPresentation && livePresentationState.active">
+            <div v-for="(scene, index) in currentPresentation.scenes" :key="scene.id" class="scene-card"
+              @click="clickScene(index)">
+              <div class="scene-info">
+                <p class="scene-label">{{ scene.name }}</p>
+                <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
+              </div>
+              <div v-if="scenesMap.get(scene.id)?.slides[0]" class="scene-item"
+                @mouseenter="showPreview(scenesMap.get(scene.id), $event)" @mouseleave="hidePreview">
+                <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
+                  :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
+                  style="pointer-events: none;" :shadow="true" />
+                <!--<SceneView v-if="scenesMap.get(scene.id)" :preview="true" :key="scenesMap.get(scene.id).id" :scene="scenesMap.get(scene.id)"
             :showframe="false" />-->
+              </div>
             </div>
           </div>
         </div>
+      </SplitterPanel>
+
+      <!-- Zweites Panel -->
+      <SplitterPanel :size="75" :minSize="15" class="sub-panel">
+        <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
+        <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
+
+          <div v-if="livePresentationState.active" class="scene-container">
+            <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
+              :showframe="false" />
+          </div>
+
+          <div v-else class="fallback-container">
+            <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
+          </div>
+
+          <div class="controls glass">
+            <Button @click="previousScene" rounded>
+              <template #icon>
+                <i class="material-symbols-outlined">chevron_left</i>
+              </template>
+            </Button>
+
+            <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
+
+            <Button @click="nextScene" rounded>
+              <template #icon>
+                <i class="material-symbols-outlined">chevron_right</i>
+              </template>
+            </Button>
+
+            <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
+              <template #icon>
+                <i class="material-symbols-outlined">stop_circle</i>
+              </template>
+            </Button>
+
+            <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
+            <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
+          </div>
+        </div>
+      </SplitterPanel>
+    </Splitter>
+    <Teleport to="body">
+      <div v-if="previewItem" class="preview-layer" :style="{ left: posLeft + 'px', top: posTop + 'px' }">
+        <SceneView v-if="previewItem" :preview="false" :key="previewItem.id" :scene="previewItem" :showframe="false" />
       </div>
-    </SplitterPanel>
-
-    <!-- Zweites Panel -->
-    <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
-      <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
-
-        <div v-if="livePresentationState.active" class="scene-container">
-          <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
-            :showframe="false" />
-        </div>
-
-        <div v-else class="fallback-container">
-          <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
-        </div>
-
-        <div class="controls glass">
-          <Button @click="previousScene" rounded>
-            <template #icon>
-              <i class="material-symbols-outlined">chevron_left</i>
-            </template>
-          </Button>
-
-          <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
-
-          <Button @click="nextScene" rounded>
-            <template #icon>
-              <i class="material-symbols-outlined">chevron_right</i>
-            </template>
-          </Button>
-
-          <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
-            <template #icon>
-              <i class="material-symbols-outlined">stop_circle</i>
-            </template>
-          </Button>
-
-          <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
-          <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
-        </div>
-      </div>
-    </SplitterPanel>
-  </Splitter>
+    </Teleport>
 </template>
 
 <style scoped>
-/* Das Dashboard füllt das gesamte Browserfenster/Elternelement */
 .dashboard {
   height: 100%;
 }
@@ -333,7 +357,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 }
 
 .scene-item {
-
   flex: 1;
   /* fill remaining height after slide-info */
   min-height: 0;
@@ -349,5 +372,24 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.preview-layer {
+  position: fixed;
+  /* viewport-anchored (works with nested panels) */
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999999;
+  pointer-events: none;
+  /* doesn’t break hover */
+  transform: translateY(-50%);
+  /* center at posTop */
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+  transform: scale(5.0);
+  /* 1.0 = normal */
+  transform-origin: top left;
 }
 </style>
