@@ -230,7 +230,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
     </Splitter>
     <Teleport to="body">
       <div v-if="previewItem" class="preview-layer" :style="{ left: posLeft + 'px', top: posTop + 'px' }">
-        <SceneView v-if="previewItem" :preview="false" :key="previewItem.id" :scene="previewItem" :showframe="false" />
+        <SceneView v-if="previewItem" :preview="true" :key="previewItem.id" :scene="previewItem" :showframe="false" />
       </div>
     </Teleport>
 </template>
@@ -388,8 +388,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   border-radius: 10px;
   padding: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
-  transform: scale(5.0);
-  /* 1.0 = normal */
+  transform: scale(0.5); 
   transform-origin: top left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /*height: 100%;*/
+  flex: 1;
+  min-height: 0;
 }
 </style>
