@@ -30,7 +30,8 @@
       "next": "Vor",
       "previous": "Zurück",
       "stop": "Beenden",
-      "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt"
+      "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt",
+      "no_presentation_showing_short": "Keine Präsentation aktiv"
     },
     "scene": "Szene",
     "slide": "Folie",

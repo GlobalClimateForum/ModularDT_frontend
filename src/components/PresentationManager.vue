@@ -10,30 +10,20 @@ import PresentationEditing from '@/components/PresentationEditor.vue';
 import { formatDate } from '@/utils/date_utils';
 
 import { scenes, fetchScenes } from '@/globals/scenes';
-import { getPresentations, updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
+import { presentations, fetchPresentations } from '@/globals/presentations';
+import { updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
 import { startPresentation } from "@/services/live_presentation_service";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 
-
 const { t } = useI18n();
 
-const presentations = ref<Presentation[]>([]);
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
 const editingRows = ref<Presentation[]>([]);
 const toast = useToast();
-
-function fetchPresentations() {
-    getPresentations().then(response => {
-        presentations.value = response.data.presentations;
-        console.info('fetched presentations:', JSON.parse(JSON.stringify(presentations.value)))
-    }).catch(error => {
-        console.error("Error fetching presentations:", error);
-    });
-}
 
 onMounted(() => {
     fetchPresentations();
@@ -182,7 +172,6 @@ async function onPlayPresentation(presentation: Presentation) {
 
         <SplitterPanel class="sub-panel" :size="60" :minSize="60" :maxSize="60">
             <div v-if="selectedPresentation">
-                <!-- <h2>Details für: {{ selectedPresentation.name }}</h2> -->
                 <PresentationEditing :key="selectedPresentation.id" :presentation="selectedPresentation"
                     :scenes="scenes" />
             </div>

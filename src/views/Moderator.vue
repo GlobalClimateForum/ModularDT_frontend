@@ -4,6 +4,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import router from '@/router';
+import Badge from 'primevue/badge';
 
 import SlideManager from '@/components/SlideManager.vue';
 import ParticipantsManager from '@/components/ParticipantsManager.vue';
@@ -25,8 +26,12 @@ import { Transition } from "vue";
 import { useI18n } from 'vue-i18n';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
+import { useLivePresentationState } from '@/globals/live_presentation';
+import { presentations } from '@/globals/presentations';
+
 
 const { t } = useI18n();
+const livePresentationState = useLivePresentationState()
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'globalsettings' | 'participants'>('slides');
 const participants = ref<any[]>([]);
@@ -195,8 +200,19 @@ function handleLiveSwitch() {
         </ul>
         <ul>
           <li class="label-container">
-            <label>Presentation</label>
-            live
+            <label>{{ $t('moderator.presentation.presentation') }}</label>
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
+              <Badge :severity="livePresentationState.active ? 'success' : 'danger'"
+                style="align-self: center; flex-shrink: 0;" />
+              <div v-if="livePresentationState.active">
+                <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
+                font-size: var(--fs-small);"> {{ presentations.find(p => p.id === livePresentationState.presentation)?.name }} </p>
+              </div>
+              <div v-else>
+                <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
+                font-size: var(--fs-small); ">{{ t('moderator.presentation.no_presentation_showing_short') }}</p>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
@@ -212,7 +228,6 @@ function handleLiveSwitch() {
 </template>
 
 <style scoped>
-
 .panel {
   position: relative;
   overflow: hidden;

@@ -105,7 +105,7 @@ onMounted(() => {
         if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
           livePresentationState.value.active = false
           livePresentationState.value.presentation = -1
-          livePresentationState.value.current_scene = -1
+          livePresentationState.value.current_scene = 1
         }
       }
 

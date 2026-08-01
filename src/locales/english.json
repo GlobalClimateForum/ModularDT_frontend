@@ -30,7 +30,8 @@
       "next": "Next",
       "previous": "Previous",
       "stop": "Terminate",
-      "no_presentation_showing": "Currently no presentation playing"
+      "no_presentation_showing": "Currently no presentation playing",
+      "no_presentation_showing_short": "No presentation active"
     },
     "scene": "Scene",
     "slide": "Slide",

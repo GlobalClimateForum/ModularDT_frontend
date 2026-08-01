@@ -8,13 +8,13 @@ import { getPresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service";
 import type { Scene } from "@/services/scene_service";
 import { useLivePresentationState } from '@/globals/live_presentation';
+import { presentations } from '@/globals/presentations';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
 import { updateMonitorStates } from '@/services/monitor_service'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import { scenes, fetchScenes } from '@/globals/scenes';
-import { formatDate } from '@/utils/date_utils';
 import SlideView from '@/components/SlideView.vue';
 import { toRaw } from 'vue'
 
@@ -61,8 +61,12 @@ onMounted(() => {
       const live_presentation_read = response.data.live_presentation;
 
       if (live_presentation_read && Object.keys(live_presentation_read).length > 0) {
-        livePresentationState.value.current_scene = live_presentation_read.current_scene || 1;
         livePresentationState.value.active = live_presentation_read.active;
+        if (livePresentationState.value.active) {
+          livePresentationState.value.current_scene = live_presentation_read.current_scene || 1;
+        } else {
+          livePresentationState.value.current_scene = 1;
+        }
 
         const presentationId = live_presentation_read.presentation;
         if (presentationId) {
@@ -124,7 +128,7 @@ const nextScene = () => {
 
 const abortPresentation = () => {
   stopPresentation();
-  livePresentationState.value.current_scene = -1;
+  livePresentationState.value.current_scene = 1;
 };
 
 
@@ -148,7 +152,7 @@ function showPreview(item, e) {
   previewItem.value = toRaw(item);
   const rect = e.currentTarget.getBoundingClientRect();
   posLeft.value = rect.right + 12;
-  posTop.value = rect.top + rect.height / 2;
+  posTop.value = rect.top;
   //console.log("posLeft:", posLeft)
   //console.log("posTop:", posTop)
 }
@@ -162,77 +166,75 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 </script>
 
 <template>
-    <Splitter :gutter-size="2" class="dashboard">
-      <!-- Available Slides -->
-      <SplitterPanel :size="25" class="sub-panel">
-        <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
-        <div class="slide_gallery_container">
-          <div v-if="currentPresentation && livePresentationState.active">
-            <div v-for="(scene, index) in currentPresentation.scenes" :key="scene.id" class="scene-card"
-              @click="clickScene(index)">
-              <div class="scene-info">
-                <p class="scene-label">{{ scene.name }}</p>
-                <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
-              </div>
-              <div v-if="scenesMap.get(scene.id)?.slides[0]" class="scene-item"
-                @mouseenter="showPreview(scenesMap.get(scene.id), $event)" @mouseleave="hidePreview">
-                <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
-                  :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
-                  style="pointer-events: none;" :shadow="true" />
-                <!--<SceneView v-if="scenesMap.get(scene.id)" :preview="true" :key="scenesMap.get(scene.id).id" :scene="scenesMap.get(scene.id)"
-            :showframe="false" />-->
-              </div>
+  <Splitter :gutter-size="2" class="dashboard">
+    <!-- Available Slides -->
+    <SplitterPanel :size="25" class="sub-panel">
+      <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
+      <div class="slide_gallery_container">
+        <div v-if="currentPresentation && livePresentationState.active">
+          <div v-for="(scene, index) in currentPresentation.scenes" :key="scene.id" class="scene-card"
+            @click="clickScene(index)">
+            <div class="scene-info">
+              <p class="scene-label">{{ scene.name }}</p>
+              <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
+            </div>
+            <div v-if="scenesMap.get(scene.id)?.slides[0]" class="scene-item"
+              @mouseenter="showPreview(scenesMap.get(scene.id), $event)" @mouseleave="hidePreview">
+              <SlideView :preview="false" :slide="scenesMap.get(scene.id)?.slides[0]"
+                :sections="scenesMap.get(scene.id)?.slides[0].sections ?? []" :showFrame="false"
+                style="pointer-events: none;" :shadow="true" />
             </div>
           </div>
         </div>
-      </SplitterPanel>
-
-      <!-- Zweites Panel -->
-      <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-        <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
-        <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
-
-          <div v-if="livePresentationState.active" class="scene-container">
-            <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
-              :showframe="false" />
-          </div>
-
-          <div v-else class="fallback-container">
-            <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
-          </div>
-
-          <div class="controls glass">
-            <Button @click="previousScene" rounded>
-              <template #icon>
-                <i class="material-symbols-outlined">chevron_left</i>
-              </template>
-            </Button>
-
-            <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
-
-            <Button @click="nextScene" rounded>
-              <template #icon>
-                <i class="material-symbols-outlined">chevron_right</i>
-              </template>
-            </Button>
-
-            <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
-              <template #icon>
-                <i class="material-symbols-outlined">stop_circle</i>
-              </template>
-            </Button>
-
-            <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
-            <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
-          </div>
-        </div>
-      </SplitterPanel>
-    </Splitter>
-    <Teleport to="body">
-      <div v-if="previewItem" class="preview-layer" :style="{ left: posLeft + 'px', top: posTop + 'px' }">
-        <SceneView v-if="previewItem" :preview="true" :key="previewItem.id" :scene="previewItem" :showframe="false" />
       </div>
-    </Teleport>
+    </SplitterPanel>
+
+    <!-- Zweites Panel -->
+    <SplitterPanel :size="75" :minSize="15" class="sub-panel">
+      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
+      <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
+
+        <div v-if="livePresentationState.active" class="scene-container">
+          <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
+            :showframe="false" />
+        </div>
+
+        <div v-else class="fallback-container">
+          <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
+        </div>
+
+        <div class="controls glass">
+          <Button @click="previousScene" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">chevron_left</i>
+            </template>
+          </Button>
+
+          <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
+
+          <Button @click="nextScene" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">chevron_right</i>
+            </template>
+          </Button>
+
+          <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
+            <template #icon>
+              <i class="material-symbols-outlined">stop_circle</i>
+            </template>
+          </Button>
+
+          <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
+          <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
+        </div>
+      </div>
+    </SplitterPanel>
+  </Splitter>
+  <Teleport to="body">
+    <div v-if="previewItem" class="preview-layer" :style="{ left: posLeft + 'px', top: posTop + 'px' }">
+      <SceneView v-if="previewItem" :preview="true" :key="previewItem.id" :scene="previewItem" :showframe="false" />
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -388,7 +390,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   border-radius: 10px;
   padding: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
-  transform: scale(0.5); 
+  transform: scale(0.5);
   transform-origin: top left;
   display: flex;
   align-items: center;
