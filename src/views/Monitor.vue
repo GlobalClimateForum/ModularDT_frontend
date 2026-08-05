@@ -22,14 +22,12 @@ const activeMonitor = computed(() => {
 
 let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
-const mySlideId = ref<number>()
 
 // The slide to be displayed, which is the currentSlide with the latest parameter changes applied
 const displaySlide = computed(() => {
   if (!currentSlide.value) return null
   const lastChange = parameterChanges.value[parameterChanges.value.length - 1]
   const updatedSlide = applyParameterChange(currentSlide.value, lastChange)
-  console.log('Display slide updated:', updatedSlide)
   return updatedSlide
 })
 
@@ -86,7 +84,7 @@ onMounted(() => {
   socket = new WebSocket(socketUrl)
 
   socket.onopen = (event) => {
-    console.log('Success: connected to Django Channel!', event)
+    console.log('Success: connected to channel!', event)
     connectionStatus.value = 'Connected'
   }
 
@@ -112,13 +110,14 @@ onMounted(() => {
       if (data.event_type === 'slide_update' || data.message) {
         if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
           if (data.slide != "null") {
-            currentSlide.value = data.slide
+            if ((currentSlide.value != null && currentSlide.value.id != data.slide.id) || currentSlide.value == null) {
+              currentSlide.value = data.slide
+            }
           } else {
             currentSlide.value = null
           }
         }
       }
-
     } catch (e) {
       console.error('Error processing WebSocket message:', e)
     }

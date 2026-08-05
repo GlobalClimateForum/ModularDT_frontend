@@ -8,7 +8,6 @@ import { getPresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service";
 import type { Scene } from "@/services/scene_service";
 import { useLivePresentationState } from '@/globals/live_presentation';
-import { presentations } from '@/globals/presentations';
 import InputText from 'primevue/inputtext';
 import { useNow, useDateFormat } from '@vueuse/core'
 import { updateMonitorStates } from '@/services/monitor_service'
