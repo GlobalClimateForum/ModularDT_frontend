@@ -33,7 +33,7 @@ import { presentations } from '@/globals/presentations';
 const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'scenes' | 'scenecreate' | 'live' | 'presentations' | 'scenecreate' | 'globalsettings' | 'participants'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants'>('slides');
 const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -41,10 +41,11 @@ const currentScene = ref<Scene | null>(null);
 const dashboardViews = {
   slides: SlideManager,
   slidecreate: SlideCreator,
+  liveslides: null,
   scenes: SceneManager,
   scenecreate: SceneBuilder,
   live: PresentationControl,
-  presentations: PresentationManager,
+  //presentations: PresentationManager,
   globalsettings: GlobalSettings,
   participants: ParticipantsManager
 }
@@ -64,12 +65,12 @@ const items = computed(() => [
   {
     label: t('moderator.nav.presentations'),
     items: [
-      {
+      /*{
         key: 'presentations',
         label: t('moderator.nav.overview'),
         materialIcon: "filter",
         command: () => { currentDashboard.value = 'presentations'; }
-      },
+      },*/
       {
         key: 'live',
         label: "Live",
@@ -112,6 +113,12 @@ const items = computed(() => [
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
+      },      
+      {
+        key: 'liveslides',
+        label: "Live",
+        materialIcon: 'live_tv',
+        command: () => { currentDashboard.value = 'liveslides'; }
       },
     ],
   },

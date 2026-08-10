@@ -13,8 +13,8 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import { saveSlide } from '@/services/slide_service'
 import Tag from 'primevue/tag';
-
-import { getSlides, updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
+import { slides, fetchSlides } from '@/globals/slides';
+import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
 
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
@@ -24,7 +24,6 @@ import { useConfirm } from "primevue/useconfirm";
 const confirm = useConfirm();
 const { t } = useI18n();
 
-const slides = ref<Slide[]>([]);
 const selectedSlide = ref<Slide | null>(null);
 const previewSlide = ref('');
 const editingRows = ref<Slide[]>([]);
@@ -32,24 +31,6 @@ const toast = useToast();
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
-
-function fetchSlides() {
-    getSlides().then(response => {
-        slides.value = response.data;
-        response.data.forEach((slide: Slide) => {
-            if (slide.sections && slide.sections.length > 0) {
-                slide.mode = getSlideMode(slide.sections);
-            }
-        });
-    }).catch(error => {
-        console.error("Error fetching slides:", error);
-    });
-}
-
-function getSlideMode(sections: SlideSection[]): string {
-     
-    return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
-}
 
 onMounted(() => {
     fetchSlides();
