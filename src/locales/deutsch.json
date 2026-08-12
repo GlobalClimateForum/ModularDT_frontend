@@ -51,8 +51,10 @@
     "confirmation": "Bestätigung",
     "confirmation-message-head": "Diese ",
     "confirmation-message-tail": " wirklich löschen?",
-    "confirmation-ok": "OK", 
-    "confirmation-cancel": "Abbrechen"
+    "confirmation-ok": "OK",
+    "confirmation-cancel": "Abbrechen",
+    "update-slide-confirmation-message-head": "Eine Folie mit Namen",
+    "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?"
   },
   "participant": {
     "name": "Teilnehmer"

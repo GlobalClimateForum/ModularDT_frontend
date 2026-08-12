@@ -339,7 +339,7 @@ const removeItem = (index: number) => {
 <template>
     <div style="display: flex; flex-direction: column; height: 100vh;"> <!-- Obere Reihe -->
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
-            <Splitter layout="horizontal" style="width: 100%; height: 100%" @resizeend="syncTopResize">
+            <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <h2 class="dashboard_label">{{ $t('moderator.nav.scenes') }}</h2>
                     <DataTable :value="scenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
@@ -404,7 +404,7 @@ const removeItem = (index: number) => {
         <div style="height: 10px; background: #e5e5e5;"></div>
         <!-- Lower panel row -->
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
-            <Splitter layout="horizontal" style="width: 100%; height: 100%" @resizeend="syncBottomResize">
+            <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <h2 class="dashboard_label">{{ $t('moderator.nav.presentations') }}</h2>
                     <DataTable :value="presentations" dataKey="id" editMode="row" scrollable scrollHeight="flex"
@@ -545,6 +545,7 @@ const removeItem = (index: number) => {
 }
 
 .drop-zone * {
+
     pointer-events: none;
 }
 
@@ -556,8 +557,11 @@ const removeItem = (index: number) => {
 
 /* Sorgt dafür, dass die Drop-Zone groß genug ist, auch wenn sie leer ist */
 .drop-zone {
+    display: flex;
+    flex-direction: column;
     min-height: 200px;
-    height: 100%;
+    height: 95%;
+    gap: 0.5rem;
 }
 
 .builder-container {

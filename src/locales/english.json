@@ -52,7 +52,9 @@
     "confirmation-message-head": "Are you sure you want to delete this ",
     "confirmation-message-tail": "?",
     "confirmation-ok": "OK",
-    "confirmation-cancel": "Cancel"
+    "confirmation-cancel": "Cancel",
+    "update-slide-confirmation-message-head": "A slide with name",
+    "update-slide-confirmation-message-tail": "already exits. Overwrite?"
   },
   "participant": {
     "name": "Participant"

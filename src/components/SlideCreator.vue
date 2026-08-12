@@ -1,12 +1,13 @@
+F
 <script setup lang="ts">
-import { ref, watch, defineAsyncComponent } from 'vue'
+import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import type { Slide } from '@/services/slide_service'
-import { saveSlide, getSlideSectionType, SlideSectionTypes } from '@/services/slide_service'
+import { saveSlide, updateSlide, getSlideSectionType, SlideSectionTypes } from '@/services/slide_service'
 import SlideView from '@/components/SlideView.vue'
 import { useToast } from 'primevue/usetoast'
 import LayoutEditor from '@/components/LayoutEditor.vue'
@@ -21,6 +22,13 @@ import '@/assets/main.css'
 import Select from 'primevue/select';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
+import { slides, fetchSlides } from '@/globals/slides';
+import { scenes } from '@/globals/scenes'
+import { useI18n } from 'vue-i18n';
+import { useConfirm } from "primevue/useconfirm";
+
+const { t } = useI18n();
+const confirm = useConfirm();
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
 const DEFAULT_CONTENT = ''
@@ -58,9 +66,12 @@ const editorMapping: Record<string, any> = {
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
 
-// Save a slide handler
-function storeSlide() {
+onMounted(() => {
+    fetchSlides();
+});
 
+// 
+function confirmedUpdateSlide() {
     const sections = slideSections.value.map((section, index) => ({
         ...section,
         width_fraction: sectionWidths.value[index],
@@ -78,12 +89,66 @@ function storeSlide() {
         tags: currentSlide.value.tags,
     };
 
-    saveSlide(slide, sections).then(response => {
+    return updateSlide(currentSlide.value.id,slide).then(response => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
-        console.error("Error saving slide:", error);
+        console.error('Error saving slide:', error)
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
+    })
+}
+
+function confirmUpdateSlide() {
+    confirm.require({
+        header: t('moderator.confirmation'), 
+        message: t('moderator.update-slide-confirmation-message-head') + " " + currentSlide.value.name + " " + t('moderator.update-slide-confirmation-message-tail'), 
+        acceptLabel: `${t('moderator.confirmation-ok')}`,
+        rejectLabel: t('moderator.confirmation-cancel'), 
+        accept: async () => {    
+            await confirmedUpdateSlide();
+        }, reject: () => {      
+            // nothing to do    
+        },
     });
+}
+
+// Save a slide handler
+function storeSlide() {
+    const sections = slideSections.value.map((section, index) => ({
+        ...section,
+        width_fraction: sectionWidths.value[index],
+        parameters: section.parameters ?? {},
+        mode: section.mode ?? 'static',
+        url_pattern: section.url_pattern ?? '',
+        properties: section.properties ?? {},
+    }));
+
+    const slide = {
+        id: currentSlide.value.id,
+        name: currentSlide.value.name,
+        width: currentSlide.value.width,
+        height: currentSlide.value.height,
+        tags: currentSlide.value.tags,
+    };
+
+    return saveSlide(slide, sections).then(response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
+    }).catch(error => {
+        console.error('Error saving slide:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
+    })
+}
+
+function updateOrStoreSlide() {
+    if (!currentSlide.value.name?.trim()) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Slide name cannot be empty', life: 3000 })
+        return
+    }
+
+    if (slides.value.some(item => item.name === currentSlide.value.name)) {
+        confirmUpdateSlide()
+    } else {
+        storeSlide()
+    }
 }
 
 // Small Helper to identify the layout type based on the section widths (fullscreen, golden, reversegolden, custom)
@@ -279,7 +344,7 @@ watch(currentSectionIndex, (i) => {
                                             <div>
                                                 <p style="margin: 0; font-size: var(--fs-medium)"> {{
                                                     slotProps.option.label
-                                                }}</p>
+                                                    }}</p>
                                                 <p style="margin: 0; font-size: var(--fs-small)">{{
                                                     slotProps.option.description }}</p>
                                             </div>
@@ -305,8 +370,8 @@ watch(currentSectionIndex, (i) => {
                             :slideSection="sectionWithWidth(index)"
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
-                            @targetSlideUpdated="targetSlide = $event" :basemap="basemap"
-                            :progress="vegaProgress" :sectionIdx="index" :autosize="autosizeVega">
+                            @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
+                            :sectionIdx="index" :autosize="autosizeVega">
                         </component>
                     </TabPanel>
                 </TabPanels>
@@ -322,7 +387,7 @@ watch(currentSectionIndex, (i) => {
                 <Toolbar class="editor-toolbar">
                     <template #start>
                         <div class="editor-toolbar-start">
-                            <Button icon="pi pi-save" size="small" rounded @click="storeSlide"
+                            <Button icon="pi pi-save" size="small" rounded @click="updateOrStoreSlide"
                                 :disabled="currentSlide.name === ''" />
                             <InputText v-model="currentSlide.name" placeholder="Enter slide name..." size="small"
                                 rounded />
@@ -333,15 +398,13 @@ watch(currentSectionIndex, (i) => {
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame" :basemap="basemap" :targetSlide = "targetSlide" />
+                    :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
 
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                     @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                     :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                    @autosize="autosizeVega = $event"
-                    @bgcolor="bgColor = $event"
-                 />
+                    @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" />
 
             </div>
         </SplitterPanel>
