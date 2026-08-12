@@ -41,6 +41,7 @@
     "empty_screens": "Leere Bildschirme",
     "empty_screen": "Leerer Bildschirm",
     "enter_scene_name": "Name für Szene eingeben...",
+    "enter_slide_name": "Name für Folie eingeben...",
     "order": "Reihenfolge",
     "clear": "Löschen",
     "save": "Speichern",
@@ -54,6 +55,7 @@
     "confirmation-ok": "OK",
     "confirmation-cancel": "Abbrechen",
     "update-slide-confirmation-message-head": "Eine Folie mit Namen",
+    "update-scene-confirmation-message-head": "Eine Szene mit Namen",
     "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?"
   },
   "participant": {

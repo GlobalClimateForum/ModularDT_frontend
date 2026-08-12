@@ -15,10 +15,13 @@ import { saveScene } from '@/services/scene_service';
 import { settings } from '@/globals/settings'
 import { useToast } from 'primevue/usetoast'
 import type { Scene } from '@/services/scene_service';
+import { scenes } from '@/globals/scenes';
 //import type { Scene } from 'vega'
 import { useI18n } from 'vue-i18n';
+import { useConfirm } from "primevue/useconfirm";
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 // Define Input Proerties
 const props = defineProps({
@@ -56,6 +59,10 @@ onMounted(() => {
         scene.value = grid;
     } else {
         scene.value = Array(settings.value.number_of_screens).fill(null);
+    }
+
+    if (props.inp_scene) {
+        scenename.value = props.inp_scene.name
     }
 });
 
@@ -98,8 +105,24 @@ function onDrop(event: DragEvent, index: number) {
     scene.value[index] = slide;
 }
 
-// Handle saving the scene to the backend
-function onSaveScene() {
+function confirmedUpdateScene() {
+}
+
+function confirmUpdateScene() {
+    confirm.require({
+        header: t('moderator.confirmation'), 
+        message: t('moderator.update-scene-confirmation-message-head') + " " + scenename.value + " " + t('moderator.update-slide-confirmation-message-tail'), 
+        acceptLabel: `${t('moderator.confirmation-ok')}`,
+        rejectLabel: t('moderator.confirmation-cancel'), 
+        accept: async () => {    
+            await confirmedUpdateScene();
+        }, reject: () => {      
+            // nothing to do    
+        },
+    });
+}
+
+function storeScene() {
     if (!scenename.value.trim()) {
         alert("Please enter a scene name before saving.");
         return;
@@ -121,6 +144,20 @@ function onSaveScene() {
         console.error("Error saving scene:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     });
+}
+
+// Handle saving the scene to the backend
+function onSaveScene() {
+    if (!scenename.value.trim()) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Scene name cannot be empty', life: 3000 })
+        return
+    }
+
+    if (scenes.value.some(item => item.name === scenename.value)) {
+        confirmUpdateScene()
+    } else {
+        storeScene()
+    }
 }
 
 // Check if there are slides assinged to multiple monitors (duplicates)

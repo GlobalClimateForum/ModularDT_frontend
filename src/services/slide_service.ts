@@ -93,7 +93,6 @@ export const getIPanels = () => api.get("/slides/ipanels/")
 export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
     api.post("/slides/", { ...slide, sections });
 
-
 export const updateSlide = (id: number, slide: Partial<SlidePayload>) =>
     api.patch(`/slides/${id}/`, slide);
 

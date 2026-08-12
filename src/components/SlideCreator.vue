@@ -389,7 +389,7 @@ watch(currentSectionIndex, (i) => {
                         <div class="editor-toolbar-start">
                             <Button icon="pi pi-save" size="small" rounded @click="updateOrStoreSlide"
                                 :disabled="currentSlide.name === ''" />
-                            <InputText v-model="currentSlide.name" placeholder="Enter slide name..." size="small"
+                            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')" size="small"
                                 rounded />
                         </div>
                     </template>

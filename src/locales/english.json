@@ -41,6 +41,7 @@
     "empty_screens": "Empty Screens",
     "empty_screen": "Empty Screen",
     "enter_scene_name": "Enter scene name...",
+    "enter_slide_name": "Enter slide name...",
     "order": "Order",
     "clear": "Clear",
     "save": "Save",
@@ -54,6 +55,7 @@
     "confirmation-ok": "OK",
     "confirmation-cancel": "Cancel",
     "update-slide-confirmation-message-head": "A slide with name",
+    "update-scene-confirmation-message-head": "A scene with name",
     "update-slide-confirmation-message-tail": "already exits. Overwrite?"
   },
   "participant": {
