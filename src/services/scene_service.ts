@@ -1,23 +1,23 @@
 import { api } from "./api";
-import type { Slide } from "@/services/slide_service"  
+import type { Slide } from "@/services/slide_service"
 
 export interface Scene {
-    id?: number;
-    name: string;
-    description: string;
-    created_at?: string | null;
-    updated_at?: string | null;
-    tags: string[];
-    slides: (Slide & { position: number })[]; 
+  id?: number;
+  name: string;
+  description: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  tags: string[];
+  slides: (Slide & { position: number })[];
 }
 
 export type ScenePayload = Omit<Scene, "id" | "created_at" | "updated_at">;
 
 export const getScenes = () => api.get("/scenes/");
-export const saveScene = (scene: Omit<Scene , "id" | "created_at" | "updated_at">) => {
+export const saveScene = (scene: Omit<Scene, "id" | "created_at" | "updated_at">) => {
   const payload = {
     ...scene,
-    as: scene.slides.map(slide => ({
+    slide_positions: scene.slides.map(slide => ({
       id: slide.id,
       position: slide.position
     }))
@@ -26,9 +26,17 @@ export const saveScene = (scene: Omit<Scene , "id" | "created_at" | "updated_at"
   return api.post("/scenes/", payload);
 }
 
+export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
+  const payload = {
+    ...scene,
+    slide_positions: scene.slides?.map(slide => ({
+      id: slide.id,
+      position: slide.position
+    }))
+  };
+  return api.patch(`/scenes/${id}/`, payload);
+};
 
-export const updateScene = (id: number, scene: Partial<ScenePayload>) =>
-    api.patch(`/scenes/${id}/`, scene);
 
 export const deleteScene = (id: number) => api.delete(`/scenes/${id}/`);
 

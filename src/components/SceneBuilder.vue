@@ -11,7 +11,7 @@ import Message from 'primevue/message';
 import { ref, onMounted, watch } from 'vue';
 import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
-import { saveScene } from '@/services/scene_service';
+import { saveScene, updateScene } from '@/services/scene_service';
 import { settings } from '@/globals/settings'
 import { useToast } from 'primevue/usetoast'
 import type { Scene } from '@/services/scene_service';
@@ -105,28 +105,41 @@ function onDrop(event: DragEvent, index: number) {
     scene.value[index] = slide;
 }
 
-function confirmedUpdateScene() {
+function confirmedUpdateScene(id: number) {
+
+    const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
+        .filter((s): s is (Slide & { position: number }) => s !== null);
+
+    const scene_ = {
+        name: scenename.value,
+        description: "",
+        tags: [],
+        slides: validSlidesWithPositions
+    };
+
+    updateScene(id, scene_).then(_response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 })
+    }).catch(error => {
+        console.error("Error saving scene:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update scene', life: 3000 })
+    });
 }
 
-function confirmUpdateScene() {
+function confirmUpdateScene(id: number) {
     confirm.require({
-        header: t('moderator.confirmation'), 
-        message: t('moderator.update-scene-confirmation-message-head') + " " + scenename.value + " " + t('moderator.update-slide-confirmation-message-tail'), 
+        header: t('moderator.confirmation'),
+        message: t('moderator.update-scene-confirmation-message-head') + " " + scenename.value + " " + t('moderator.update-slide-confirmation-message-tail'),
         acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'), 
-        accept: async () => {    
-            await confirmedUpdateScene();
-        }, reject: () => {      
+        rejectLabel: t('moderator.confirmation-cancel'),
+        accept: async () => {
+            await confirmedUpdateScene(id);
+        }, reject: () => {
             // nothing to do    
         },
     });
 }
 
 function storeScene() {
-    if (!scenename.value.trim()) {
-        alert("Please enter a scene name before saving.");
-        return;
-    }
 
     const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
         .filter((s): s is (Slide & { position: number }) => s !== null);
@@ -153,8 +166,9 @@ function onSaveScene() {
         return
     }
 
-    if (scenes.value.some(item => item.name === scenename.value)) {
-        confirmUpdateScene()
+    const exisitng_scene = scenes.value.find((s) => s.name === scenename.value);
+    if (exisitng_scene) {
+        confirmUpdateScene(exisitng_scene?.id)
     } else {
         storeScene()
     }
