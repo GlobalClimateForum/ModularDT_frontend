@@ -4,7 +4,9 @@
     "name": "Moderator",
     "nav": {
       "event": "Event",
+      "live": "Live",
       "presentations": "Presentations",
+      "presentation": "Presentation",
       "scenes": "Scenes",
       "slides": "Slides",
       "settings": "Settings",
@@ -13,7 +15,8 @@
       "editor": "Editor",
       "dashboard": "Dashboard",
       "globalsettings": "DT Settings",
-      "participants": "Participants"
+      "participants": "Participants",
+      "participants_slides": "Participant slides"
     },
     "settings": {
       "numberscreens": "Number of Screens",
@@ -56,7 +59,8 @@
     "confirmation-cancel": "Cancel",
     "update-slide-confirmation-message-head": "A slide with name",
     "update-scene-confirmation-message-head": "A scene with name",
-    "update-slide-confirmation-message-tail": "already exits. Overwrite?"
+    "update-slide-confirmation-message-tail": "already exits. Overwrite?",
+    "choose_presentation": "Choose presentation"
   },
   "participant": {
     "name": "Participant"

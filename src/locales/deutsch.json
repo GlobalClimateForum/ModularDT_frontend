@@ -4,7 +4,9 @@
     "name": "Moderator",
     "nav": {
       "event": "Veranstaltung",
+      "live": "Live",
       "presentations": "Präsentationen",
+      "presentation": "Präsentation",
       "scenes": "Szenen",
       "slides": "Folien",
       "settings": "Einstellungen",
@@ -13,7 +15,8 @@
       "editor": "Editor",
       "dashboard": "Kontrollzentrum",
       "globalsettings": "DT Einstellungen",
-      "participants": "Teilnehmer"
+      "participants": "Teilnehmer",
+      "participants_slides": "Teilnehmer-Folien"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
@@ -56,7 +59,8 @@
     "confirmation-cancel": "Abbrechen",
     "update-slide-confirmation-message-head": "Eine Folie mit Namen",
     "update-scene-confirmation-message-head": "Eine Szene mit Namen",
-    "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?"
+    "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?",
+    "choose_presentation": "Präsentation wählen"
   },
   "participant": {
     "name": "Teilnehmer"

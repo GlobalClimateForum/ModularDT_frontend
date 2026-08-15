@@ -1,25 +1,65 @@
 <script lang="ts" setup>
+import { useRoute } from 'vue-router'
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { ref } from 'vue'
 import { getIPanels } from '@/services/slide_service'
+
 import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue'
 
 const parameterChanges = ref<ParameterChange[]>([])
 const panels = ref<any[]>([])
+const route = useRoute()
+const currentId = computed(() => route.params.id)
+
+let socket: WebSocket | null = null
+const connectionStatus = ref('Connecting...')
 
 let stop: (() => void) | undefined
+
 onMounted(() => {
   stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
+  onMounted(() => {
+    const socketUrl = `ws://localhost:8000/ws/participant/${currentId.value}/`
+
+    socket = new WebSocket(socketUrl)
+
+    socket.onopen = (event) => {
+      console.log('Success: connected to channel!', event)
+      connectionStatus.value = 'Connected'
+    }
+
+    socket.onmessage = (event) => {
+      try {
+
+      } catch (e) {
+        console.error('Error processing WebSocket message:', e)
+      }
+    }
+
+    socket.onerror = (error) => {
+      console.error('WebSocket-Error:', error)
+      connectionStatus.value = 'Error'
+    }
+
+    socket.onclose = (event) => {
+      console.log('WebSocket-connection closed.', event)
+      connectionStatus.value = 'Disconnected'
+    }
+  })
 })
 
 const ipanels = getIPanels().then((response) => {
   panels.value = response.data
 })
 
-onUnmounted(() => stop?.())
-
+onUnmounted(() => {
+  if (socket) {
+    socket.close()
+  }
+  stop?.()
+})
 </script>
 
 <template>

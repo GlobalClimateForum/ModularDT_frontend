@@ -32,7 +32,7 @@ import { presentations } from '@/globals/presentations';
 const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides'>('slides');
 const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -62,17 +62,17 @@ const viewProps = computed(() => {
 
 const items = computed(() => [
   {
-    label: t('moderator.nav.presentations'),
+    label: t('moderator.nav.live'),
     items: [
-      /*{
-        key: 'presentations',
-        label: t('moderator.nav.overview'),
-        materialIcon: "filter",
-        command: () => { currentDashboard.value = 'presentations'; }
-      },*/
+      {
+        key: 'liveslides',
+        label: "Live " + t('moderator.nav.slides'),
+        materialIcon: 'live_tv',
+        command: () => { currentDashboard.value = 'liveslides'; }
+      },
       {
         key: 'live',
-        label: "Live",
+        label: "Live " + t('moderator.nav.presentation'),
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'live'; }
       },
@@ -113,12 +113,6 @@ const items = computed(() => [
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
       },      
-      {
-        key: 'liveslides',
-        label: "Live",
-        materialIcon: 'live_tv',
-        command: () => { currentDashboard.value = 'liveslides'; }
-      },
     ],
   },
   {
@@ -129,6 +123,12 @@ const items = computed(() => [
         label: t('moderator.nav.overview'),
         materialIcon: "group",
         command: () => { currentDashboard.value = 'participants'; }
+      },
+      {
+        key: 'participants_slides',
+        label: t('moderator.nav.participants_slides'),
+        materialIcon: "live_tv",
+        command: () => { currentDashboard.value = 'participants_slides'; }
       },
     ],
   },
@@ -164,6 +164,10 @@ function handleSceneEdit(scene: Scene) {
 
 function handleLiveSwitch() {
   currentDashboard.value = 'live'
+}
+
+function handleScenes() {
+  currentDashboard.value = 'scenes'
 }
 </script>
 
@@ -227,7 +231,7 @@ function handleLiveSwitch() {
     <SplitterPanel :size="85" class="panel">
       <Transition name="fade">
         <component :is="currentView" v-bind="viewProps" :key="currentDashboard" @edit-slide="handleSlideEdit"
-          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" />
+          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes" />
       </Transition>
     </SplitterPanel>
   </Splitter>

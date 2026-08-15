@@ -130,6 +130,14 @@ const abortPresentation = () => {
   livePresentationState.value.current_scene = 1;
 };
 
+const emit = defineEmits<{
+  'scenes': [];
+}>();
+
+const choosePresentation = () => {
+  emit('scenes')
+};
+
 
 function handleKey(e: KeyboardEvent) {
   const target = e.target as HTMLElement;
@@ -224,7 +232,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
           </Button>
 
           <InputText style="width: 150px" :value="time" readonly class="scene_indicator" disabled />
-          <InputText :value="currentPresentation?.name" readonly class="presentation_name" disabled />
+          <Button style="white-space: nowrap"
+            :label="livePresentationState.active ? currentPresentation?.name : $t('moderator.choose_presentation')"
+            rounded :disabled="!!livePresentationState.active" @click="choosePresentation">
+            <template v-if="!livePresentationState.active" #icon>
+              <i class="material-symbols-outlined">file_open</i>
+            </template>
+          </Button>
+
+
         </div>
       </div>
     </SplitterPanel>
