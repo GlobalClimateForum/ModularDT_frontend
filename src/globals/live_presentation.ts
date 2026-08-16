@@ -1,4 +1,7 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue';
+import type { Scene } from "@/services/scene_service";
+import type { Presentation } from "@/services/presentation_service";
+import { scenes } from '@/globals/scenes';
 
 // globale reactive variable
 const livePresentationState = ref({
@@ -10,4 +13,33 @@ const livePresentationState = ref({
 // This function returns always the SAME instance
 export function useLivePresentationState() {
   return livePresentationState
+}
+
+const currentScene = ref<Scene>();
+
+export function useCurrentScene() {
+  return currentScene
+}
+
+const currentPresentation = ref<Presentation | null>(null);
+
+export function useCurrentPresentation() {
+  return currentPresentation
+}
+
+const scenesMap = computed(() => {
+  return new Map(scenes.value.map(scene => [scene.id, scene]));
+});
+
+export function useScenesMap() {
+  return scenesMap
+}
+
+const activeSceneIdFromPresentation = computed(() => {
+  const index = livePresentationState.value.current_scene - 1;
+  return currentPresentation.value?.scenes?.[index]?.id || null;
+});
+
+export function useAactiveSceneIdFromPresentation() {
+  return activeSceneIdFromPresentation
 }
