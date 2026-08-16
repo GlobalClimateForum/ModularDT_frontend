@@ -13,6 +13,7 @@ import SceneBuilder from '@/components/SceneBuilder.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
+import LiveSlides from '@/components/LiveSlides.vue';
 
 import '@/assets/main.css'
 
@@ -40,7 +41,7 @@ const currentScene = ref<Scene | null>(null);
 const dashboardViews = {
   slides: SlideManager,
   slidecreate: SlideCreator,
-  liveslides: null,
+  liveslides: LiveSlides,
   scenes: SceneManager,
   scenecreate: SceneBuilder,
   live: PresentationControl,

@@ -29,7 +29,7 @@ export const updateMonitorStates = async (scene: Scene) => {
             sendMonitorUpdate((Number(index) + 1), {
                 'payload': {
                     'event_type': 'slide_update',
-                    'slide': 'null'
+                     'slide': 'null'
                 }
             }
             )
@@ -38,7 +38,7 @@ export const updateMonitorStates = async (scene: Scene) => {
     }
 }
 
-// Hilfsfunktion für den CSRF-Token (Standard bei Django)
+// not sure if used
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {

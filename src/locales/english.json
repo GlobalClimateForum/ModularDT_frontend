@@ -60,7 +60,8 @@
     "update-slide-confirmation-message-head": "A slide with name",
     "update-scene-confirmation-message-head": "A scene with name",
     "update-slide-confirmation-message-tail": "already exits. Overwrite?",
-    "choose_presentation": "Choose presentation"
+    "choose_presentation": "Choose presentation",
+    "live_monitors": "Live monitors"
   },
   "participant": {
     "name": "Participant"

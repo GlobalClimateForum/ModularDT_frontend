@@ -1,47 +1,42 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
+// Vue-stuff
+import { onMounted, onUnmounted, ref, computed, watch, toRaw } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { useI18n } from 'vue-i18n';
-import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
-import { getPresentation } from "@/services/presentation_service";
-import type { Presentation } from "@/services/presentation_service";
-import type { Scene } from "@/services/scene_service";
-import { useLivePresentationState } from '@/globals/live_presentation';
 import InputText from 'primevue/inputtext';
-import { useNow, useDateFormat } from '@vueuse/core'
-import { updateMonitorStates } from '@/services/monitor_service'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import { scenes, fetchScenes } from '@/globals/scenes';
+import { useNow, useDateFormat } from '@vueuse/core'
+import { useI18n } from 'vue-i18n';
+// globals and services
+import type { Scene } from "@/services/scene_service";
+import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
+import { getPresentation } from "@/services/presentation_service";
+import { updateMonitorStates } from '@/services/monitor_service'
+import { fetchScenes } from '@/globals/scenes';
+import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
+import { useCurrentPresentation, useAactiveSceneIdFromPresentation } from '@/globals/live_presentation';
+// compinents
 import SlideView from '@/components/SlideView.vue';
-import { toRaw } from 'vue'
-
-const livePresentationState = useLivePresentationState()
 import SceneView from '@/components/SceneView.vue';
+import '@/assets/main.css';
+
 
 const { t } = useI18n();
-import '@/assets/main.css';
+
+const now = useNow({ interval: 1000 })
+const time = useDateFormat(now, 'HH:mm:ss')
 
 const previewItem = ref<Scene | null>(null)
 const posLeft = ref(0)
 const posTop = ref(0)
 
-const currentPresentation = ref<Presentation | null>(null);
+const livePresentationState = useLivePresentationState()
+const currentPresentation = useCurrentPresentation()
 const loading = ref(false);
-const currentScene = ref<Scene>();
-
-const now = useNow({ interval: 1000 })
-const time = useDateFormat(now, 'HH:mm:ss')
-
-const scenesMap = computed(() => {
-  return new Map(scenes.value.map(scene => [scene.id, scene]));
-});
-
-const activeSceneIdFromPresentation = computed(() => {
-  const index = livePresentationState.value.current_scene - 1;
-  return currentPresentation.value?.scenes?.[index]?.id || null;
-});
+const currentScene = useCurrentScene()
+const scenesMap = useScenesMap()
+const activeSceneIdFromPresentation = useAactiveSceneIdFromPresentation()
 
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   if (newSceneId) {
@@ -49,7 +44,7 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   } else {
     currentScene.value = undefined;
   }
-}, { immediate: true }); // immediate sorgt dafür, dass es auch direkt beim Start prüft
+}, { immediate: true }); // immediate to execute also at start
 
 onMounted(() => {
   loading.value = true;

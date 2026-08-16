@@ -60,7 +60,8 @@
     "update-slide-confirmation-message-head": "Eine Folie mit Namen",
     "update-scene-confirmation-message-head": "Eine Szene mit Namen",
     "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?",
-    "choose_presentation": "Präsentation wählen"
+    "choose_presentation": "Präsentation wählen",
+    "live_monitors": "Live Monitore"
   },
   "participant": {
     "name": "Teilnehmer"
