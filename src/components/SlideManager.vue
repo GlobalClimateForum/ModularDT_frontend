@@ -178,7 +178,6 @@ function onTagAdded(addedTag: string) {
                     </template>
                 </Column>
 
-
                 <template #header>
                     <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
                         type="text" />

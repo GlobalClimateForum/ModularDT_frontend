@@ -186,6 +186,7 @@ function onTagAdded(addedTag: string) {
 
 const colLeftSize = ref(35);
 const colRightSize = ref(65);
+/*
 const syncTopResize = (event) => {
     // event.sizes gibt dir die neuen Größen  
     if (event.sizes) {
@@ -199,6 +200,7 @@ const syncBottomResize = (event) => {
         colRightSize.value = event.sizes[1];
     }
 };
+*/
 
 function onDeletePresentation(presentation: Presentation) {
     if (presentation.id) {

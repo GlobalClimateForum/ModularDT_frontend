@@ -168,7 +168,7 @@ function onSaveScene() {
 
     const exisitng_scene = scenes.value.find((s) => s.name === scenename.value);
     if (exisitng_scene) {
-        confirmUpdateScene(exisitng_scene?.id)
+        confirmUpdateScene(exisitng_scene?.id  ?? -1)
     } else {
         storeScene()
     }
@@ -199,7 +199,7 @@ function emptyScreens() {
                 <div v-for="slide in slides" :key="slide.id" class="slide-card">
                     <div class="slide-info">
                         <p class="slide-label">{{ slide.name }}</p>
-                        <p class="slide-date">{{ formatDate(slide.created_at) }}</p>
+                        <p class="slide-date">{{ formatDate(slide.created_at  ?? '') }}</p>
                     </div>
                     <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)"
                         @dragend="onDragEnd($event)">

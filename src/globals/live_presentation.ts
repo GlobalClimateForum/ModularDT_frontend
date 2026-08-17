@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
 import type { Presentation } from "@/services/presentation_service";
 import { scenes } from '@/globals/scenes';
@@ -15,7 +16,7 @@ export function useLivePresentationState() {
   return livePresentationState
 }
 
-const currentScene = ref<Scene>();
+const currentScene = ref<Scene | null>();
 
 export function useCurrentScene() {
   return currentScene
@@ -42,4 +43,10 @@ const activeSceneIdFromPresentation = computed(() => {
 
 export function useAactiveSceneIdFromPresentation() {
   return activeSceneIdFromPresentation
+}
+
+var sceneOnMonitors = ref<(Slide | null)[]>([]);
+
+export function useSceneOnMonitors() {
+  return sceneOnMonitors
 }
