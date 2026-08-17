@@ -26,6 +26,7 @@ import type { Presentation } from "@/services/presentation_service"
 import { startPresentation } from "@/services/live_presentation_service";
 
 
+
 const { t } = useI18n();
 const confirm = useConfirm();
 
