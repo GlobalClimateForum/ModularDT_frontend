@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
+import InputText from 'primevue/inputtext';
 import type { Slide } from '@/services/slide_service'
 import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
@@ -13,11 +16,17 @@ import { formatDate } from '@/utils/date_utils';
 import { settings } from '@/globals/settings'
 import type { Scene } from '@/services/scene_service';
 import { useLivePresentationState } from '@/globals/live_presentation';
-//import type { Scene } from 'vega'
 import { useI18n } from 'vue-i18n';
+import { FilterMatchMode } from '@primevue/core/api'
+import TagView from '@/components/TagView.vue';
+import Tag from 'primevue/tag';
 
 const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
+
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+})
 
 // Define Input Proerties
 const props = defineProps({
@@ -96,14 +105,23 @@ function onDrop(event: DragEvent, index: number) {
     const slide: Slide = JSON.parse(slideData);
     scene.value[index] = slide;
 }
+
+// remove later
+function onClick(slide: Slide) {
+}
+
+function onDo(event: any) {
+}
+
+const editingRows = ref<Slide[]>([]);
+const selectedSlide = ref<Slide | null>(null);
 </script>
 
 <template>
     <Splitter :gutter-size="2" class="dashboard">
-
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <h2 class="dashboard_label">{{ $t('moderator.nav.slides') }}</h2>
+           <!-- <h2 class="dashboard_label">{{ $t('moderator.nav.slides') }}</h2>
             <div class="slide_gallery_container">
                 <div v-for="slide in slides" :key="slide.id" class="slide-card">
                     <div class="slide-info">
@@ -116,7 +134,50 @@ function onDrop(event: DragEvent, index: number) {
                             style="pointer-events: none;" :shadow="true" />
                     </div>
                 </div>
-            </div>
+            </div> -->
+
+            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                @row-edit-save="onDo" responsiveLayout="scroll" class="slide-table"
+                v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single"
+                :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
+
+                <Column field="name" header="">
+                    <template #editor="slotProps">
+                        <InputText v-model="slotProps.data.name" />
+                    </template>
+                    <template #body="slotProps">
+                        <!--<span style="font-weight: 600;">{{ slotProps.data.name }}</span>
+                        <span style="font-size: 0.875rem; color: #64748b;">Updated
+                            {{ formatDate(slotProps.data.updated_at) }}</span>-->
+                        <div class="slide-info">
+                        <p class="slide-label">{{ slotProps.data.name }}</p>
+                        <p class="slide-date">{{ formatDate(slotProps.data.updated_at) }}</p>
+                        </div>
+                        <!--<div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
+                            <Tag :severity="slotProps.data.mode === 'interactive' ? 'success' : 'info'">
+                                {{ slotProps.data.mode }}
+                            </Tag>
+                        </div>-->
+                        <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slotProps.data)"
+                        @dragend="onDragEnd($event)">
+                        <SlideView :preview="false" :slide="slotProps.data" :sections="slotProps.data.sections ?? []" :showFrame="false"
+                            style="pointer-events: none; width: 100%; height: 150px; overflow: hidden;" :shadow="true" />
+                    </div>
+                    </template>
+                </Column>
+
+                <template #header>
+                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
+                        type="text" />
+                    <Button class="button-reset-search" @click="filters.global.value = null" rounded
+                        :disabled="!filters.global.value">
+                        <i class="pi pi-times"></i>
+                    </Button>
+                </template>
+
+            </DataTable>
+
+
         </SplitterPanel>
         <!-- Current view -->
         <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -184,6 +245,12 @@ function onDrop(event: DragEvent, index: number) {
 </template>
 
 <style scoped>
+.slide-table {
+    flex: 1;
+    min-height: 0;
+    /* the critical line */
+}
+
 .dashboard {
     height: 100%;
 }
