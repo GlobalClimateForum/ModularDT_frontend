@@ -60,6 +60,7 @@ function onEditSlide(slide: Slide) {
 function onDeleteSlide(slide: Slide) {
     if (slide.id) {
         deleteSlide(slide.id).then(() => {
+            fetchSlides();
             toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
             slides.value = slides.value.filter(s => s.id !== slide.id);
             if (selectedSlide.value?.id === slide.id) {
@@ -108,12 +109,11 @@ function onDuplicateSlide(slide: Slide) {
         };
 
         saveSlide(new_slide, new_sections).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
             fetchSlides();
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
         }).catch(error => {
             console.error("Error saving slide:", error);
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-            fetchSlides();
         });
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });

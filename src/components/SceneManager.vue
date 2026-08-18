@@ -25,8 +25,6 @@ import { updatePresentation, deletePresentation, savePresentation } from "@/serv
 import type { Presentation } from "@/services/presentation_service"
 import { startPresentation } from "@/services/live_presentation_service";
 
-
-
 const { t } = useI18n();
 const confirm = useConfirm();
 
@@ -52,7 +50,6 @@ const selectedOrder = ref<SelectedScene[]>([]);
 
 onMounted(() => {
     fetchScenes();
-    fetchPresentations();
 });
 
 function onRowEditSaveScene(event: any) {
@@ -99,6 +96,7 @@ function onRowEditSavePresentation(event: any) {
         updatePresentation(id, { name: name }).then(response => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation updated successfully', life: 3000 });
             presentations.value[event.index] = { ...response.data };
+            fetchPresentations();
         }).catch(error => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update presentation', life: 3000 });
             console.error("Error updating presentation:", error)
@@ -123,6 +121,7 @@ function onDeleteScene(scene: Scene) {
             if (selectedScene.value?.id === scene.id) {
                 selectedScene.value = null;
             }
+            fetchScenes();
         }).catch(error => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete scene', life: 3000 });
             console.error("Error deleting scene:", error);
@@ -210,6 +209,7 @@ function onDeletePresentation(presentation: Presentation) {
             if (selectedPresentation.value?.id === presentation.id) {
                 selectedPresentation.value = null;
             }
+            fetchPresentations();
         }).catch(error => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete presentation', life: 3000 });
             console.error("Error deleting presentation:", error);

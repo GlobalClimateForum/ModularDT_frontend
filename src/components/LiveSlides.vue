@@ -29,6 +29,7 @@ const filters = ref({
 })
 
 const slides = ref<Slide[]>([]);
+var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
 var sceneOnMonitors = useSceneOnMonitors()
 
 // on mount get all slides from backend and store in slides ref
@@ -41,6 +42,7 @@ onMounted(() => {
     });
     
     // This should be unneccessary if implemented proper
+    /*
     if (livePresentationState.value.active) {
         const grid = Array(settings.value.number_of_screens).fill(null)
 
@@ -52,7 +54,7 @@ onMounted(() => {
         sceneOnMonitors.value = grid;
     } else {
         sceneOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-    }
+    }*/
 });
 
 watch(
@@ -167,7 +169,7 @@ const selectedSlide = ref<Slide | null>(null);
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="sceneOnMonitors.fill(null)" />
                     </div>
                 </template>
             </Toolbar>

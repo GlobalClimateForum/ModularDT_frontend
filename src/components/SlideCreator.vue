@@ -67,7 +67,7 @@ const editorMapping: Record<string, any> = {
 const toast = useToast()
 
 onMounted(() => {
-    fetchSlides();
+    //fetchSlides();
 });
 
 // 
@@ -90,6 +90,7 @@ function confirmedUpdateSlide() {
     };
 
     return updateSlide(currentSlide.value.id,slide).then(response => {
+        fetchSlides();
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
         console.error('Error saving slide:', error)
@@ -131,6 +132,7 @@ function storeSlide() {
     };
 
     return saveSlide(slide, sections).then(response => {
+        fetchSlides();
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
         console.error('Error saving slide:', error)

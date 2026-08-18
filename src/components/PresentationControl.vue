@@ -15,12 +15,12 @@ import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStates } from '@/services/monitor_service'
 import { fetchScenes } from '@/globals/scenes';
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
-import { useCurrentPresentation, useAactiveSceneIdFromPresentation } from '@/globals/live_presentation';
-// compinents
+import { useCurrentPresentation, useAactiveSceneIdFromPresentation, useSceneOnMonitors } from '@/globals/live_presentation';
+import { settings } from '@/globals/settings'
+// components
 import SlideView from '@/components/SlideView.vue';
 import SceneView from '@/components/SceneView.vue';
 import '@/assets/main.css';
-
 
 const { t } = useI18n();
 
@@ -37,6 +37,7 @@ const loading = ref(false);
 const currentScene = useCurrentScene()
 const scenesMap = useScenesMap()
 const activeSceneIdFromPresentation = useAactiveSceneIdFromPresentation()
+const sceneOnMonitors = useSceneOnMonitors()
 
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   if (newSceneId) {
@@ -82,7 +83,23 @@ onMounted(() => {
       currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
       updateMonitors();
     });
+    sceneToMonitorGrid();
 });
+
+function sceneToMonitorGrid() {
+  if (livePresentationState.value.active) {
+    const grid = Array(settings.value.number_of_screens).fill(null)
+
+    currentScene.value?.slides.forEach(slide => {
+      if (slide && slide.position && slide.position <= settings.value.number_of_screens) {
+        grid[slide.position - 1] = slide
+      }
+    })
+    sceneOnMonitors.value = grid;
+  } else {
+    sceneOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
+  }
+}
 
 async function updateMonitors() {
   if (currentScene.value) {
@@ -107,6 +124,7 @@ const previousScene = () => {
   if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
     livePresentationState.value.current_scene--;
     updatePresentationState();
+    sceneToMonitorGrid();
     updateMonitors();
   }
 };
@@ -116,12 +134,14 @@ const nextScene = () => {
   if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
     livePresentationState.value.current_scene++;
     updatePresentationState();
+    sceneToMonitorGrid();
     updateMonitors();
   }
 };
 
 const abortPresentation = () => {
   stopPresentation();
+  sceneToMonitorGrid();
   livePresentationState.value.current_scene = 1;
 };
 

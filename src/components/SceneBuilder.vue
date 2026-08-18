@@ -1,24 +1,26 @@
 <script setup lang="ts">
+// Vue-stuff
+import { ref, onMounted, watch } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
-import type { Slide } from '@/services/slide_service'
-import '@/assets/main.css'
-import SlideView from '@/components/SlideView.vue';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
-import { ref, onMounted, watch } from 'vue';
-import { getSlides } from "@/services/slide_service";
-import { formatDate } from '@/utils/date_utils';
-import { saveScene, updateScene } from '@/services/scene_service';
-import { settings } from '@/globals/settings'
 import { useToast } from 'primevue/usetoast'
-import type { Scene } from '@/services/scene_service';
-import { scenes } from '@/globals/scenes';
-//import type { Scene } from 'vega'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
+// globals and services
+import type { Slide } from '@/services/slide_service'
+import type { Scene } from '@/services/scene_service';
+import { scenes } from '@/globals/scenes';
+import { slides } from '@/globals/slides';
+import { settings } from '@/globals/settings'
+import { saveScene, updateScene } from '@/services/scene_service';
+import { formatDate } from '@/utils/date_utils';
+import '@/assets/main.css'
+// components
+import SlideView from '@/components/SlideView.vue';
 
 const { t } = useI18n();
 const confirm = useConfirm();
@@ -32,7 +34,6 @@ const props = defineProps({
     }
 })
 
-const slides = ref<Slide[]>([]);
 var scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 
@@ -41,12 +42,6 @@ const toast = useToast()
 
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
-    getSlides().then(response => {
-        slides.value = response.data;
-        console.log("Fetched slides:", slides.value);
-    }).catch(error => {
-        console.error("Error fetching slides:", error);
-    });
 
     if (props.inp_scene && props.inp_scene.slides) {
         const grid = Array(settings.value.number_of_screens).fill(null)

@@ -1,13 +1,19 @@
 <script setup lang="ts">
+// Vue-stuff
+import { onMounted, onBeforeMount, watch, ref } from 'vue'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
-import { onMounted, onBeforeMount, watch, ref } from 'vue'
+import ConfirmDialog from "primevue/confirmdialog";
+import { useI18n } from 'vue-i18n'
+// globals and services
 import { settings } from '@/globals/settings'
+import { fetchScenes } from '@/globals/scenes';
+import { fetchSlides } from '@/globals/slides';
+import { fetchPresentations } from '@/globals/presentations';
 import { getSettings } from "@/services/settings_service";
 import { registerContentServer } from '@/services/cs_service.ts';
-import { useI18n } from 'vue-i18n'
 import { updateLivePresentation, stopPresentation } from "@/services/live_presentation_service";
-import ConfirmDialog from "primevue/confirmdialog";
+
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -38,6 +44,9 @@ onMounted(async () => {
     isSettingsLoaded.value = true
   })
 
+  fetchSlides();
+  fetchScenes();
+  fetchPresentations();
   stopPresentation();
 })
 </script>
