@@ -166,12 +166,12 @@ function onHandsOff() {
       </div>
     </div>
 
-    <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" :scrollable="true"
+    <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id"
       scrollHeight="flex" tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
       :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
-      :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']" :filterOperator="FilterOperator.OR">
+      :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']" :filterOperator="FilterOperator.OR" scrollable>
 
-      <Column field="seat" header="Seat" style="width: 150px">
+      <Column field="seat" header="Seat" style="width: 150px" sortable>
         <template #body="{ data }">
           <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
             @change="persist(data)">
@@ -196,7 +196,7 @@ function onHandsOff() {
         </template>
       </Column>
 
-      <Column field="name" header="Name">
+      <Column field="name" header="Name" sortable>
         <template #body="{ data }">
           <span class="participant-name">{{ data.name }}</span>
         </template>
@@ -331,20 +331,13 @@ function onHandsOff() {
   background: var(--p-surface-100);
 }
 
-:deep(.p-datatable-thead > tr > th:first-child) {
-  border-top-left-radius: var(--br-medium);
-  border-bottom-left-radius: var(--br-medium);
+:deep(.p-datatable-thead > tr > th:hover) {
+  background: var(--p-primary-500);
+  color: white;
 }
 
-:deep(.p-datatable-thead > tr > th:last-child) {
-  border-top-right-radius: var(--br-medium);
-  border-bottom-right-radius: var(--br-medium);
-}
-
-:deep(.p-datatable-table-container) {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--p-primary-300) transparent;
+:deep(.p-datatable-sort-icon) {
+  filter: brightness(0) invert(1);
 }
 
 :deep(.row-unseated) {
@@ -354,4 +347,5 @@ function onHandsOff() {
 :deep(.row-unseated .participant-name) {
   opacity: 0.5;
 }
+
 </style>
