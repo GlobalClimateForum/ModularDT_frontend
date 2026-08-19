@@ -10,10 +10,10 @@ import { type Participant, updateParticipant, createParticipant, deleteParticipa
 import { ref, watch, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, changeAvatarStyleSetting } from '@/services/avatar_service';
 
 const toast = useToast();
 
-import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
 
 type DraftParticipant = Participant & { isNew?: boolean };
 
@@ -129,7 +129,8 @@ function onHandsOff() {
 
         <InputText v-model="filters.global.value" placeholder="Search participant ..."></InputText>
 
-        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select">
+        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select"
+        @change="changeAvatarStyleSetting(selectedStyle)">
           <template #option="{ option }">
             <div class="style-option">
               <img :src="previewUri(option)" width="28" height="28" />
