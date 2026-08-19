@@ -6,8 +6,11 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button';
 import Select from 'primevue/select';
 import "@/assets/main.css";
-import { type Participant, updateParticipant, createParticipant } from "@/services/participant_service";
+import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
 import { ref, watch, computed } from 'vue';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
 
@@ -16,6 +19,7 @@ type DraftParticipant = Participant & { isNew?: boolean };
 const props = defineProps<{
   participants: Participant[];
 }>();
+
 
 /* ---------- rows ---------- */
 
@@ -69,6 +73,24 @@ function onRowEditCancel(event: { data: DraftParticipant; index: number }) {
   if (event.data.isNew) rows.value.splice(event.index, 1);
 }
 
+function onRowEditDelete(event: { data: DraftParticipant; index: number }) {
+  const row = event.data;
+  if (row.isNew) {
+    rows.value = rows.value.filter(r => r !== row);
+    return;
+  }
+  if (row.id) {
+    deleteParticipant(row.id).then(() => {
+      rows.value = rows.value.filter(r => r.id !== row.id);
+      toast.add({
+        severity: 'success',
+        summary: 'Participant deleted',
+        detail: `Participant ${row.name} has been deleted.`,
+      });
+    });
+  }
+}
+
 function onAddParticipant() {
   const draft: DraftParticipant = {
     id: `new-${Date.now()}` as unknown as Participant['id'],
@@ -116,7 +138,7 @@ function onHandsOff() {
           </template>
         </Select>
 
-        <Button rounded  @click="onHandsOff">
+        <Button rounded @click="onHandsOff">
           <template #icon>
             <i class="material-symbols-outlined">do_not_touch</i>
           </template>
@@ -158,7 +180,7 @@ function onHandsOff() {
         </template>
       </Column>
 
-      <Column header="" style="width: 72px" bodyStyle="text-align: center" >
+      <Column header="" style="width: 72px" bodyStyle="text-align: center">
         <template #body="{ data }">
           <img :src="avatarUri(data.name)" width="44" height="44"
             :class="['avatar', data.seat == null ? 'avatar-unseated' : 'avatar-seated']" />
@@ -181,10 +203,28 @@ function onHandsOff() {
         </template>
       </Column>
 
-
-
-      <Column :rowEditor="true" style="width: 56px" bodyStyle="text-align: center" />
-
+      <Column :rowEditor="true" style="width: 110px;" bodyStyle="text-align: center">
+        <template #body="{ data, rowIndex, editorInitCallback }">
+          <div class="interactions">
+            <Button text rounded @click="editorInitCallback($event)">
+              <template #icon><i class="material-symbols-outlined">edit</i></template>
+            </Button>
+            <Button text rounded @click="onRowEditDelete({ data, index: rowIndex })">
+              <template #icon><i class="material-symbols-outlined">delete</i></template>
+            </Button>
+          </div>
+        </template>
+        <template #editor="{ editorSaveCallback, editorCancelCallback }">
+          <div class="interactions">
+            <Button text rounded @click="editorSaveCallback($event)">
+              <template #icon><i class="material-symbols-outlined">check</i></template>
+            </Button>
+            <Button text rounded @click="editorCancelCallback($event)">
+              <template #icon><i class="material-symbols-outlined">close</i></template>
+            </Button>
+          </div>
+        </template>
+      </Column>
     </DataTable>
   </div>
 </template>
@@ -263,6 +303,12 @@ function onHandsOff() {
 .participant-name {
   color: var(--p-primary-500);
   font-weight: bold;
+}
+
+.interactions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-small);
 }
 
 :deep(.p-datatable-thead > tr > th) {

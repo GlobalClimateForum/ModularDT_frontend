@@ -10,3 +10,4 @@ export interface Participant {
 export const getParticipants = () => api.get("/participants/");
 export const updateParticipant = (participant: Participant) => api.put(`/participants/${participant.id}/`, participant);
 export const createParticipant = (participant: Participant) => api.post("/participants/", participant);
+export const deleteParticipant = (participantId: number) => api.delete(`/participants/${participantId}/`);
