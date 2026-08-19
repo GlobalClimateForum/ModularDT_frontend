@@ -179,7 +179,7 @@ const selectedSlide = ref<Slide | null>(null);
                     </div>
 
                     <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                    <div v-if="slot" style="width: 100%; height:90%;">
+                    <div v-if="slot" style="width: 100%; height:90%; pointer-events: none">
                         <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
                             :showFrame="false">
                         </SlideView>
