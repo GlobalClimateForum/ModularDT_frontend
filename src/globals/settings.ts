@@ -1,5 +1,5 @@
-import { getSettings } from '@/services/settings_service';
 import { ref } from 'vue'
+import { getSettings } from '@/services/settings_service';
 
 // globale reactive variable
 export const settings = ref({
