@@ -6,12 +6,15 @@ import { EditorState } from '@codemirror/state'
 import type { Extension } from '@codemirror/state'
 import type { SlideSection } from '@/services/slide_service'
 import { json } from "@codemirror/lang-json"
+import { html } from "@codemirror/lang-html"
+import { vue } from "@codemirror/lang-vue"
 import * as prettier from 'prettier/standalone'
 import parserBabel from 'prettier/plugins/babel'
 import parserEstree from 'prettier/plugins/estree'
 import Button from 'primevue/button'
 import Toolbar from 'primevue/toolbar'
 import Message from 'primevue/message'
+import DynamicDialog from 'primevue/dynamicdialog';
 import { formatDate } from '@/utils/date_utils'
 
 const emit = defineEmits<{ contentUpdated: [content: string] }>();
@@ -38,6 +41,8 @@ onMounted(() => {
 const languageExtensions: Record<string, Extension> = {
     markdown: markdown(),
     json: json(),
+    html: html(),
+    vue: vue()
 }
 
 async function formatJsonWithPrettier() {
@@ -189,6 +194,10 @@ watch(() => props.slideSection.content, (newContent) => {
 <template>
     <div class="editor-container">
 
+        <DynamicDialog>
+            
+        </DynamicDialog>
+
         <div ref="editorHost" class="editor-host"></div>
         <Toolbar class="editor-toolbar">
             <template #end>
@@ -221,6 +230,12 @@ watch(() => props.slideSection.content, (newContent) => {
                     <Button small rounded v-if="props.language === 'json'">
                         <template #icon>
                             <i class="material-symbols-outlined" @click="formatJsonWithPrettier()">data_object</i>
+                        </template>
+                    </Button>
+
+                    <Button  rounded >
+                        <template #icon>
+                            <i class="material-symbols-outlined">fullscreen</i>
                         </template>
                     </Button>
 
