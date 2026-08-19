@@ -38,11 +38,10 @@ const whatYouSeeOnMonitors = computed(() => {
     });
 });
 
-onMounted(() => { 
-    console.log("settings: ", settings.value)
-console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
-console.log("sceneOnMonitors: ", sceneOnMonitors.value)
-console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
+onMounted(() => {   
+//console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
+//console.log("sceneOnMonitors: ", sceneOnMonitors.value)
+//console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
 });
 
 watch(
@@ -73,16 +72,22 @@ function onDragStart(e: DragEvent, slide: Slide) {
 }
 
 function onDragEnd(e: DragEvent) {
+        console.log('onDragEnd ', e); 
+
     (e.currentTarget as HTMLElement).classList.remove('is-dragging');
 }
 
 function onDrop(event: DragEvent, index: number) {
 
+    console.log('onDrop ',event," - ", index); 
+
     const slideData = event.dataTransfer?.getData('slide');
+    console.log('slideData ',slideData); 
     if (!slideData) return;
 
     const slide: Slide = JSON.parse(slideData);
-    sceneOnMonitors.value[index] = slide;
+    liveSlidesOnMonitors.value[index] = slide;
+    
 }
 
 // remove later
@@ -166,7 +171,7 @@ const selectedSlide = ref<Slide | null>(null);
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="liveSlidesOnMonitors[index] = null; console.log('clicked ',index); console.log('liveSlidesOnMonitors: ', liveSlidesOnMonitors)">
+                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null)">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>

@@ -6,16 +6,19 @@ import Toast from 'primevue/toast'
 import ConfirmDialog from "primevue/confirmdialog";
 import { useI18n } from 'vue-i18n'
 // globals and services
+import type { Slide } from "@/services/slide_service"
 import { fetchSettings, settings } from '@/globals/settings'
 import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
 import { fetchPresentations } from '@/globals/presentations';
 import { registerContentServer } from '@/services/cs_service.ts';
 import { stopPresentation } from "@/services/live_presentation_service";
+import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
+var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 
 watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
@@ -33,6 +36,7 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
+  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   fetchSlides();
   fetchScenes();
   fetchPresentations();

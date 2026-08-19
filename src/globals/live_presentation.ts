@@ -52,7 +52,7 @@ export function useSceneOnMonitors() {
   return sceneOnMonitors
 }
 
-var liveSlidesOnMonitors = ref<(Slide | null)[]>(Array(settings.value.number_of_screens).fill(null));
+var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
 
 export function useLiveSlidesOnMonitors() {
   return liveSlidesOnMonitors

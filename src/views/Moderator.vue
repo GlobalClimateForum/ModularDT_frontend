@@ -152,7 +152,6 @@ onMounted(() => {
     .then(response => { participants.value = response.data.participants; })
     .catch(error => { console.error("Error fetching participants:", error); });
   currentDashboard.value = 'slides';
-  liveSlidesOnMonitors = ref<(Slide | null)[]>(Array(settings.value.number_of_screens).fill(null));
 });
 
 function handleSlideEdit(slide: Slide) {
