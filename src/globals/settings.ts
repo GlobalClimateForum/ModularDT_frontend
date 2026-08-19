@@ -1,3 +1,4 @@
+import { getSettings } from '@/services/settings_service';
 import { ref } from 'vue'
 
 // globale reactive variable
@@ -11,4 +12,13 @@ export const settings = ref({
 // This function returns always the SAME instance
 export function useSettings() {
   return settings
+}
+
+export async function fetchSettings() {
+  try {
+    const response = await getSettings();
+    settings.value = { ...settings.value, ...response.data.settings };
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+  }
 }

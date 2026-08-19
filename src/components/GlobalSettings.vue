@@ -8,7 +8,7 @@ import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 
-import { settings } from '@/globals/settings'
+import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 
@@ -26,21 +26,21 @@ const translatedLocales = computed(() => {
 });
 
 // save function - todo
-const saveSettings = () => {
-  //console.info('Saved settings:', JSON.parse(JSON.stringify(settings.value)))
-  const fetched_settings = {
+const saveSettings = async() => {
+  const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
     background_image: settings.value.background_image,
     language: settings.value.language
   };
 
-  updateSettings(fetched_settings).then(response => {
+  await updateSettings(current_settings).then(response => {
     toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully', life: 3000 })
   }).catch(error => {
     console.error("Error saving settings:", error);
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings', life: 3000 })
   });
+  await fetchSettings()
 }
 
 // better: go via backend.

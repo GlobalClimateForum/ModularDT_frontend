@@ -3,6 +3,7 @@ import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
 import type { Presentation } from "@/services/presentation_service";
 import { scenes } from '@/globals/scenes';
+import { settings } from '@/globals/settings'
 
 // globale reactive variable
 const livePresentationState = ref({
@@ -49,4 +50,10 @@ var sceneOnMonitors = ref<(Slide | null)[]>([]);
 
 export function useSceneOnMonitors() {
   return sceneOnMonitors
+}
+
+var liveSlidesOnMonitors = ref<(Slide | null)[]>(Array(settings.value.number_of_screens).fill(null));
+
+export function useLiveSlidesOnMonitors() {
+  return liveSlidesOnMonitors
 }

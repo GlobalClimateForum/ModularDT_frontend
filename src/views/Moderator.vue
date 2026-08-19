@@ -1,11 +1,23 @@
 <script setup lang="ts">
+// Vue-stuff
+import { onMounted, ref, computed } from 'vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import router from '@/router';
 import Badge from 'primevue/badge';
-
+import { Transition } from "vue";
+import { useI18n } from 'vue-i18n';
+// globals and services
+import type { Slide } from "@/services/slide_service"
+import type { Scene } from "@/services/scene_service"
+import { getParticipants } from "@/services/participant_service";
+import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
+import { presentations } from '@/globals/presentations';
+import { settings } from '@/globals/settings'
+import '@/assets/main.css'
+// components
 import SlideManager from '@/components/SlideManager.vue';
 import ParticipantsManager from '@/components/ParticipantsManager.vue';
 import SlideCreator from '@/components/SlideCreator.vue';
@@ -14,24 +26,13 @@ import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
 import LiveSlides from '@/components/LiveSlides.vue';
-
-import '@/assets/main.css'
-
-import { PrimeIcons } from '@primevue/core/api';
-import { getParticipants } from "@/services/participant_service";
-import { onMounted, ref, computed } from 'vue';
-import type { Slide } from "@/services/slide_service"
-import type { Scene } from "@/services/scene_service"
-import { Transition } from "vue";
-import { useI18n } from 'vue-i18n';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
-import { useLivePresentationState } from '@/globals/live_presentation';
-import { presentations } from '@/globals/presentations';
 
 
 const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
+var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides'>('slides');
 const participants = ref<any[]>([]);
@@ -151,6 +152,7 @@ onMounted(() => {
     .then(response => { participants.value = response.data.participants; })
     .catch(error => { console.error("Error fetching participants:", error); });
   currentDashboard.value = 'slides';
+  liveSlidesOnMonitors = ref<(Slide | null)[]>(Array(settings.value.number_of_screens).fill(null));
 });
 
 function handleSlideEdit(slide: Slide) {

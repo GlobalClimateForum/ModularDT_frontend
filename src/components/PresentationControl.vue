@@ -13,7 +13,6 @@ import type { Scene } from "@/services/scene_service";
 import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
 import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStates } from '@/services/monitor_service'
-import { fetchScenes } from '@/globals/scenes';
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
 import { useCurrentPresentation, useAactiveSceneIdFromPresentation, useSceneOnMonitors } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
@@ -49,7 +48,6 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 
 onMounted(() => {
   loading.value = true;
-  fetchScenes();
 
   getLivePresentation()
     .then(response => {

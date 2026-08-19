@@ -30,7 +30,7 @@ function refreshStatus() {
 
 function stripContentServerUrl(url: string): string {
     // remove http:// or https:// from the beginning of the url
-    return url.replace(/^https?:\/\//, '')
+    return url ? url.replace(/^https?:\/\//, '') : ""
 }
 
 </script>
@@ -47,7 +47,7 @@ function stripContentServerUrl(url: string): string {
                 </template>
                 <div style="display: flex; flex-direction: row; align-items: center; gap: 1rem; padding-left: 0.5rem">
                     <div style="display: flex; flex-direction: column; gap: 0rem">
-                        <p style="padding: 0; margin: 0; font-weight: 700">{{ settings.cs_url }}</p>
+                        <p style="padding: 0; margin: 0; font-weight: 700">{{ settings?.cs_url }}</p>
                         <p style="padding: 0; margin: 0; font-weight: 400">{{ statusMessage }}</p>
                     </div>
                     <Button :severity="statusclass === 'error' ? 'danger' : statusclass" text @click="refreshStatus"
@@ -65,7 +65,7 @@ function stripContentServerUrl(url: string): string {
                 <Badge :severity="statusclass === 'error' ? 'danger' : statusclass"
                     style="align-self: center; flex-shrink: 0;" />
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
-                font-size: var(--fs-small); ">{{ stripContentServerUrl(settings.cs_url) }}</p>
+                font-size: var(--fs-small); ">{{ stripContentServerUrl(settings?.cs_url) }}</p>
                 <Button  text rounded
                     @click="refreshStatus">
                     <template #icon>

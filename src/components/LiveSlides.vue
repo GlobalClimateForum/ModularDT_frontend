@@ -10,15 +10,16 @@ import type { Slide } from '@/services/slide_service'
 import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import Message from 'primevue/message';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { settings } from '@/globals/settings'
 import type { Scene } from '@/services/scene_service';
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
+import { slides } from '@/globals/slides';
 import Tag from 'primevue/tag';
-import { useCurrentScene, useLivePresentationState, useScenesMap, useSceneOnMonitors } from '@/globals/live_presentation';
+import { useCurrentScene, useLivePresentationState, useScenesMap, useSceneOnMonitors, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 
 const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
@@ -28,33 +29,20 @@ const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-const slides = ref<Slide[]>([]);
-var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
+var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 var sceneOnMonitors = useSceneOnMonitors()
-
-// on mount get all slides from backend and store in slides ref
-onMounted(() => {
-    getSlides().then(response => {
-        slides.value = response.data;
-        console.log("Fetched slides:", slides.value);
-    }).catch(error => {
-        console.error("Error fetching slides:", error);
+const whatYouSeeOnMonitors = computed(() => {
+    const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
+    return Array.from({ length: maxLen }, (_, i) => {
+        return liveSlidesOnMonitors.value[i] ?? sceneOnMonitors.value[i] ?? null;
     });
-    
-    // This should be unneccessary if implemented proper
-    /*
-    if (livePresentationState.value.active) {
-        const grid = Array(settings.value.number_of_screens).fill(null)
+});
 
-        currentScene.value?.slides.forEach(slide => {
-            if (slide && slide.position && slide.position <= settings.value.number_of_screens) {
-                grid[slide.position - 1] = slide
-            }
-        })
-        sceneOnMonitors.value = grid;
-    } else {
-        sceneOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-    }*/
+onMounted(() => { 
+    console.log("settings: ", settings.value)
+console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
+console.log("sceneOnMonitors: ", sceneOnMonitors.value)
+console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
 });
 
 watch(
@@ -89,6 +77,7 @@ function onDragEnd(e: DragEvent) {
 }
 
 function onDrop(event: DragEvent, index: number) {
+
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
@@ -97,12 +86,6 @@ function onDrop(event: DragEvent, index: number) {
 }
 
 // remove later
-function onClick(slide: Slide) {
-}
-
-function onDo(event: any) {
-}
-
 const editingRows = ref<Slide[]>([]);
 const selectedSlide = ref<Slide | null>(null);
 </script>
@@ -111,7 +94,7 @@ const selectedSlide = ref<Slide | null>(null);
     <Splitter :gutter-size="2" class="dashboard">
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex" @row-edit-save="onDo"
+            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                 responsiveLayout="scroll" class="slide-table" v-model:editingRows="editingRows"
                 v-model:selection="selectedSlide" selectionMode="single"
                 :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
@@ -125,11 +108,6 @@ const selectedSlide = ref<Slide | null>(null);
                             <p class="slide-label">{{ slotProps.data.name }}</p>
                             <p class="slide-date">{{ formatDate(slotProps.data.updated_at) }}</p>
                         </div>
-                        <!--<div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
-                            <Tag :severity="slotProps.data.mode === 'interactive' ? 'success' : 'info'">
-                                {{ slotProps.data.mode }}
-                            </Tag>
-                        </div>-->
                         <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slotProps.data)"
                             @dragend="onDragEnd($event)">
                             <SlideView :preview="false" :slide="slotProps.data"
@@ -144,8 +122,7 @@ const selectedSlide = ref<Slide | null>(null);
                     <div style="display: flex; gap: 8px; width: 100%;">
                         <InputText class="search-input" v-model="filters.global.value"
                             :placeholder="$t('moderator.search')" type="text" />
-                        <Button @click="filters.global.value = null" rounded
-                            :disabled="!filters.global.value">
+                        <Button @click="filters.global.value = null" rounded :disabled="!filters.global.value">
                             <i class="pi pi-times"></i>
                         </Button>
                     </div>
@@ -169,22 +146,16 @@ const selectedSlide = ref<Slide | null>(null);
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="sceneOnMonitors.fill(null)" />
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
+                            @click="liveSlidesOnMonitors.fill(null)" />
                     </div>
                 </template>
             </Toolbar>
 
-            <!--v-if="livePresentationState.active"-->
             <div class="monitor_container">
-
-                <!--<div v-else class="fallback-container">
-          <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
-        </div>-->
-
-
                 <!-- For each slide in the scene, render a monitor item -->
-                <div v-for="(slot, index) in sceneOnMonitors" :key="index" class="monitor-item inset-control" @dragover.prevent
-                    @drop="onDrop($event, index)">
+                <div v-for="(slot, index) in whatYouSeeOnMonitors" :key="index" class="monitor-item inset-control"
+                    @dragover.prevent @drop="onDrop($event, index)">
 
                     <!-- Monitor Info: Name, Index, and Clear Button -->
                     <div class="monitor-info">
@@ -195,7 +166,7 @@ const selectedSlide = ref<Slide | null>(null);
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="sceneOnMonitors[index] = null">
+                        <Button small rounded @click="liveSlidesOnMonitors[index] = null; console.log('clicked ',index); console.log('liveSlidesOnMonitors: ', liveSlidesOnMonitors)">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>
