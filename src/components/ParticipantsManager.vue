@@ -9,6 +9,7 @@ import "@/assets/main.css";
 import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
 import { ref, watch, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 
 const toast = useToast();
 
@@ -20,6 +21,9 @@ const props = defineProps<{
   participants: Participant[];
 }>();
 
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+});
 
 /* ---------- rows ---------- */
 
@@ -122,6 +126,9 @@ function onHandsOff() {
       <h1 class="dashboard_label">Participants</h1>
 
       <div class="toolbar-actions">
+
+        <InputText v-model="filters.global.value" placeholder="Search participant ..."></InputText>
+
         <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select">
           <template #option="{ option }">
             <div class="style-option">
@@ -160,7 +167,8 @@ function onHandsOff() {
 
     <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" :scrollable="true"
       scrollHeight="flex" tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
-      :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table">
+      :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
+      :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']" :filterOperator="FilterOperator.OR">
 
       <Column field="seat" header="Seat" style="width: 150px">
         <template #body="{ data }">
