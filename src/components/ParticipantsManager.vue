@@ -9,10 +9,11 @@ import "@/assets/main.css";
 import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
 import { ref, watch, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, changeAvatarStyleSetting } from '@/services/avatar_service';
 
 const toast = useToast();
 
-import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
 
 type DraftParticipant = Participant & { isNew?: boolean };
 
@@ -20,6 +21,9 @@ const props = defineProps<{
   participants: Participant[];
 }>();
 
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+});
 
 /* ---------- rows ---------- */
 
@@ -122,7 +126,11 @@ function onHandsOff() {
       <h1 class="dashboard_label">Participants</h1>
 
       <div class="toolbar-actions">
-        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select">
+
+        <InputText v-model="filters.global.value" placeholder="Search participant ..."></InputText>
+
+        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select"
+        @change="changeAvatarStyleSetting(selectedStyle)">
           <template #option="{ option }">
             <div class="style-option">
               <img :src="previewUri(option)" width="28" height="28" />
@@ -158,11 +166,12 @@ function onHandsOff() {
       </div>
     </div>
 
-    <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" :scrollable="true"
+    <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id"
       scrollHeight="flex" tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
-      :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table">
+      :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
+      :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']" :filterOperator="FilterOperator.OR" scrollable>
 
-      <Column field="seat" header="Seat" style="width: 150px">
+      <Column field="seat" header="Seat" style="width: 150px" sortable>
         <template #body="{ data }">
           <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
             @change="persist(data)">
@@ -187,7 +196,7 @@ function onHandsOff() {
         </template>
       </Column>
 
-      <Column field="name" header="Name">
+      <Column field="name" header="Name" sortable>
         <template #body="{ data }">
           <span class="participant-name">{{ data.name }}</span>
         </template>
@@ -322,20 +331,13 @@ function onHandsOff() {
   background: var(--p-surface-100);
 }
 
-:deep(.p-datatable-thead > tr > th:first-child) {
-  border-top-left-radius: var(--br-medium);
-  border-bottom-left-radius: var(--br-medium);
+:deep(.p-datatable-thead > tr > th:hover) {
+  background: var(--p-primary-500);
+  color: white;
 }
 
-:deep(.p-datatable-thead > tr > th:last-child) {
-  border-top-right-radius: var(--br-medium);
-  border-bottom-right-radius: var(--br-medium);
-}
-
-:deep(.p-datatable-table-container) {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--p-primary-300) transparent;
+:deep(.p-datatable-sort-icon) {
+  filter: brightness(0) invert(1);
 }
 
 :deep(.row-unseated) {
@@ -345,4 +347,5 @@ function onHandsOff() {
 :deep(.row-unseated .participant-name) {
   opacity: 0.5;
 }
+
 </style>

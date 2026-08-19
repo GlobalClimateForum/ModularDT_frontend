@@ -1,4 +1,5 @@
-import { Style, Avatar } from '@dicebear/core';
+import { Style, Avatar } from '@dicebear/core'
+import { useSettings } from '@/globals/settings'
 
 import glyphs from '@dicebear/styles/glyphs.json' with { type: 'json' };
 import icons from '@dicebear/styles/icons.json' with { type: 'json' };
@@ -38,6 +39,11 @@ export function previewUri(name: StyleName, size = 32) {
     );
   }
   return previewCache.get(key)!;
+}
+
+export function changeAvatarStyleSetting(style: StyleName) {
+  const settings = useSettings(); 
+  settings.value.avatar_style = style;
 }
 
 export function prettyName(name: string) {

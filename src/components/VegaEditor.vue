@@ -575,7 +575,7 @@ watch(parameters, () => emitSection({}), { deep: true })
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0px;
 }
 
 .vegaspec-preview {

@@ -25,7 +25,7 @@ export interface SlideSection {
     width_fraction: number;
     content: string;
     content_path: string;
-    mode?: 'static' | 'url' | 'interactive';
+    mode?: 'static' | 'url' | 'interactive' | 'html' | 'vue';
     parameters?: Parameters;
     url_pattern?: string;
     properties?: SectionProperties;
@@ -71,7 +71,8 @@ export const SlideSectionTypes = [
     { value: "markdown", icon: "markdown", label: "Markdown", description: "Markdown content rendered as MARP slides." },
     { value: "map", icon: "map", label: "Map", description: "Interactive map view." },
     { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "An interactive panel." },
-    { value: "vega", icon: "bar_chart", label: "Vega", description: "Vega data visualization." }
+    { value: "vega", icon: "bar_chart", label: "Vega", description: "Vega data visualization." },
+    { value: "custom", icon: "code", label: "Custom", description: "Custom content." }
 ];
 
 export const getSlideSectionType = (value: string) => {
