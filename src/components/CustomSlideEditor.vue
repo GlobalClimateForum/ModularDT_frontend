@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import SelectButton from 'primevue/selectbutton';
 import type { SlideSection } from '@/services/slide_service';
 import CodeEditor from './CodeEditor.vue';
@@ -25,6 +25,12 @@ const emit = defineEmits<{
     (e: 'sectionUpdated', content: SlideSection): void
 }>()
 
+onMounted(() => {
+    if (!props.slideSection.mode) {
+        props.slideSection.mode = 'html'
+        emit('sectionUpdated', { ...props.slideSection, mode: 'html' })
+    }
+})
 
 </script>
 
