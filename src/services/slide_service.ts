@@ -68,11 +68,11 @@ export interface Parameters {
 }
 
 export const SlideSectionTypes = [
-    { value: "markdown", icon: "markdown", label: "Markdown", description: "Markdown content rendered as MARP slides." },
-    { value: "map", icon: "map", label: "Map", description: "Interactive map view." },
-    { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "An interactive panel." },
-    { value: "vega", icon: "bar_chart", label: "Vega", description: "Vega data visualization." },
-    { value: "custom", icon: "code", label: "Custom", description: "Custom content." }
+    { value: "markdown", icon: "markdown", label: "Markdown", description: "Create a slide section using Markdown MARP flavour." },
+    { value: "map", icon: "map", label: "Map", description: "Create an interactive map section." },
+    { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "Create an interactive panel section for a defined slide." },
+    { value: "vega", icon: "bar_chart", label: "Vega", description: "Create a Vega data visualization section." },
+    { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." }
 ];
 
 export const getSlideSectionType = (value: string) => {
