@@ -218,7 +218,7 @@ watch(() => props.slideSection.content, (newContent) => {
                         </template>
                     </Message>
 
-                    <Button :label="fileHandle ? 'Disconnect' : 'Connect File'" @click="connectFile"
+                    <Button rounded :label="fileHandle ? 'Disconnect' : 'Connect File'" @click="connectFile"
                         style="width: 150px;">
                         <template #icon>
                             <i :style="{
@@ -227,7 +227,7 @@ watch(() => props.slideSection.content, (newContent) => {
                         </template>
                     </Button>
 
-                    <Button small rounded v-if="props.language === 'json'">
+                    <Button  rounded v-if="props.language === 'json'">
                         <template #icon>
                             <i class="material-symbols-outlined" @click="formatJsonWithPrettier()">data_object</i>
                         </template>
