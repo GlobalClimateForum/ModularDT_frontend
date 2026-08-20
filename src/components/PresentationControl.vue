@@ -14,7 +14,7 @@ import { getLivePresentation, stopPresentation, updateLivePresentation } from "@
 import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStates } from '@/services/monitor_service'
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
-import { useCurrentPresentation, useAactiveSceneIdFromPresentation, useSceneOnMonitors } from '@/globals/live_presentation';
+import { useCurrentPresentation, useActiveSceneIdFromPresentation, useSceneOnMonitors } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -35,7 +35,7 @@ const currentPresentation = useCurrentPresentation()
 const loading = ref(false);
 const currentScene = useCurrentScene()
 const scenesMap = useScenesMap()
-const activeSceneIdFromPresentation = useAactiveSceneIdFromPresentation()
+const activeSceneIdFromPresentation = useActiveSceneIdFromPresentation()
 const sceneOnMonitors = useSceneOnMonitors()
 
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {

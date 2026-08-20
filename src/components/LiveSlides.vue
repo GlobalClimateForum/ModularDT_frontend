@@ -11,17 +11,16 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import Message from 'primevue/message';
 import { ref, onMounted, watch, computed } from 'vue';
-import { getSlides } from "@/services/slide_service";
 import { formatDate } from '@/utils/date_utils';
 import { settings } from '@/globals/settings'
-import type { Scene } from '@/services/scene_service';
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
 import { slides } from '@/globals/slides';
 import Tag from 'primevue/tag';
-import { useCurrentScene, useLivePresentationState, useScenesMap, useSceneOnMonitors, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
+import { useCurrentScene, useLivePresentationState, useScenesMap, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesState } from '@/globals/live_presentation';
 
 const livePresentationState = useLivePresentationState()
+const liveSlideState = useLiveSlidesState()
 const { t } = useI18n();
 const currentScene = useCurrentScene()
 
@@ -39,6 +38,7 @@ const whatYouSeeOnMonitors = computed(() => {
 });
 
 onMounted(() => {   
+    console.log("liveSlideState: ", liveSlideState.value)
 //console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
 //console.log("sceneOnMonitors: ", sceneOnMonitors.value)
 //console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
@@ -72,17 +72,12 @@ function onDragStart(e: DragEvent, slide: Slide) {
 }
 
 function onDragEnd(e: DragEvent) {
-        console.log('onDragEnd ', e); 
-
     (e.currentTarget as HTMLElement).classList.remove('is-dragging');
 }
 
 function onDrop(event: DragEvent, index: number) {
 
-    console.log('onDrop ',event," - ", index); 
-
     const slideData = event.dataTransfer?.getData('slide');
-    console.log('slideData ',slideData); 
     if (!slideData) return;
 
     const slide: Slide = JSON.parse(slideData);
@@ -171,7 +166,7 @@ const selectedSlide = ref<Slide | null>(null);
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null)">
+                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null);">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>

@@ -3,7 +3,7 @@ import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
 import type { Presentation } from "@/services/presentation_service";
 import { scenes } from '@/globals/scenes';
-import { settings } from '@/globals/settings'
+
 
 // globale reactive variable
 const livePresentationState = ref({
@@ -15,6 +15,16 @@ const livePresentationState = ref({
 // This function returns always the SAME instance
 export function useLivePresentationState() {
   return livePresentationState
+}
+
+// globale reactive variable
+export const liveSlidesState = computed(() => {
+    return liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide!=null), false)
+});
+
+// This function returns always the SAME instance
+export function useLiveSlidesState() {
+  return liveSlidesState
 }
 
 const currentScene = ref<Scene | null>();
@@ -42,7 +52,7 @@ const activeSceneIdFromPresentation = computed(() => {
   return currentPresentation.value?.scenes?.[index]?.id || null;
 });
 
-export function useAactiveSceneIdFromPresentation() {
+export function useActiveSceneIdFromPresentation() {
   return activeSceneIdFromPresentation
 }
 

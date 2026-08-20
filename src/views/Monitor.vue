@@ -63,21 +63,6 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
   return { ...slide, sections: updatedSections }
 }
 
-/*
-function fetchSlide(id: number) {
-  getSlide(id).then(response => {
-    currentSlide.value = response.data;
-    if (currentSlide.value)
-      if (currentSlide.value.sections && currentSlide.value.sections.length > 0) {
-        currentSlide.value.mode = getSlideMode(currentSlide.value.sections);
-      }
-  }).catch(error => {
-    console.error("Error fetching slide ", id, ":", error);
-  });
-}
-*/
-
-
 onMounted(() => {
   const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
 
