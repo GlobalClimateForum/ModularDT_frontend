@@ -194,10 +194,6 @@ watch(() => props.slideSection.content, (newContent) => {
 <template>
     <div class="editor-container">
 
-        <DynamicDialog>
-            
-        </DynamicDialog>
-
         <div ref="editorHost" class="editor-host"></div>
         <Toolbar class="editor-toolbar">
             <template #end>
