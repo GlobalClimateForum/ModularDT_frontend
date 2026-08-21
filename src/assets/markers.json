@@ -1,0 +1,1527 @@
+[
+  {
+    "type": "icon",
+    "value": "location_on",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "location_pin",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "pin_drop",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "place",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "my_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "near_me",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "explore",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "explore_nearby",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "where_to_vote",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "share_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "add_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "wrong_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "not_listed_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "edit_location",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "person_pin_circle",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "emoji_transportation",
+    "category": "pins"
+  },
+  {
+    "type": "icon",
+    "value": "star",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "favorite",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "flag",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "bookmark",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "label",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "push_pin",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "circle",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "radio_button_checked",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "adjust",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "stat_2",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "priority_high",
+    "category": "markers"
+  },
+  {
+    "type": "icon",
+    "value": "forest",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "park",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "nature",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "hiking",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "terrain",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "landscape",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "water",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "waves",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "beach_access",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "pool",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "agriculture",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "grass",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "potted_plant",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "eco",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "volcano",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "tsunami",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "filter_hdr",
+    "category": "nature"
+  },
+  {
+    "type": "icon",
+    "value": "home",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "house",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "apartment",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "business",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "store",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "storefront",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "location_city",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "domain",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "factory",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "warehouse",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "church",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "mosque",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "synagogue",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "temple_buddhist",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "temple_hindu",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "castle",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "cottage",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "cabin",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "holiday_village",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "stadium",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "museum",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "school",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "local_library",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "account_balance",
+    "category": "buildings"
+  },
+  {
+    "type": "icon",
+    "value": "restaurant",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "local_cafe",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "local_bar",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "local_dining",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "fastfood",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "lunch_dining",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "dinner_dining",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "bakery_dining",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "ramen_dining",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "coffee",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "liquor",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "wine_bar",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "local_pizza",
+    "category": "food"
+  },
+  {
+    "type": "icon",
+    "value": "flight",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "train",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "directions_bus",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "directions_car",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "directions_boat",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "directions_bike",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "directions_walk",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "local_taxi",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "local_gas_station",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "ev_station",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "local_parking",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "anchor",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "sailing",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "two_wheeler",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "subway",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "tram",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "airport_shuttle",
+    "category": "transport"
+  },
+  {
+    "type": "icon",
+    "value": "local_hospital",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_pharmacy",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_police",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_fire_department",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_post_office",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "hotel",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "bed",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "wc",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "atm",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_atm",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_grocery_store",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "shopping_cart",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_mall",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_laundry_service",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "local_convenience_store",
+    "category": "services"
+  },
+  {
+    "type": "icon",
+    "value": "sports_soccer",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "sports_basketball",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "fitness_center",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "golf_course",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "festival",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "theater_comedy",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "attractions",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "camping",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "kayaking",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "downhill_skiing",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "scuba_diving",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "surfing",
+    "category": "recreation"
+  },
+  {
+    "type": "icon",
+    "value": "warning",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "error",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "info",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "help",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "report",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "gpp_maybe",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "dangerous",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "do_not_disturb_on",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "check_circle",
+    "category": "alerts"
+  },
+  {
+    "type": "icon",
+    "value": "cancel",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "📍",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "📌",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🚩",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🏁",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "⭐",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🌟",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "❤️",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "💛",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "💚",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "💙",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🔴",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🟠",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🟡",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🟢",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🔵",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🟣",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "⚫",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "⚪",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🔺",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🔻",
+    "category": "markers"
+  },
+  {
+    "type": "emoji",
+    "value": "🌲",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌳",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌴",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌵",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌿",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🍃",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌱",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏔️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "⛰️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌋",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🗻",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏕️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "⛺",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏞️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏝️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏖️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🏜️",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌊",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "💧",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🔥",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🪨",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌾",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🌻",
+    "category": "nature"
+  },
+  {
+    "type": "emoji",
+    "value": "🐾",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐻",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦌",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦅",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦉",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐦",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐟",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐠",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦁",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐗",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦊",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐺",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐝",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🦋",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐢",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐬",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🐋",
+    "category": "animals"
+  },
+  {
+    "type": "emoji",
+    "value": "🏠",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏡",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏢",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏬",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏭",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏛️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "⛪",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🕌",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🛕",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🕍",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏰",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏯",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏟️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏗️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏘️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏚️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏨",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏫",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏥",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏦",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏪",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🏩",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🗼",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🗽",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "⛩️",
+    "category": "buildings"
+  },
+  {
+    "type": "emoji",
+    "value": "🍽️",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "☕",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍵",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍺",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍷",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍸",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍕",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍔",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🌮",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍜",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍣",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🥐",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🥖",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍞",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍦",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🧁",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🍩",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "🥗",
+    "category": "food"
+  },
+  {
+    "type": "emoji",
+    "value": "✈️",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚁",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚗",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚕",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚌",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚆",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚇",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚊",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚲",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🛵",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🏍️",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "⛵",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚢",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "⚓",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚀",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🅿️",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "⛽",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚏",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "🚧",
+    "category": "transport"
+  },
+  {
+    "type": "emoji",
+    "value": "⚽",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🏀",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🏈",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "⛳",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎾",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🏊",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🏄",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🚴",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🧗",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "⛷️",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🏂",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🤿",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎣",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎪",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎭",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎡",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎢",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎨",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎬",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🎤",
+    "category": "recreation"
+  },
+  {
+    "type": "emoji",
+    "value": "🚑",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🚒",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🚓",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🏧",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "💰",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🛒",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🛍️",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🧺",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🚻",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🚾",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "ℹ️",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "📮",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "📞",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🔌",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🔋",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "🚿",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "💊",
+    "category": "services"
+  },
+  {
+    "type": "emoji",
+    "value": "⚠️",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "❗",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "⛔",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "🚫",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "☢️",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "☣️",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "🆘",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "✅",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "❌",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "⏰",
+    "category": "alerts"
+  },
+  {
+    "type": "emoji",
+    "value": "📵",
+    "category": "alerts"
+  }
+]

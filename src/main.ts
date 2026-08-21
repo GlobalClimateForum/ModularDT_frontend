@@ -12,6 +12,7 @@ import ToastService from 'primevue/toastservice';
 import { definePreset } from '@primeuix/themes';
 import i18n from './i18n/index.ts';
 import ConfirmationService from "primevue/confirmationservice";
+import DialogService from 'primevue/dialogservice';
 
 const primecolors = definePreset(Aura, {
   semantic: {
@@ -37,6 +38,7 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 app.use(ToastService)
+app.use(DialogService);
 
 app.use(PrimeVue, {
   theme: { preset: primecolors }

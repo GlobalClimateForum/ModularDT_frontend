@@ -14,7 +14,7 @@ import { fetchPresentations } from '@/globals/presentations';
 import { registerContentServer } from '@/services/cs_service.ts';
 import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
-
+import DynamicDialog from 'primevue/dynamicdialog';
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -50,6 +50,7 @@ onMounted(async () => {
   <div v-else class="loading-screen">
     Load Settings...
   </div>
+  <DynamicDialog />
   <ConfirmDialog />
 </template>
 
