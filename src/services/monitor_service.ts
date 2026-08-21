@@ -1,11 +1,13 @@
 import { api } from "./api";
+import { ref } from 'vue';
 import type { Scene } from "@/services/scene_service";
+import type { Slide } from "@/services/slide_service";
 import { settings } from '@/globals/settings'
 
 
 export const sendMonitorUpdate = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);
 
-export const updateMonitorStates = async (scene: Scene) => {
+export const updateMonitorStatesFromScene = async (scene: Scene) => {
     const grid = Array(settings.value.number_of_screens).fill(null)
 
     scene.slides.forEach(slide => {
@@ -29,7 +31,7 @@ export const updateMonitorStates = async (scene: Scene) => {
             sendMonitorUpdate((Number(index) + 1), {
                 'payload': {
                     'event_type': 'slide_update',
-                     'slide': 'null'
+                    'slide': 'null'
                 }
             }
             )
@@ -37,6 +39,53 @@ export const updateMonitorStates = async (scene: Scene) => {
 
     }
 }
+
+export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | null)[]>) => {
+    for (let index in slides) {
+        if (slides[index]) {
+            //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])
+            sendMonitorUpdate((Number(index) + 1), {
+                'payload': {
+                    'event_type': 'slide_update',
+                    'slide': slides[index]
+                }
+            }
+            )
+        } else {
+            //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
+            sendMonitorUpdate((Number(index) + 1), {
+                'payload': {
+                    'event_type': 'slide_update',
+                    'slide': 'null'
+                }
+            }
+            )
+        }
+
+    }
+}
+
+export const updateOneMonitor = async (slide: Slide, id: number) => {
+    if (slide) {
+        //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])
+        sendMonitorUpdate((id), {
+            'payload': {
+                'event_type': 'slide_update',
+                'slide': slide
+            }
+        }
+        )
+    } else {
+        sendMonitorUpdate((id), {
+            'payload': {
+                'event_type': 'slide_update',
+                'slide': 'null'
+            }
+        }
+        )
+    }
+}
+
 
 // not sure if used
 function getCookie(name) {
@@ -53,38 +102,3 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
-
-/*
-export const stopPresentation = async () => {
-    livePresentationState.value.active = false;
-    livePresentationState.value.presentation = -1;
-    livePresentationState.value.current_scene = 1;
-
-    try {
-        const response = await updateLivePresentation({
-            active: false
-        });
-        console.log("Live Presentation stoped.");
-    } catch (error) {
-        console.error("Error stopping presentation:", error);
-    }
-}
-
-export const startPresentation = async (presentationid) => {
-    livePresentationState.value.active = true;
-    livePresentationState.value.presentation = presentationid;
-    livePresentationState.value.current_scene = 1;
-
-    try {
-        const response = await updateLivePresentation({
-            active: true,
-            presentation: presentationid,
-            current_scene: 1
-        });
-        console.log("Live Presentation started.");
-    } catch (error) {
-        console.error("Error starting presentation:", error);
-    }
-}
-*/

@@ -17,16 +17,6 @@ export function useLivePresentationState() {
   return livePresentationState
 }
 
-// globale reactive variable
-export const liveSlidesState = computed(() => {
-    return liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide!=null), false)
-});
-
-// This function returns always the SAME instance
-export function useLiveSlidesState() {
-  return liveSlidesState
-}
-
 const currentScene = ref<Scene | null>();
 
 export function useCurrentScene() {
@@ -66,4 +56,14 @@ var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
 
 export function useLiveSlidesOnMonitors() {
   return liveSlidesOnMonitors
+}
+
+// globale reactive variable
+export var liveSlidesActive = computed(() => {
+    return liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide!=null), false)
+});
+
+// This function returns always the SAME instance
+export function useLiveSlidesAcive() {
+  return liveSlidesActive
 }

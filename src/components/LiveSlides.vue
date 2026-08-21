@@ -16,13 +16,12 @@ import { settings } from '@/globals/settings'
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
 import { slides } from '@/globals/slides';
-import Tag from 'primevue/tag';
-import { useCurrentScene, useLivePresentationState, useScenesMap, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesState } from '@/globals/live_presentation';
+import { useLivePresentationState, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesAcive } from '@/globals/live_presentation';
+import { updateMonitorStatesFromGriddedSlides, updateOneMonitor} from '@/services/monitor_service'
 
 const livePresentationState = useLivePresentationState()
-const liveSlideState = useLiveSlidesState()
+const liveSlidesActive = useLiveSlidesAcive()
 const { t } = useI18n();
-const currentScene = useCurrentScene()
 
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -38,7 +37,6 @@ const whatYouSeeOnMonitors = computed(() => {
 });
 
 onMounted(() => {   
-    console.log("liveSlideState: ", liveSlideState.value)
 //console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
 //console.log("sceneOnMonitors: ", sceneOnMonitors.value)
 //console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
@@ -82,6 +80,9 @@ function onDrop(event: DragEvent, index: number) {
 
     const slide: Slide = JSON.parse(slideData);
     liveSlidesOnMonitors.value[index] = slide;
+    console.log(livePresentationState.value.active)
+    console.log(liveSlidesActive.value)
+    updateOneMonitor(slide, index+1)
     
 }
 
@@ -147,7 +148,7 @@ const selectedSlide = ref<Slide | null>(null);
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
-                            @click="liveSlidesOnMonitors.fill(null)" />
+                            @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors)" />
                     </div>
                 </template>
             </Toolbar>
@@ -166,7 +167,7 @@ const selectedSlide = ref<Slide | null>(null);
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null);">
+                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index+1)">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>

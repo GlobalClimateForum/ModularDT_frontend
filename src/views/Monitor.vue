@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { computed, onMounted, onBeforeUnmount, onUnmounted,  ref } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
-import { useLivePresentationState } from '@/globals/live_presentation';
+import { useLivePresentationState, useLiveSlidesAcive } from '@/globals/live_presentation';
 import type { Slide, SlideSection } from '@/services/slide_service';
 import SlideView from '@/components/SlideView.vue';
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
@@ -13,6 +13,7 @@ const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 const currentSlide = ref<Slide | null>(null)
+const liveSlidesActive = useLiveSlidesAcive()
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -130,9 +131,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="livePresentationState.active" class="slideshow">
+  <div v-if="(livePresentationState.active || liveSlidesActive)" class="slideshow">
+    <div v-if="currentSlide === null && livePresentationState.active">
 
-    <div v-if="currentSlide === null">
+    </div>
+    <div v-else-if="currentSlide === null && !livePresentationState.active" class="welcome">
 
     </div>
     <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
@@ -148,6 +151,8 @@ onBeforeUnmount(() => {
     <div v-if="activeMonitor">
       <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
       <p>Status: <strong>{{ connectionStatus }}</strong></p>
+      <p>livePresentationState.active: {{ livePresentationState.active }} </p> 
+      <p>liveSlidesActive: {{ liveSlidesActive }} </p>   
     </div>
 
     <!-- Monitor ID is 0 or exceeds the number of screens -->
