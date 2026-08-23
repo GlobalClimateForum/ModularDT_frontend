@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { computed, onMounted, onBeforeUnmount, onUnmounted,  ref } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
-import { useLivePresentationState, useLiveSlidesAcive } from '@/globals/live_presentation';
+import { useLivePresentationState, useLiveSlidesActive, liveSlidesOnMonitors } from '@/globals/live_presentation';
 import type { Slide, SlideSection } from '@/services/slide_service';
 import SlideView from '@/components/SlideView.vue';
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
@@ -13,7 +13,7 @@ const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 const currentSlide = ref<Slide | null>(null)
-const liveSlidesActive = useLiveSlidesAcive()
+const liveSlidesActive = useLiveSlidesActive()
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {

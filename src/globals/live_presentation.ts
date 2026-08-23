@@ -1,8 +1,9 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
 import type { Presentation } from "@/services/presentation_service";
 import { scenes } from '@/globals/scenes';
+import { settings } from '@/globals/settings'
 
 
 // globale reactive variable
@@ -52,18 +53,46 @@ export function useSceneOnMonitors() {
   return sceneOnMonitors
 }
 
-var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
+export var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
 
 export function useLiveSlidesOnMonitors() {
   return liveSlidesOnMonitors
 }
 
-// globale reactive variable
-export var liveSlidesActive = computed(() => {
-    return liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide!=null), false)
-});
-
-// This function returns always the SAME instance
-export function useLiveSlidesAcive() {
-  return liveSlidesActive
+export function useLiveSlidesActive() {
+  return computed(() => {
+    const result = liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide != null), false)
+    console.log('liveSlidesOnMonitors:', liveSlidesOnMonitors.value)
+    console.log('computed result:', result)
+    return result
+  })
 }
+
+export const whatYouSeeOnMonitors = computed(() => {
+    const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
+    return Array.from({ length: maxLen }, (_, i) => {
+      return liveSlidesOnMonitors.value[i] ?? sceneOnMonitors.value[i] ?? null;
+    });
+  });
+
+  export function useWhatYouSeeOnMonitors() {
+    return whatYouSeeOnMonitors
+  }
+
+  watch(
+    () => settings.value.number_of_screens,
+    (newCount) => {
+      const currentCount = sceneOnMonitors.value.length
+
+      if (newCount > currentCount) {
+        const extraSlots = Array(newCount - currentCount).fill(null)
+        sceneOnMonitors.value.push(...extraSlots)
+        liveSlidesOnMonitors.value.push(...extraSlots)
+      } else if (newCount < currentCount) {
+        sceneOnMonitors.value.splice(newCount)
+        liveSlidesOnMonitors.value.splice(newCount)
+
+      }
+    },
+    { immediate: true }
+  )

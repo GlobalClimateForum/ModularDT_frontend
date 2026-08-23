@@ -14,7 +14,7 @@ import { getLivePresentation, stopPresentation, updateLivePresentation } from "@
 import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStatesFromGriddedSlides } from '@/services/monitor_service'
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
-import { useCurrentPresentation, useActiveSceneIdFromPresentation, useSceneOnMonitors } from '@/globals/live_presentation';
+import { useCurrentPresentation, useActiveSceneIdFromPresentation, useSceneOnMonitors, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -37,6 +37,7 @@ const currentScene = useCurrentScene()
 const scenesMap = useScenesMap()
 const activeSceneIdFromPresentation = useActiveSceneIdFromPresentation()
 const sceneOnMonitors = useSceneOnMonitors()
+const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   if (newSceneId) {
@@ -100,8 +101,8 @@ function sceneToMonitorGrid() {
 }
 
 async function updateMonitors() {
-  if (sceneOnMonitors.value) {
-    updateMonitorStatesFromGriddedSlides(sceneOnMonitors.value)
+  if (whatYouSeeOnMonitors.value) {
+    updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors.value)
   }
 }
 

@@ -16,11 +16,11 @@ import { settings } from '@/globals/settings'
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
 import { slides } from '@/globals/slides';
-import { useLivePresentationState, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesAcive } from '@/globals/live_presentation';
+import { useLivePresentationState, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, updateOneMonitor} from '@/services/monitor_service'
 
 const livePresentationState = useLivePresentationState()
-const liveSlidesActive = useLiveSlidesAcive()
+const liveSlidesActive = useLiveSlidesActive()
 const { t } = useI18n();
 
 const filters = ref({
@@ -29,12 +29,7 @@ const filters = ref({
 
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 var sceneOnMonitors = useSceneOnMonitors()
-const whatYouSeeOnMonitors = computed(() => {
-    const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
-    return Array.from({ length: maxLen }, (_, i) => {
-        return liveSlidesOnMonitors.value[i] ?? sceneOnMonitors.value[i] ?? null;
-    });
-});
+var whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 onMounted(() => {   
 //console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
@@ -42,6 +37,7 @@ onMounted(() => {
 //console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
 });
 
+/*
 watch(
     () => settings.value.number_of_screens,
     (newCount) => {
@@ -56,7 +52,7 @@ watch(
     },
     { immediate: true }
 )
-'*'
+'*' */
 
 // Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
