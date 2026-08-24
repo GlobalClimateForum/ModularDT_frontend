@@ -1,0 +1,83 @@
+// services/websocketService.ts
+
+class WebSocketService {
+  private sockets: Record<string, WebSocket> = {}
+  private listeners: Record<string, Record<string, Function[]>> = {}
+
+  connect(channelId: string, url: string): void {
+    console.log(`Connect to channel `, url)
+    if (this.sockets[channelId]) {
+      console.log(`Already connected to channel ${channelId}`)
+      return
+    }
+
+    this.sockets[channelId] = new WebSocket(url)
+    this.listeners[channelId] = {}
+
+    this.sockets[channelId].onopen = (event: Event) => {
+      console.log(`Connected to channel ${channelId}:`, event)
+      this.emit(channelId, 'open', event)
+    }
+
+    this.sockets[channelId].onmessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        this.emit(channelId, 'message', data)
+      } catch (e) {
+        console.error('Error parsing WebSocket message:', e)
+      }
+    }
+
+    this.sockets[channelId].onerror = (error: Event) => {
+      console.error(`WebSocket Error on channel ${channelId}:`, error)
+      this.emit(channelId, 'error', error)
+    }
+
+    this.sockets[channelId].onclose = (event: CloseEvent) => {
+      console.log(`WebSocket closed on channel ${channelId}:`, event)
+      delete this.sockets[channelId]
+      delete this.listeners[channelId]
+      this.emit(channelId, 'close', event)
+    }
+  }
+
+  send(channelId: string, data: any): void {
+    if (this.sockets[channelId]?.readyState === WebSocket.OPEN) {
+      this.sockets[channelId].send(JSON.stringify(data))
+    } else {
+      console.warn(`WebSocket channel ${channelId} is not connected`)
+    }
+  }
+
+  on(channelId: string, event: string, callback: Function): void {
+    if (!this.listeners[channelId]) {
+      this.listeners[channelId] = {}
+    }
+    if (!this.listeners[channelId][event]) {
+      this.listeners[channelId][event] = []
+    }
+    this.listeners[channelId][event].push(callback)
+  }
+
+  off(channelId: string, event: string, callback: Function): void {
+    if (this.listeners[channelId]?.[event]) {
+      this.listeners[channelId][event] = this.listeners[channelId][event].filter(
+        (cb) => cb !== callback
+      )
+    }
+  }
+
+  emit(channelId: string, event: string, data: any): void {
+    if (this.listeners[channelId]?.[event]) {
+      this.listeners[channelId][event].forEach((callback) => callback(data))
+    }
+  }
+
+  disconnect(channelId: string): void {
+    if (this.sockets[channelId]) {
+      this.sockets[channelId].close()
+    }
+  }
+}
+
+export default new WebSocketService()
