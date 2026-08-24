@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, onUnmounted, ref, computed, watch, toRaw } from 'vue';
+import { onMounted, onUnmounted, ref, watch, toRaw } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';

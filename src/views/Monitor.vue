@@ -1,19 +1,27 @@
 <script setup lang="ts">
+// Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onBeforeUnmount, onUnmounted,  ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n';
-import { settings } from '@/globals/settings'
-import { useLivePresentationState, useLiveSlidesActive, liveSlidesOnMonitors } from '@/globals/live_presentation';
+// globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
-import SlideView from '@/components/SlideView.vue';
+import { settings } from '@/globals/settings'
+import { useLivePresentationState } from '@/globals/live_presentation';
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
+import wsService from '@/services/websocket_service'
+// components
+import SlideView from '@/components/SlideView.vue';
 
 const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 const currentSlide = ref<Slide | null>(null)
-const liveSlidesActive = useLiveSlidesActive()
+
+const channelId = `monitor/${currentId.value}/`
+const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
+
+var liveSlidesActive = false
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -21,7 +29,7 @@ const activeMonitor = computed(() => {
   return 1 <= idAsNumber && idAsNumber <= settings.value.number_of_screens
 })
 
-let socket: WebSocket | null = null
+//let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
 
 // The slide to be displayed, which is the currentSlide with the latest parameter changes applied
@@ -43,9 +51,9 @@ onMounted(() => {
   stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
 })
 // Function to stop the subscription to parameter changes
-let stop: (() => void) | undefined 
+let stop: (() => void) | undefined
 // Clean up the subscription when the component is unmounted
-onUnmounted(() => stop?.()) 
+onUnmounted(() => stop?.())
 
 // Function to apply a parameter change to a slide, returning a new slide object with the updated parameters
 function applyParameterChange(slide: Slide, change: ParameterChange | undefined): Slide {
@@ -54,8 +62,8 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
     if (section.id !== change.section) return section // If the section ID does not match, return the original section
     const existing = section.parameters?.[change.parameter] // Get the existing parameter value for the section
     const updated = existing && typeof existing === 'object'
-        ? { ...existing, default: change.value }
-        : change.value
+      ? { ...existing, default: change.value }
+      : change.value
     return {
       ...section,
       parameters: { ...section.parameters, [change.parameter]: updated },
@@ -64,69 +72,87 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
   return { ...slide, sections: updatedSections }
 }
 
-onMounted(() => {
-  const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
-
-  socket = new WebSocket(socketUrl)
-
-  socket.onopen = (event) => {
-    console.log('Success: connected to channel!', event)
-    connectionStatus.value = 'Connected'
-  }
-
-  socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data)
-      if (data.event_type === 'presentation_start' || data.message) {
-        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-          livePresentationState.value.active = true
-          livePresentationState.value.presentation = data.presentation_id || 1
-          livePresentationState.value.current_scene = data.current_scene || 1
-        }
+const handleMessage = (data) => {
+  try {
+    if (data.event_type === 'presentation_start' || data.message) {
+      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+        livePresentationState.value.active = true
+        livePresentationState.value.presentation = data.presentation_id || 1
+        livePresentationState.value.current_scene = data.current_scene || 1
       }
-
-      if (data.event_type === 'presentation_stop' || data.message) {
-        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-          livePresentationState.value.active = false
-          livePresentationState.value.presentation = -1
-          livePresentationState.value.current_scene = 1
-        }
-      }
-
-      if (data.event_type === 'slide_update' || data.message) {
-        if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-          if (data.slide != "null") {
-            if ((currentSlide.value != null && currentSlide.value.id != data.slide.id) || currentSlide.value == null) {
-              currentSlide.value = data.slide
-            }
-          } else {
-            currentSlide.value = null
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error processing WebSocket message:', e)
     }
-  }
 
-  socket.onerror = (error) => {
-    console.error('WebSocket-Error:', error)
-    connectionStatus.value = 'Error'
-  }
+    if (data.event_type === 'presentation_stop' || data.message) {
+      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+        livePresentationState.value.active = false
+        livePresentationState.value.presentation = -1
+        livePresentationState.value.current_scene = 1
+      }
+    }
 
-  socket.onclose = (event) => {
-    console.log('WebSocket-connection closed.', event)
-    connectionStatus.value = 'Disconnected'
+    if (data.event_type === 'slide_update' || data.message) {
+      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+        if (data.slide != "null") {
+          if ((currentSlide.value != null && currentSlide.value.id != data.slide.id) || currentSlide.value == null) {
+            currentSlide.value = data.slide
+          }
+        } else {
+          currentSlide.value = null
+        }
+      }
+    }
+
+    if (data.event_type === 'single_slide_start' || data.message) {
+      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+        liveSlidesActive = true
+      }
+    }
+
+    if (data.event_type === 'single_slide_end' || data.message) {
+      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
+        liveSlidesActive = false
+      }
+    }
+  } catch (e) {
+    console.error('Error processing WebSocket message:', e)
   }
+}
+
+
+onMounted(() => {
+  wsService.connect(channelId, socketUrl)
+  
+  wsService.on(channelId, 'message', handleMessage)
+  
+  /*
+  wsService.on(channelId, 'open', (event) => {        
+    connectionStatus.value = 'Connected'  
+  })
+  
+  wsService.on(channelId, 'error', (error) => {    
+    console.error('WebSocket-Error:', error)    
+    connectionStatus.value = 'Error'  
+  })
+  
+  wsService.on(channelId, 'close', (event) => {       
+    connectionStatus.value = 'Disconnected'  
+  })
+    */
 })
 
 // we do not need a send function, because the monitor is only a listener, not a sender
 
 // important: close the socket when the component is unmounted to avoid memory leaks
+/*
 onBeforeUnmount(() => {
   if (socket) {
     socket.close()
   }
+})
+*/
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
 })
 </script>
 
@@ -151,8 +177,8 @@ onBeforeUnmount(() => {
     <div v-if="activeMonitor">
       <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
       <p>Status: <strong>{{ connectionStatus }}</strong></p>
-      <p>livePresentationState.active: {{ livePresentationState.active }} </p> 
-      <p>liveSlidesActive: {{ liveSlidesActive }} </p>   
+      <p>livePresentationState.active: {{ livePresentationState.active }} </p>
+      <p>liveSlidesActive: {{ liveSlidesActive }} </p>
     </div>
 
     <!-- Monitor ID is 0 or exceeds the number of screens -->

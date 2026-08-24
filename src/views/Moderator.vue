@@ -114,7 +114,7 @@ const items = computed(() => [
         label: t('moderator.nav.editor'),
         materialIcon: 'code',
         command: () => { currentDashboard.value = 'slidecreate'; }
-      },      
+      },
     ],
   },
   {
@@ -148,6 +148,7 @@ const items = computed(() => [
 ]);
 
 onMounted(() => {
+  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   getParticipants()
     .then(response => { participants.value = response.data.participants; })
     .catch(error => { console.error("Error fetching participants:", error); });
@@ -218,7 +219,8 @@ function handleScenes() {
                 style="align-self: center; flex-shrink: 0;" />
               <div v-if="livePresentationState.active">
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
-                font-size: var(--fs-small);"> {{ presentations.find(p => p.id === livePresentationState.presentation)?.name }} </p>
+                font-size: var(--fs-small);"> {{presentations.find(p => p.id ===
+                  livePresentationState.presentation)?.name }} </p>
               </div>
               <div v-else>
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
