@@ -7,6 +7,10 @@ const api = axios.create({
     },
 })
 
+const uploadApi = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+});
+
 const marpApi = axios.create({
     baseURL: import.meta.env.VITE_MARP_API_BASE_URL,
     headers: {
@@ -17,4 +21,4 @@ const marpApi = axios.create({
 
 
 export default api;
-export { api, marpApi };
+export { api, uploadApi, marpApi };

@@ -10,6 +10,8 @@ import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
 import type { Marker } from '@/components/MapMarkerEditor.vue';
+import {type MapLayer, saveMapLayer} from '@/services/map_service';
+import Button from 'primevue/button';
 
 const props = defineProps<{
     slide: Slide | null,
@@ -23,6 +25,7 @@ interface Layer {
     file: File;
     filetype: 'geojson' | 'gpkg' | undefined
     marker?: Marker; // Optional marker property
+    path:string; // Path to the uploaded file
 }
 
 interface MapProperties {
@@ -34,15 +37,6 @@ interface MapProperties {
 const dialog = useDialog();
 
 const layers = ref<Layer[]>([
-    {
-        name: 'example.geojson',
-        file: new File([], 'example.geojson'),
-        filetype: 'geojson'
-    }, {
-        name: 'example.gpkg',
-        file: new File([], 'example.gpkg'),
-        filetype: 'gpkg'
-    }
 ]);
 
 const emit = defineEmits<{
@@ -66,7 +60,7 @@ function onChangeBasemap() {
 function saveMapProperties() {
     const mapProperties: MapProperties = {
         basemap: selectedBasemap.value,
-        startPosition: [0, 0], 
+        startPosition: [0, 0],
         layers: layers.value
     };
     props.section.content = JSON.stringify(mapProperties);
@@ -82,8 +76,20 @@ function onFileSelect(event: { files: File[] }) {
             : file.name.endsWith('.gpkg')
                 ? 'gpkg'
                 : undefined,
+        path: URL.createObjectURL(file) 
     }));
     layers.value.push(...newLayers);
+}
+
+function uploadLayer(layer: Layer) {
+    saveMapLayer(layer)
+        .then((response) => {
+            console.log('Layer uploaded successfully:', response);
+            // saveMapProperties(); // Save the updated map properties after uploading
+        })
+        .catch((error) => {
+            console.error('Error uploading layer:', error);
+        });
 }
 
 function openMarkerEditor(item: Layer) {
@@ -103,7 +109,6 @@ function openMarkerEditor(item: Layer) {
     });
 }
 
-
 </script>
 
 <template>
@@ -114,7 +119,10 @@ function openMarkerEditor(item: Layer) {
                 <div>Drag and drop files here to upload.</div>
             </template>
 </FileUpload> -->
+
+
         <h1 class="dashboard_label">Layer</h1>
+        <FileUpload ref="fu" mode="basic" chooseLabel="Add File" :multiple="true" @select="onFileSelect" />
         <div class="label-container">
             <DataView :value="layers" layout="list" class="layer-container">
                 <template #list="slotProps">
@@ -133,6 +141,7 @@ function openMarkerEditor(item: Layer) {
                         </div>
                         <Tag :value="item.filetype" v-if="item.filetype" />
                         <span class="filename">{{ item.name }}</span>
+                        <Button label="Upload" @click="uploadLayer(item)"></Button>
                     </div>
                 </template>
             </DataView>
