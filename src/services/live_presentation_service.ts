@@ -10,8 +10,8 @@ export interface LivePresentation {
     current_scene: number;
 }
 
-export const getLivePresentation = () => api.get("/live/");
-export const updateLivePresentation = (live: Partial<LivePresentation>) => api.patch("/live/", live);
+export const getLivePresentation = () => api.get("/livepresentation/");
+export const updateLivePresentation = (livepresentation: Partial<LivePresentation>) => api.patch("/livepresentation/", livepresentation);
 
 export const stopPresentation = async () => {
     livePresentationState.value.active = false;

@@ -78,6 +78,42 @@ class WebSocketService {
       this.sockets[channelId].close()
     }
   }
+
+  /**
+   * Send a message to all channels matching the pattern
+   * e.g. broadcast('monitor/* /', data) sends to all monitor_X channels
+   */
+  broadcastPattern(pattern: string, data: any): void {
+    const regex = new RegExp(`^${pattern.replace('*', '[0-9]+')}$`)
+
+    Object.keys(this.sockets).forEach(channelId => {
+      if (regex.test(channelId)) {
+        this.send(channelId, data)
+      }
+    })
+  }
+
+  /**
+   * Sends to spezific Channel-IDs
+   */
+  broadcastToChannels(channelIds: string[], data: any): void {
+    channelIds.forEach(channelId => {
+      this.send(channelId, data)
+    })
+  }
+
+  /**
+   * returns all active channels
+   */
+
+  getActiveChannels(filter?: string): string[] {
+    const channels = Object.keys(this.sockets)
+    if (!filter) return channels
+
+    const regex = new RegExp(`^${filter.replace('*', '[0-9]+')}$`)
+    return channels.filter(ch => regex.test(ch))
+  }
 }
 
 export default new WebSocketService()
+

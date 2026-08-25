@@ -73,6 +73,7 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 const handleMessage = (data) => {
+  console.log("got message: ",data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
@@ -102,13 +103,13 @@ const handleMessage = (data) => {
       }
     }
 
-    if (data.event_type === 'single_slide_start' || data.message) {
+    if (data.event_type === 'live_slides_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         liveSlidesActive = true
       }
     }
 
-    if (data.event_type === 'single_slide_end' || data.message) {
+    if (data.event_type === 'live_slides_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         liveSlidesActive = false
       }
@@ -120,36 +121,11 @@ const handleMessage = (data) => {
 
 
 onMounted(() => {
-  wsService.connect(channelId, socketUrl)
-  
+  wsService.connect(channelId, socketUrl)  
   wsService.on(channelId, 'message', handleMessage)
-  
-  /*
-  wsService.on(channelId, 'open', (event) => {        
-    connectionStatus.value = 'Connected'  
-  })
-  
-  wsService.on(channelId, 'error', (error) => {    
-    console.error('WebSocket-Error:', error)    
-    connectionStatus.value = 'Error'  
-  })
-  
-  wsService.on(channelId, 'close', (event) => {       
-    connectionStatus.value = 'Disconnected'  
-  })
-    */
 })
-
-// we do not need a send function, because the monitor is only a listener, not a sender
 
 // important: close the socket when the component is unmounted to avoid memory leaks
-/*
-onBeforeUnmount(() => {
-  if (socket) {
-    socket.close()
-  }
-})
-*/
 onUnmounted(() => {
   wsService.off(channelId, 'message', handleMessage)
   wsService.disconnect(channelId)

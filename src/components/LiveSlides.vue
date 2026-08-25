@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// Vue-stuff
+import { ref, onMounted } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import DataTable from 'primevue/datatable';
@@ -6,18 +8,22 @@ import Column from 'primevue/column';
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext';
-import type { Slide } from '@/services/slide_service'
-import '@/assets/main.css'
-import SlideView from '@/components/SlideView.vue';
-import Message from 'primevue/message';
-import { ref, onMounted, watch, computed } from 'vue';
-import { formatDate } from '@/utils/date_utils';
-import { settings } from '@/globals/settings'
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
+import Message from 'primevue/message';
+// globals and services
+import type { Slide } from '@/services/slide_service'
+import { settings } from '@/globals/settings'
 import { slides } from '@/globals/slides';
-import { useLivePresentationState, useSceneOnMonitors, useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
-import { updateMonitorStatesFromGriddedSlides, updateOneMonitor} from '@/services/monitor_service'
+import { useLivePresentationState, useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
+import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
+import { formatDate } from '@/utils/date_utils';
+import wsService from '@/services/websocket_service'
+import '@/assets/main.css'
+// components
+import SlideView from '@/components/SlideView.vue';
+
 
 const livePresentationState = useLivePresentationState()
 const liveSlidesActive = useLiveSlidesActive()
@@ -28,13 +34,10 @@ const filters = ref({
 })
 
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
-var sceneOnMonitors = useSceneOnMonitors()
+//var sceneOnMonitors = useSceneOnMonitors()
 var whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
-onMounted(() => {   
-//console.log("liveSlidesOnMonitors: ", liveSlidesOnMonitors.value)
-//console.log("sceneOnMonitors: ", sceneOnMonitors.value)
-//console.log("whatYouSeeOnMonitors: ", whatYouSeeOnMonitors)
+onMounted(() => {
 });
 
 /*
@@ -74,12 +77,10 @@ function onDrop(event: DragEvent, index: number) {
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
+    startLiveSlides()
     const slide: Slide = JSON.parse(slideData);
     liveSlidesOnMonitors.value[index] = slide;
-    console.log(livePresentationState.value.active)
-    console.log(liveSlidesActive.value)
-    updateOneMonitor(slide, index+1)
-    
+    updateOneMonitor(slide, index + 1)
 }
 
 // remove later
@@ -144,7 +145,7 @@ const selectedSlide = ref<Slide | null>(null);
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
-                            @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors)" />
+                            @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
                     </div>
                 </template>
             </Toolbar>
@@ -163,7 +164,9 @@ const selectedSlide = ref<Slide | null>(null);
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index+1)">
+
+                        <Button small rounded
+                            @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>
