@@ -16,7 +16,8 @@
       "dashboard": "Kontrollzentrum",
       "globalsettings": "DT Einstellungen",
       "participants": "Teilnehmer",
-      "participants_slides": "Teilnehmer-Folien"
+      "participants_slides": "Teilnehmer-Folien", 
+      "parameterchanges": "Parameteränderungen"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",

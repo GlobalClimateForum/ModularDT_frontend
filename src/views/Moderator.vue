@@ -28,13 +28,14 @@ import PresentationControl from '@/components/PresentationControl.vue';
 import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
+import ParameterChanges from '@/components/ParameterChanges.vue';
 
 
 const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'parameterchanges'>('slides');
 const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -48,7 +49,8 @@ const dashboardViews = {
   live: PresentationControl,
   //presentations: PresentationManager,
   globalsettings: GlobalSettings,
-  participants: ParticipantsManager
+  participants: ParticipantsManager,
+  parameterchanges: ParameterChanges
 }
 
 const currentView = computed(() => dashboardViews[currentDashboard.value])
@@ -78,6 +80,12 @@ const items = computed(() => [
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'live'; }
       },
+      {
+        key: 'parameterchanges',
+        label: "Live " +  t('moderator.nav.parameterchanges'), 
+        materialIcon: 'tune',
+        command: () => { currentDashboard.value = 'parameterchanges'; }
+      }
     ],
   },
   {

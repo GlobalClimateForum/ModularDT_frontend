@@ -16,7 +16,8 @@
       "dashboard": "Dashboard",
       "globalsettings": "DT Settings",
       "participants": "Participants",
-      "participants_slides": "Participant slides"
+      "participants_slides": "Participant slides", 
+      "parameterchanges": "Parameter Changes"
     },
     "settings": {
       "numberscreens": "Number of Screens",
