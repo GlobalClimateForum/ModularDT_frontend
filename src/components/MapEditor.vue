@@ -10,29 +10,16 @@ import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
 import type { Marker } from '@/components/MapMarkerEditor.vue';
-import {type MapLayer, saveMapLayer} from '@/services/map_service';
+import { type MapLayer, saveMapLayer } from '@/services/map_service';
 import Button from 'primevue/button';
-
+import { slides } from '@/globals/slides';
+import { type MapProperties, type Layer} from '@/services/map_service';
 const props = defineProps<{
     slide: Slide | null,
-    section: SlideSection,
+    slideSection: SlideSection,
 }>()
 
 const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
-
-interface Layer {
-    name: string;
-    file: File;
-    filetype: 'geojson' | 'gpkg' | undefined
-    marker?: Marker; // Optional marker property
-    path:string; // Path to the uploaded file
-}
-
-interface MapProperties {
-    basemap: keyof typeof basemaps;
-    startPosition: [number, number]; // [longitude, latitude]
-    layers: Layer[];
-}
 
 const dialog = useDialog();
 
@@ -63,8 +50,8 @@ function saveMapProperties() {
         startPosition: [0, 0],
         layers: layers.value
     };
-    props.section.content = JSON.stringify(mapProperties);
-    emit('contentUpdated', props.section.content);
+    props.slideSection.content = JSON.stringify(mapProperties);
+    emit('contentUpdated', props.slideSection.content);
 }
 
 function onFileSelect(event: { files: File[] }) {
@@ -76,16 +63,27 @@ function onFileSelect(event: { files: File[] }) {
             : file.name.endsWith('.gpkg')
                 ? 'gpkg'
                 : undefined,
-        path: URL.createObjectURL(file) 
+        path: URL.createObjectURL(file),
+        id: null,
+        section: props.slideSection?.id || null,
+        uploaded: false
     }));
     layers.value.push(...newLayers);
 }
 
-function uploadLayer(layer: Layer) {
-    saveMapLayer(layer)
+function uploadLayer(layer: Layer, idx: number) {
+
+    if (!props.slideSection?.id) {
+        console.error('SlideSection ID is not available. Cannot upload layer.');
+        return;
+    }
+    saveMapLayer(layer, props.slideSection.id)
         .then((response) => {
-            console.log('Layer uploaded successfully:', response);
-            // saveMapProperties(); // Save the updated map properties after uploading
+            layer.uploaded = true;
+            layer.path = response.data.path;
+            layer.id = response.data.id;
+            layers.value[idx] = layer;
+            saveMapProperties();
         })
         .catch((error) => {
             console.error('Error uploading layer:', error);
@@ -113,16 +111,10 @@ function openMarkerEditor(item: Layer) {
 
 <template>
     <div class="editor-container">
-
-        <!-- <FileUpload :multiple="true" :auto="true" :customUpload="true" @select="onFileSelect">
-            <template #empty>
-                <div>Drag and drop files here to upload.</div>
-            </template>
-</FileUpload> -->
-
-
         <h1 class="dashboard_label">Layer</h1>
-        <FileUpload ref="fu" mode="basic" chooseLabel="Add File" :multiple="true" @select="onFileSelect" />
+        <small>To be rendered properly layers need to be projected to the Web Mercator coordinate system. (WGS84; EPSG:4326)</small>
+        <FileUpload style="margin-left: auto" mode="basic" chooseLabel="Add File" :multiple="true"
+            @select="onFileSelect" />
         <div class="label-container">
             <DataView :value="layers" layout="list" class="layer-container">
                 <template #list="slotProps">
@@ -139,9 +131,17 @@ function openMarkerEditor(item: Layer) {
                             </div>
 
                         </div>
-                        <Tag :value="item.filetype" v-if="item.filetype" />
-                        <span class="filename">{{ item.name }}</span>
-                        <Button label="Upload" @click="uploadLayer(item)"></Button>
+                        <div
+                            style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
+                            <span class="filename">{{ item.name }}</span>
+                            <Tag severity="success" :value="item.filetype" v-if="item.filetype" />
+                        </div>
+                        <div v-if="item.uploaded">
+                            <Tag severity="success" value="Uploaded" />
+                        </div>
+
+                        <Button label="Upload" @click="uploadLayer(item, i)" class="upload-btn"
+                            :disabled="!props.slideSection?.id"></Button>
                     </div>
                 </template>
             </DataView>
@@ -169,7 +169,6 @@ function openMarkerEditor(item: Layer) {
 }
 
 .layer-container {
-    padding: var(--space-small);
     max-height: 300px;
     overflow-y: auto;
     width: 100%;
@@ -218,5 +217,13 @@ function openMarkerEditor(item: Layer) {
     font-family: "Fira Code", monospace;
     font-weight: bold;
     color: var(--p-primary-500);
+}
+
+.upload-btn {
+    margin-left: auto;
+}
+
+:deep(.p-fileupload-basic .p-fileupload-filename) {
+    display: none;
 }
 </style>

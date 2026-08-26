@@ -4,6 +4,7 @@ import maplibregl, { Map as MaplibreMap, type StyleSpecification } from "maplibr
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { basemaps, type Basemap } from '@/utils/map_utils';
+import type { Layer } from '@/services/map_service';
 
 const props = defineProps<{
     slide: Slide,
@@ -72,7 +73,6 @@ onUnmounted(() => {
 });
 
 watch(() => props.basemap, (newBasemap) => {
-    console.log("Incoming: ", newBasemap) 
     if (newBasemap && newBasemap !== currentBasemap.value) {
         currentBasemap.value = newBasemap;
         if (map) {
@@ -85,11 +85,24 @@ watch(() => props.basemap, (newBasemap) => {
 
 <template>
     <div :style="{ width: slide.width * sectionWidth + 'px', height: slide.height + 'px' }">
+        <div class="debuginfo">
+            {{ section.content }}
+        </div>
         <div ref="mapContainer" style="height: 100%; width: 100%;"></div>
     </div>
 </template>
 
 <style scoped>
+
+.debuginfo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    z-index: 1000;
+    font-size: 40pt;
+}
 
 .basemap-indicator {
     position: absolute;

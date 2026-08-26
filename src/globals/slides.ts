@@ -21,3 +21,7 @@ export function fetchSlides() {
 export function getSlideMode(sections: SlideSection[]): string {
     return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
+
+export function getSlideById(id: number): Slide | undefined {
+    return slides.value.find(slide => slide.id === id);
+}
