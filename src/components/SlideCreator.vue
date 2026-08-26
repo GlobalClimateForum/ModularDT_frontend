@@ -133,11 +133,21 @@ function storeSlide() {
     };
 
     return saveSlide(slide, sections).then(response => {
-        fetchSlides();
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-    }).catch(error => {
-        console.error('Error saving slide:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
+        const saved = response.data.slide
+
+        if (!saved || !saved.sections) {
+            console.error('Response has no nested slide/sections:', response.data)
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Server did not return sections', life: 3000 })
+            return
+        }
+
+        currentSlide.value = { ...saved }
+        slideSections.value = saved.sections.map(s => ({ ...s }))
+        sectionWidths.value = saved.sections.map(s => s.width_fraction ?? 1.0)
+        selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+
+        fetchSlides() 
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
     })
 }
 
@@ -374,7 +384,7 @@ watch(currentSectionIndex, (i) => {
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
                             @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
-                            :sectionIdx="index" :autosize="autosizeVega">
+                            :sectionIdx="index" :autosize="autosizeVega" :slide="currentSlide">
                         </component>
                     </TabPanel>
                 </TabPanels>
