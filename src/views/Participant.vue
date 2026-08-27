@@ -20,8 +20,21 @@ const connectionStatus = ref('Connecting...')
 const channelId = `participant/${currentId.value}/`
 const socketUrl = `ws://localhost:8000/ws/participant/${currentId.value}/`
 
-
 let stop: (() => void) | undefined
+
+const handleMessage = (data) => {
+  //console.log("got message: ", data)
+  try {
+    if (data.event_type === 'presentation_start' || data.message) {
+//...
+    }
+
+    if (data.event_type === 'presentation_stop' || data.message) {
+    }
+  } catch (e) {
+    console.error('Error processing WebSocket message:', e)
+  }
+}
 
 onMounted(() => {
   stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
