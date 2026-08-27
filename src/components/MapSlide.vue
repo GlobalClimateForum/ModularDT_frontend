@@ -21,14 +21,14 @@ let map: MaplibreMap | null = null;
 
 
 function rasterStyle(basemapKey: keyof typeof basemaps): StyleSpecification {
-    
+
     const bmap = basemaps[basemapKey];
 
     // Guard agains the case where the basemap is a vector style instead of a raster tile source
     if (!('url' in bmap)) {
         throw new Error(`Basemap ${basemapKey} does not have a URL for raster tiles.`);
     }
-    
+
     return {
         version: 8,
         sources: {
@@ -49,12 +49,38 @@ function rasterStyle(basemapKey: keyof typeof basemaps): StyleSpecification {
     };
 }
 
-// 
 function resolveStyle(key: keyof typeof basemaps): string | StyleSpecification {
     const b = basemaps[key];
     return 'style' in b ? b.style : rasterStyle(key);
 }
 
+async function addLayer(layer: Layer) {
+    if (!map || !layer.uploaded) return;
+    if (map.getLayer(layer.name)) return;
+
+    if (layer.filetype === 'geojson') {
+        const url = `${import.meta.env.VITE_API_BASE_URL}${layer.path}`;
+
+        if (!map.getSource(layer.name)) {
+            map.addSource(layer.name, {
+                type: 'geojson',
+                data: url,
+            });
+        }
+
+        map.addLayer({
+            id: layer.name,
+            type: 'circle',
+            source: layer.name,
+            paint: {
+                'circle-radius': 20,
+                'circle-color': '#ff0000',
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#ffffff',
+            },
+        });
+    }
+}
 onMounted(() => {
     if (!mapContainer.value) return;
 
@@ -81,6 +107,15 @@ watch(() => props.basemap, (newBasemap) => {
     }
 })
 
+watch(() => props.section.content, (newContent) => {
+    if (!map) return;
+
+    JSON.parse(newContent).layers.forEach((layer: Layer) => {
+        addLayer(layer);
+    });
+});
+
+
 </script>
 
 <template>
@@ -93,15 +128,15 @@ watch(() => props.basemap, (newBasemap) => {
 </template>
 
 <style scoped>
-
 .debuginfo {
     position: absolute;
     top: 0;
     left: 0;
-    background-color: rgba(255, 255, 255, 0.8);
     padding: 5px;
     z-index: 1000;
-    font-size: 40pt;
+    font-size: 25pt;
+    font-style: italic;
+    max-width: 500px;
 }
 
 .basemap-indicator {
@@ -117,5 +152,4 @@ watch(() => props.basemap, (newBasemap) => {
     border-radius: 50px;
     z-index: 1
 }
-
 </style>

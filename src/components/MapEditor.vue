@@ -13,7 +13,7 @@ import type { Marker } from '@/components/MapMarkerEditor.vue';
 import { type MapLayer, saveMapLayer } from '@/services/map_service';
 import Button from 'primevue/button';
 import { slides } from '@/globals/slides';
-import { type MapProperties, type Layer} from '@/services/map_service';
+import { type MapProperties, type Layer } from '@/services/map_service';
 const props = defineProps<{
     slide: Slide | null,
     slideSection: SlideSection,
@@ -79,8 +79,9 @@ function uploadLayer(layer: Layer, idx: number) {
     }
     saveMapLayer(layer, props.slideSection.id)
         .then((response) => {
+            console.log('upload response:', response.data);
             layer.uploaded = true;
-            layer.path = response.data.path;
+            layer.path = response.data.path.replace(/^\//, '');
             layer.id = response.data.id;
             layers.value[idx] = layer;
             saveMapProperties();
@@ -111,9 +112,10 @@ function openMarkerEditor(item: Layer) {
 
 <template>
     <div class="editor-container">
-        <h1 class="dashboard_label">Layer</h1>
-        <small>To be rendered properly layers need to be projected to the Web Mercator coordinate system. (WGS84; EPSG:4326)</small>
-        <FileUpload style="margin-left: auto" mode="basic" chooseLabel="Add File" :multiple="true"
+        <h1 style="margin-bottom: 0;" class="dashboard_label">Layer</h1>
+        <small class="layerinfo">To be rendered properly layers need to be projected to the Web Mercator coordinate system. (WGS84;
+            EPSG:4326)</small>
+        <FileUpload style="margin-left: auto" mode="basic" chooseLabel="Add File" :multiple="true" class="file-upload"
             @select="onFileSelect" />
         <div class="label-container">
             <DataView :value="layers" layout="list" class="layer-container">
@@ -168,6 +170,13 @@ function openMarkerEditor(item: Layer) {
     gap: 1rem;
 }
 
+.layerinfo{
+    margin: none;
+    padding: none;
+    font-size: var(--fs-medium);
+    color: var(--p-primary-500);
+}
+
 .layer-container {
     max-height: 300px;
     overflow-y: auto;
@@ -175,6 +184,9 @@ function openMarkerEditor(item: Layer) {
     display: flex;
     flex-direction: column;
     gap: var(--space-small);
+    border-top: 1px solid var(--p-primary-500);
+    border-bottom: 1px solid var(--p-primary-500);
+    padding-top: var(--space-small);
 }
 
 .layer-item {
