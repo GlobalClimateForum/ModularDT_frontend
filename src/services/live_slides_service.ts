@@ -4,7 +4,7 @@ export interface LiveSlides {
     active: boolean;
 }
 
-export const updateLiveSlides = (livepresentation: Partial<LiveSlides>) => api.patch("/livepresentation/", livepresentation);
+export const updateLiveSlides = (liveslides: Partial<LiveSlides>) => api.patch("/liveslides/", liveslides);
 
 export const stopLiveSlides = async () => {
     try {

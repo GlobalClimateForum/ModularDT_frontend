@@ -1,11 +1,13 @@
 <script lang="ts" setup>
+// Vue-stuff
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+// globals and services
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
-import { computed, onMounted, onUnmounted } from 'vue'
-import { ref } from 'vue'
 import { getIPanels } from '@/services/slide_service'
-
+import wsService from '@/services/websocket_service'
 import '@/assets/main.css'
+// components
 import SlideView from '@/components/SlideView.vue'
 
 const parameterChanges = ref<ParameterChange[]>([])
@@ -13,41 +15,18 @@ const panels = ref<any[]>([])
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 
-let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
+
+const channelId = `participant/${currentId.value}/`
+const socketUrl = `ws://localhost:8000/ws/participant/${currentId.value}/`
+
 
 let stop: (() => void) | undefined
 
 onMounted(() => {
   stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
-  onMounted(() => {
-    const socketUrl = `ws://localhost:8000/ws/participant/${currentId.value}/`
-
-    socket = new WebSocket(socketUrl)
-
-    socket.onopen = (event) => {
-      console.log('Success: connected to channel!', event)
-      connectionStatus.value = 'Connected'
-    }
-
-    socket.onmessage = (event) => {
-      try {
-
-      } catch (e) {
-        console.error('Error processing WebSocket message:', e)
-      }
-    }
-
-    socket.onerror = (error) => {
-      console.error('WebSocket-Error:', error)
-      connectionStatus.value = 'Error'
-    }
-
-    socket.onclose = (event) => {
-      console.log('WebSocket-connection closed.', event)
-      connectionStatus.value = 'Disconnected'
-    }
-  })
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
 })
 
 const ipanels = getIPanels().then((response) => {
@@ -55,10 +34,8 @@ const ipanels = getIPanels().then((response) => {
 })
 
 onUnmounted(() => {
-  if (socket) {
-    socket.close()
-  }
-  stop?.()
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
 })
 </script>
 

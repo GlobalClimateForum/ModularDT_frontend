@@ -19,7 +19,6 @@ import { useLivePresentationState, useLiveSlidesOnMonitors, useLiveSlidesActive,
 import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
 import { formatDate } from '@/utils/date_utils';
-import wsService from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';

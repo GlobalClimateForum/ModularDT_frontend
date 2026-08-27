@@ -21,7 +21,7 @@ const currentSlide = ref<Slide | null>(null)
 const channelId = `monitor/${currentId.value}/`
 const socketUrl = `ws://localhost:8000/ws/monitor/${currentId.value}/`
 
-var liveSlidesActive = false
+var liveSlidesActive = ref<Boolean>(false)
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -73,7 +73,7 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 const handleMessage = (data) => {
-  console.log("got message: ",data)
+  //console.log("got message: ", data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
@@ -105,13 +105,13 @@ const handleMessage = (data) => {
 
     if (data.event_type === 'live_slides_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        liveSlidesActive = true
+        liveSlidesActive.value = true
       }
     }
 
     if (data.event_type === 'live_slides_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        liveSlidesActive = false
+        liveSlidesActive.value = false
       }
     }
   } catch (e) {
@@ -121,7 +121,7 @@ const handleMessage = (data) => {
 
 
 onMounted(() => {
-  wsService.connect(channelId, socketUrl)  
+  wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
 })
 
@@ -135,10 +135,11 @@ onUnmounted(() => {
 <template>
   <div v-if="(livePresentationState.active || liveSlidesActive)" class="slideshow">
     <div v-if="currentSlide === null && livePresentationState.active">
-
     </div>
-    <div v-else-if="currentSlide === null && !livePresentationState.active" class="welcome">
-
+    <div v-else-if="currentSlide === null && !livePresentationState.active" class="welcome"
+      style="width: 100vw; height: 100vh;  overflow: hidden;">
+      <img src="/background_monitor.jpg" alt="Welcome"
+        style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
     </div>
     <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
       <SlideView :preview="false" :slide="displaySlide" :showframe="false"
@@ -146,20 +147,21 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-else class="welcome">
-    <h2>{{ t('monitor.greeting') }}</h2>
-    <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
+    <img src="/background_monitor.jpg" alt="Welcome"
+      style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+    <div style="position: absolute;">
+      <h2>{{ t('monitor.greeting') }}</h2>
+      <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
 
-    <!-- Monitor ID is between 1 and the number of screens -->
-    <div v-if="activeMonitor">
-      <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
-      <p>Status: <strong>{{ connectionStatus }}</strong></p>
-      <p>livePresentationState.active: {{ livePresentationState.active }} </p>
-      <p>liveSlidesActive: {{ liveSlidesActive }} </p>
-    </div>
-
-    <!-- Monitor ID is 0 or exceeds the number of screens -->
-    <div v-else>
-      <p>{{ t('monitor.invalid') }}</p>
+      <!-- Monitor ID is between 1 and the number of screens -->
+      <div v-if="activeMonitor">
+        <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
+        <p>Status: <strong>{{ connectionStatus }}</strong></p>
+      </div>
+      <!-- Monitor ID is 0 or exceeds the number of screens -->
+      <div v-else>
+        <p>{{ t('monitor.invalid') }}</p>
+      </div>
     </div>
   </div>
 </template>
