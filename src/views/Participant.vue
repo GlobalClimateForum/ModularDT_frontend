@@ -18,7 +18,8 @@ const currentId = computed(() => route.params.id)
 const connectionStatus = ref('Connecting...')
 
 const channelId = `participant/${currentId.value}/`
-const socketUrl = `ws://localhost:8000/ws/participant/${currentId.value}/`
+const wsUrlParticipant = new URL('/ws/participant/', import.meta.env.VITE_API_BASE_URL)
+const socketUrl = wsUrlParticipant + `${currentId.value}/`
 
 let stop: (() => void) | undefined
 
@@ -26,7 +27,7 @@ const handleMessage = (data) => {
   //console.log("got message: ", data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
-//...
+      //...
     }
 
     if (data.event_type === 'presentation_stop' || data.message) {
@@ -54,8 +55,8 @@ onUnmounted(() => {
 
 <template>
   <div class="participant-view">
-    <h1>Participant View</h1>
-    <p>This is the participant view.</p>
+    <img src="/background_monitor.jpg" alt="Welcome"
+      style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
 
     <div v-for="panel in panels" :key="panel.id">
       <SlideView class="ipanel" :slide="panel" :sections="panel.sections" :preview="false" />
