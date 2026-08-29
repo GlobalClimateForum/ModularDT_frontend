@@ -353,4 +353,22 @@ const selectedSlide = ref<Slide | null>(null);
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--p-primary-50, #f8fafc);
 }
+
+:deep(.p-datatable-header) {
+    padding: 0.5em 0em;
+    display: flex;
+    gap: 0.5rem;
+}
+
+:deep(.p-datatable-thead) {
+    display: none;
+}
+
+:deep(.p-datatable-row-selected) {
+    background: var(--p-primary-50);
+    color: var(--p-primary-900);
+    box-shadow: inset 3px 0 0 var(--p-primary-400);
+    font-weight: 500;
+}
+
 </style>

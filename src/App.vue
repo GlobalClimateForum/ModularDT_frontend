@@ -11,6 +11,7 @@ import { fetchSettings, settings } from '@/globals/settings'
 import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
 import { fetchPresentations } from '@/globals/presentations';
+import { fetchSlideshows } from '@/globals/slideshows';
 import { registerContentServer } from '@/services/cs_service.ts';
 import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
@@ -41,6 +42,7 @@ onMounted(async () => {
   fetchScenes();
   fetchPresentations();
   stopPresentation();
+  fetchSlideshows();
 })
 </script>
 

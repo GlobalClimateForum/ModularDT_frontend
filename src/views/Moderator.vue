@@ -29,6 +29,7 @@ import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
 import ParameterChanges from '@/components/ParameterChanges.vue';
+import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 
 
 const { t } = useI18n();
@@ -50,6 +51,7 @@ const dashboardViews = {
   //presentations: PresentationManager,
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
+  participants_slides: ParticipantSlideshow,
   parameterchanges: ParameterChanges
 }
 
