@@ -12,10 +12,12 @@ import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
 import { fetchPresentations } from '@/globals/presentations';
 import { fetchSlideshows } from '@/globals/slideshows';
+import { fetchParticipants } from '@/globals/participants';
 import { registerContentServer } from '@/services/cs_service.ts';
 import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import DynamicDialog from 'primevue/dynamicdialog';
+import OptionDialog from '@/components/OptionDialog.vue';
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -43,6 +45,7 @@ onMounted(async () => {
   fetchPresentations();
   stopPresentation();
   fetchSlideshows();
+  fetchParticipants();
 })
 </script>
 
@@ -54,6 +57,7 @@ onMounted(async () => {
   </div>
   <DynamicDialog />
   <ConfirmDialog />
+  <OptionDialog />
 </template>
 
 <style scoped>

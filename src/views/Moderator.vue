@@ -12,7 +12,6 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from "@/services/slide_service"
 import type { Scene } from "@/services/scene_service"
-import { getParticipants } from "@/services/participant_service";
 import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
@@ -37,7 +36,7 @@ const livePresentationState = useLivePresentationState()
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'parameterchanges'>('slides');
-const participants = ref<any[]>([]);
+//const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
@@ -61,7 +60,7 @@ const viewProps = computed(() => {
   switch (currentDashboard.value) {
     case 'slidecreate': return { slide: currentSlide.value };
     case 'scenecreate': return { nMonitors: 4, inp_scene: currentScene.value };
-    case 'participants': return { participants: participants.value };
+    //case 'participants': return { participants: participants.value };
     default: return {};
   }
 });
@@ -138,7 +137,7 @@ const items = computed(() => [
       },
       {
         key: 'participants_slides',
-        label: t('moderator.nav.participants_slides'),
+        label: t('moderator.nav.participants_slideshow'),
         materialIcon: "live_tv",
         command: () => { currentDashboard.value = 'participants_slides'; }
       },
@@ -159,9 +158,6 @@ const items = computed(() => [
 
 onMounted(() => {
   liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-  getParticipants()
-    .then(response => { participants.value = response.data.participants; })
-    .catch(error => { console.error("Error fetching participants:", error); });
   currentDashboard.value = 'slides';
 });
 

@@ -1,39 +1,41 @@
 <script setup lang="ts">
+// Vue-stuff
+import { ref, watch, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button';
 import Select from 'primevue/select';
-import "@/assets/main.css";
-import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
-import { ref, watch, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+// globals and services
+import "@/assets/main.css";
+import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
 import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, changeAvatarStyleSetting } from '@/services/avatar_service';
+import { participants, fetchParticipants } from '@/globals/participants';
 
 const toast = useToast();
 
-
 type DraftParticipant = Participant & { isNew?: boolean };
 
+
+/* ??
 const props = defineProps<{
   participants: Participant[];
 }>();
-
+*/ 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 /* ---------- rows ---------- */
-
-const rows = ref<DraftParticipant[]>([...props.participants]);
-watch(() => props.participants, v => { rows.value = [...v]; }, { deep: false });
+const rows = ref<DraftParticipant[]>([...participants.value]);
+watch(() => participants.value, v => { rows.value = [...v]; }, { deep: false });
 
 const editingRows = ref<DraftParticipant[]>([]);
 
 /* ---------- avatar styles ---------- */
-
 const selectedStyle = ref<StyleName>('glyphs');
 const avatarStyle = computed(() => makeStyle(selectedStyle.value));
 
@@ -42,7 +44,6 @@ function avatarUri(seed: string) {
 }
 
 /* ---------- seats ---------- */
-
 const takenSeats = computed(
   () => new Set(rows.value.map(p => p.seat).filter((s): s is number => s != null))
 );
@@ -66,6 +67,7 @@ function persist(row: DraftParticipant) {
   } else {
     updateParticipant(data as Participant);
   }
+  fetchParticipants(); // Refresh the participants list after any change
 }
 
 function onRowEditSave(event: { newData: DraftParticipant; index: number }) {
@@ -92,6 +94,7 @@ function onRowEditDelete(event: { data: DraftParticipant; index: number }) {
         detail: `Participant ${row.name} has been deleted.`,
       });
     });
+    fetchParticipants(); // Refresh the participants list after deletion
   }
 }
 
