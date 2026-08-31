@@ -16,7 +16,7 @@
       "dashboard": "Kontrollzentrum",
       "globalsettings": "DT Einstellungen",
       "participants": "Teilnehmer",
-      "participants_slides": "Teilnehmer-Folien", 
+      "participants_slideshow": "Teilnehmer-Folien",
       "parameterchanges": "Parameteränderungen"
     },
     "settings": {
@@ -35,7 +35,8 @@
       "previous": "Zurück",
       "stop": "Beenden",
       "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt",
-      "no_presentation_showing_short": "Keine Präsentation aktiv"
+      "no_presentation_showing_short": "Keine Präsentation aktiv",
+      "new_slideshow": "Neue Teilnehmer-Folien"
     },
     "scene": "Szene",
     "slide": "Folie",
@@ -76,6 +77,9 @@
   },
   "submit": "absenden",
   "select_monitor": "Monitor wählen:",
+  "select_participants": "Teilnehmer auswählen:",
+  "select_all": "Alle auswählen",
+  "select_options": "Optionen auswählen",
   "please_select": "-- bitte wählen --",
   "pin-message": "Pin eingeben um zum Kontrollzentrum zu gelangen."
 }

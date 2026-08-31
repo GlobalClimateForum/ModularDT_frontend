@@ -16,7 +16,7 @@
       "dashboard": "Dashboard",
       "globalsettings": "DT Settings",
       "participants": "Participants",
-      "participants_slides": "Participant slides", 
+      "participants_slideshow": "Participant slideshow", 
       "parameterchanges": "Parameter Changes"
     },
     "settings": {
@@ -29,13 +29,14 @@
       "presentation": "Presentation",
       "presentation_szenes": "Presentation scenes",
       "presentation_control": "Presentation control",
-      "new_presentation": "New Presentation",
+      "new_presentation": "New presentation",
       "create": "Create",
       "next": "Next",
       "previous": "Previous",
       "stop": "Terminate",
       "no_presentation_showing": "Currently no presentation playing",
-      "no_presentation_showing_short": "No presentation active"
+      "no_presentation_showing_short": "No presentation active",
+      "new_slideshow": "New slideshow"
     },
     "scene": "Scene",
     "slide": "Slide",
@@ -76,6 +77,9 @@
   },
   "submit": "submit",
   "select_monitor": "Select monitor:",
+  "select_participants" : "Select participants",
+  "select_all": "Select all",
+  "select_options": "Select options",
   "please_select": "-- please select --",
   "pin-message": "Enter pin to acces moderator dashboard."
 }

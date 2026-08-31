@@ -11,7 +11,6 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import { saveSlideshow, type Slideshow } from '@/services/slideshow_service'
 import draggable from 'vuedraggable';
-import SlideView from '@/components/SlideView.vue';
 
 //import { scenes, fetchScenes } from '@/globals/scenes';
 import { slideshows, fetchSlideshows } from '@/globals/slideshows';
@@ -21,6 +20,11 @@ import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
 import { slides, fetchSlides } from '@/globals/slides';
+import { dialogService } from '@/services/dialog_service';
+
+//
+import SlideView from '@/components/SlideView.vue';
+
 
 const { t } = useI18n();
 const confirm = useConfirm();
@@ -136,6 +140,20 @@ function onDeleteSlideshow(slideshow: Slideshow) {
     }
 }
 
+function onConfirmDeleteSlideshow(slideshow: Slideshow) {
+    confirm.require({
+        header: t('moderator.confirmation'),
+        message: t('moderator.confirmation-message-head') + t('moderator.participants_slideshow') + " (" + slideshow.name + ")" + t('moderator.confirmation-message-tail'),
+        acceptLabel: `${t('moderator.confirmation-ok')}`,
+        rejectLabel: t('moderator.confirmation-cancel'),
+        accept: async () => {
+            await onDeleteSlideshow(slideshow);
+        }, reject: () => {
+            // nothing to do    
+        },
+    });
+}
+
 function onDuplicateSlideshow(slideshow: Slideshow) {
     if (slideshow.id) {
 
@@ -161,7 +179,6 @@ function onDuplicateSlideshow(slideshow: Slideshow) {
 
 // Handle saving the slideshow to the backend
 function onAddSlideshow() {
-
     const slideshow_ = {
         name: slideshowName.value || `${t('moderator.slideshow.new_slideshow')} ${slideshows.value.length + 1}`,
         description: "",
@@ -177,19 +194,32 @@ function onAddSlideshow() {
     });
 }
 
-/*
-async function onPlayPresentation(slideshow: Presentation) {
-    console.log("slideshow:", slideshow);
+const onPlaySlideshow = async (slideshow: Slideshow) => {
+    //console.log("slideshow:", slideshow);
     const slideshowId = slideshow.id;
     if (slideshowId === undefined) {
         console.error("Error starting slideshow: no valid slideshow id");
         return;
     }
 
-    startPresentation(slideshowId)
-    emit('live')
+    const options = [
+        { id: 1, label: 'Option A' },
+        { id: 2, label: 'Option B' },
+        { id: 3, label: 'Option C' }
+    ];
+
+    const selected = await dialogService.openOptionDialog(options,  `${t('select_participants')}`);
+
+    if (selected) {
+        console.log('Ausgewählt:', selected);
+    } else {
+        console.log('Abgebrochen');
+    }
+
+    //startPresentation(slideshowId)
+    //emit('live')
 }
-*/
+
 const onDragStart = (event: DragEvent, item: Slide) => {
     if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = 'copy';
@@ -302,7 +332,7 @@ const removeItem = (index: number) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <h2 class="dashboard_label">{{ $t('moderator.nav.presentations') }}</h2>
+                    <h2 class="dashboard_label">{{ $t('moderator.nav.participants_slideshow') }}</h2>
                     <DataTable :value="slideshows" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                         @row-edit-save="onRowEditSaveSlideshow" @row-click="onRowClick" responsiveLayout="scroll"
                         class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedSlideshow"
@@ -327,7 +357,7 @@ const removeItem = (index: number) => {
                                 <Button size="small" rounded text icon="pi pi-pencil"
                                     @click="(e) => slotProps.editorInitCallback(e)" />
                                 <Button size="small" rounded text icon="pi pi-trash"
-                                    @click="onDeleteSlideshow(slotProps.data)" />
+                                    @click="onConfirmDeleteSlideshow(slotProps.data)" />
                                 <Button size="small" rounded text icon="pi pi-play-circle"
                                     @click="onPlaySlideshow(slotProps.data)" />
                             </template>
@@ -341,7 +371,7 @@ const removeItem = (index: number) => {
 
                         <template #header>
                             <InputText class="input-field" v-model="slideshowName"
-                                :placeholder="$t('moderator.presentation.new_presentation')" type="text" />
+                                :placeholder="$t('moderator.presentation.new_slideshow')" type="text" />
                             <Button :label="$t('moderator.presentation.create')" icon="pi pi-save"
                                 @click="onAddSlideshow" />
                         </template>
