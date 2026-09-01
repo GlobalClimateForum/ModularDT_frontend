@@ -27,7 +27,7 @@ import PresentationControl from '@/components/PresentationControl.vue';
 import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
-import ParameterChanges from '@/components/ParameterChanges.vue';
+import LivePariticipants from '@/components/LiveParticipants.vue';
 import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 
 
@@ -35,7 +35,7 @@ const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'parameterchanges'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges'>('slides');
 //const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -51,7 +51,8 @@ const dashboardViews = {
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
   participants_slides: ParticipantSlideshow,
-  parameterchanges: ParameterChanges
+  live_participants: LivePariticipants
+  //parameterchanges: ParameterChanges
 }
 
 const currentView = computed(() => dashboardViews[currentDashboard.value])
@@ -60,7 +61,6 @@ const viewProps = computed(() => {
   switch (currentDashboard.value) {
     case 'slidecreate': return { slide: currentSlide.value };
     case 'scenecreate': return { nMonitors: 4, inp_scene: currentScene.value };
-    //case 'participants': return { participants: participants.value };
     default: return {};
   }
 });
@@ -82,10 +82,10 @@ const items = computed(() => [
         command: () => { currentDashboard.value = 'live'; }
       },
       {
-        key: 'parameterchanges',
-        label: "Live " +  t('moderator.nav.parameterchanges'), 
+        key: 'liveparticipants',
+        label: "Live " +  t('moderator.nav.participants'), 
         materialIcon: 'tune',
-        command: () => { currentDashboard.value = 'parameterchanges'; }
+        command: () => { currentDashboard.value = 'live_participants'; }
       }
     ],
   },

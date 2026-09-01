@@ -66,10 +66,13 @@
     "live_monitors": "Live monitors"
   },
   "participant": {
-    "name": "Participant"
+    "name": "Participant",
+    "greeting": "Decition Theatre Participant",
+    "waiting" :"Please wait until the participant slideshow is started by the moderator.",
+    "seat": "Seat"
   },
   "monitor": {
-    "greeting": "I'm a Monitor.",
+    "greeting": "Decition Theatre Monitor",
     "instance_id": "My Instance ID",
     "waiting": "I'm waiting for the presentation to start and listening for it on a Django channel.",
     "invalid": "My instance ID is invalid. I'm staying inactive.",

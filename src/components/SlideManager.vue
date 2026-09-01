@@ -32,9 +32,6 @@ const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-onMounted(() => {
-    fetchSlides();
-});
 
 function onRowEditSave(event: any) {
     const { id, name } = event.newData

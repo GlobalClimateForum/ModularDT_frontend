@@ -48,9 +48,6 @@ interface SelectedScene {
 
 const selectedOrder = ref<SelectedScene[]>([]);
 
-onMounted(() => {
-    fetchScenes();
-});
 
 function onRowEditSaveScene(event: any) {
     const { id, name } = event.newData

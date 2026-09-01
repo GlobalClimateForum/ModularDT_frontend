@@ -14,13 +14,14 @@ import draggable from 'vuedraggable';
 
 //import { scenes, fetchScenes } from '@/globals/scenes';
 import { slideshows, fetchSlideshows } from '@/globals/slideshows';
-import { updateSlideshow, deleteSlideshow } from "@/services/slideshow_service";
+import { updateSlideshow, deleteSlideshow, startSlideshow } from "@/services/slideshow_service";
 import { onMounted, ref, nextTick } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
 import { slides, fetchSlides } from '@/globals/slides';
 import { dialogService } from '@/services/dialog_service';
+import { participants } from '@/globals/participants';
 
 //
 import SlideView from '@/components/SlideView.vue';
@@ -108,15 +109,6 @@ function onRowEditSaveSlideshow(event: any) {
     }
 }
 
-const emit = defineEmits<{
-    'edit-scene': [scene: Scene];
-    'live': [];
-}>();
-
-function onEditScene(scene: Scene) {
-    emit('edit-scene', { ...scene });
-}
-
 const colLeftSize = ref(35);
 const colRightSize = ref(65);
 
@@ -195,23 +187,21 @@ function onAddSlideshow() {
 }
 
 const onPlaySlideshow = async (slideshow: Slideshow) => {
-    //console.log("slideshow:", slideshow);
     const slideshowId = slideshow.id;
     if (slideshowId === undefined) {
         console.error("Error starting slideshow: no valid slideshow id");
         return;
     }
 
-    const options = [
-        { id: 1, label: 'Option A' },
-        { id: 2, label: 'Option B' },
-        { id: 3, label: 'Option C' }
-    ];
-
-    const selected = await dialogService.openOptionDialog(options,  `${t('select_participants')}`);
+    const options = participants.value.filter(p => p.interactions).map(({ name, seat }) => ({ id: seat, label: name + (seat ? ` (${t('participant.seat')} ${seat})` : '') }));
+    const selected = await dialogService.openOptionDialog(options, `${t('select_participants')}`);
 
     if (selected) {
         console.log('Ausgewählt:', selected);
+        for (const participant of selected) {
+            console.log(`Starting slideshow for participant seat: ${participant.id}`);
+            await startSlideshow(slideshow, participant.id);
+        }
     } else {
         console.log('Abgebrochen');
     }
@@ -256,6 +246,12 @@ const isSaving = ref(false);
 const saveOrderToApi = async () => {
     if (selectedOrder.value.length === 0) return;
 
+    const slideshowId = selectedSlideshow.value?.id;
+    if (slideshowId === undefined) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No slideshow selected', life: 3000 });
+        return;
+    }
+
     isSaving.value = true;
     try {
         // 1. Payload für das Backend vorbereiten
@@ -264,7 +260,7 @@ const saveOrderToApi = async () => {
             position: index + 1
         }));
 
-        const response = await updateSlideshow(selectedSlideshow.value.id, {
+        await updateSlideshow(slideshowId, {
             slides: slideshowPayload as any
         });
 

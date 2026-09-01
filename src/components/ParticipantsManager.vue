@@ -67,7 +67,6 @@ function persist(row: DraftParticipant) {
   } else {
     updateParticipant(data as Participant);
   }
-  fetchParticipants(); // Refresh the participants list after any change
 }
 
 function onRowEditSave(event: { newData: DraftParticipant; index: number }) {
@@ -113,11 +112,13 @@ function onAddParticipant() {
 function onClearSeats() {
   rows.value.forEach(p => p.seat = null);
   rows.value.forEach(p => persist(p));
+  fetchParticipants(); // Refresh the participants list after any change
 }
 
 function onHandsOff() {
   rows.value.forEach(p => p.interactions = false);
   rows.value.forEach(p => persist(p));
+  fetchParticipants(); // Refresh the participants list after any change
 }
 
 </script>
@@ -177,7 +178,7 @@ function onHandsOff() {
       <Column field="seat" header="Seat" style="width: 150px" sortable>
         <template #body="{ data }">
           <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
-            @change="persist(data)">
+            @change="persist(data); fetchParticipants();">
             <template #value="{ value }">
               <span v-if="value" class="seat">{{ value }}</span>
               <span v-else>
@@ -211,7 +212,7 @@ function onHandsOff() {
       <Column header="Interactions" style="width: 120px" bodyStyle="text-align: center"
         headerStyle="text-align: center">
         <template #body="{ data }">
-          <ToggleSwitch v-model="data.interactions" @change="persist(data)" />
+          <ToggleSwitch v-model="data.interactions" @change="persist(data); fetchParticipants();" />
         </template>
       </Column>
 
