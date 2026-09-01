@@ -94,7 +94,7 @@ function uploadLayer(layer: Layer, idx: number) {
 function openMarkerEditor(item: Layer) {
     dialog.open(MapMarkerEditor, {
         props: {
-            header: item.name,
+            header: "Edit Marker",
             modal: true,
             style: { width: '400px', height: '600px' },
         },

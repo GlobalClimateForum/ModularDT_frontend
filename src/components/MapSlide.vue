@@ -73,7 +73,7 @@ async function addLayer(layer: Layer) {
             type: 'circle',
             source: layer.name,
             paint: {
-                'circle-radius': 20,
+                'circle-radius': 60,
                 'circle-color': '#ff0000',
                 'circle-stroke-width': 1,
                 'circle-stroke-color': '#ffffff',

@@ -1,56 +1,96 @@
 <script lang="ts" setup>
 
-import markersData from '@/assets/markers.json';
 import { ref, inject } from 'vue';
-import Select from 'primevue/select';
 import Button from 'primevue/button';
+import SelectButton from 'primevue/selectbutton';
+import Knob from 'primevue/knob';
+import ColorPicker from 'primevue/colorpicker';
+import InputText from 'primevue/inputtext';
+import emojis from '@/assets/emojis.json';
+import Select from 'primevue/select';
+import Textarea from 'primevue/textarea';
 
-export type Marker = { type: 'icon' | 'emoji'; value: string; category: string };
-const markers = markersData as Marker[];
+
+type MarkerStyle =
+    | { mode: 'circle'; 'circle-radius': number; 'circle-color': string; 'circle-stroke-width': number; 'circle-stroke-color': string }
+    | { mode: 'symbol'; value: string; 'text-size': number; 'text-halo-color': string; 'text-halo-width': number }
+    | { mode: 'html'; value: string; size: number; };
+
+export type Marker = { type: 'dot' | 'emoji' | 'html'; value: string; category: string, style: MarkerStyle };
+export type Emoji = { code: string[]; emoji: string; name: string; category: string; subcategory: string };
+
+const emojiCategories = Array.from(new Set(emojis.map(e => e.category))).sort();
 
 const dialogRef = inject('dialogRef') as any;
+const selectedMarker = ref<Marker>({
+    type: 'dot', value: '', category: '', style:
+        { mode: 'circle', 'circle-radius': 10, 'circle-color': '#F7F9F9', 'circle-stroke-width': 1, 'circle-stroke-color': '#363946' }
+});
 
+function filterEmojisByCategory(category: string) {
+    if (!category) return emojis;
+    return emojis.filter(e => e.category === category);
+}
 
-const selectedMarker = ref<Marker>();
-const selectedCategory = ref<string>("");
-const markerCategories = Array.from(new Set(markers.map(marker => marker.category)));
+function selectEmoji(emoji: Emoji) {
+    selectedMarker.value.type = 'emoji';
+    selectedMarker.value.value = emoji.emoji;
+    selectedMarker.value.category = emoji.category;
+    selectedMarker.value.style = { mode: 'symbol', value: emoji.emoji, 'text-size': 24, 'text-halo-color': '#ffffff', 'text-halo-width': 2 };
+}
 
 function save() {
     dialogRef.value.close(selectedMarker.value);
 }
-
-function filterMarkersByCategory(category: string): Marker[] {
-    if (category === "") {
-        return markers;
-    }
-    return markers.filter(marker => marker.category === category);
-}
-
-function onSelectMarker(marker: Marker) {
-    selectedMarker.value = marker;
-}
-
-
 </script>
 
 <template>
     <div class="container">
 
-        <div class="marker-preview">
-            <span v-if="selectedMarker?.type === 'icon'">
-                <i class="material-symbols-outlined">{{ selectedMarker.value }}</i>
-            </span>
-            <span v-else>{{ selectedMarker?.value }}</span>
+        <SelectButton v-model="selectedMarker.type" :options="['dot', 'emoji', 'html']" fluid />
+
+        <div v-if="selectedMarker.type === 'dot'" class="marker-controls">
+
+            <div class="knob-container">
+                <label>Radius </label>
+                <Knob v-model="selectedMarker.style['circle-radius']" :min="10" :max="40" valueTemplate="{value}px" />
+            </div>
+
+            <div class="knob-container">
+                <label>Stroke Width </label>
+                <Knob v-model="selectedMarker.style['circle-stroke-width']" :min="0" :max="10"
+                    valueTemplate="{value}px" />
+            </div>
+
+            <div class="color-container">
+                <label>Fill Color </label>
+                <ColorPicker v-model="selectedMarker.style['circle-color']" />
+                <InputText size="small" style="width: 100px;" v-model="selectedMarker.style['circle-color']" />
+            </div>
+
+            <div class="color-container">
+                <label>Stroke Color </label>
+                <ColorPicker v-model="selectedMarker.style['circle-stroke-color']" />
+                <InputText size="small" style="width: 100px;" v-model="selectedMarker.style['circle-stroke-color']" />
+            </div>
         </div>
 
-        <div class="marker-picker">
-            <Select class="marker-filter" :options="markerCategories" v-model="selectedCategory" placeholder="Select a Category" />
-            <div v-for="(marker, i) in filterMarkersByCategory(selectedCategory)" :key="i" class="marker-item" @click="onSelectMarker(marker)">
-                <span v-if="marker.type === 'icon'">
-                    <i class="material-symbols-outlined">{{ marker.value }}</i>
-                </span>
-                <span v-else>{{ marker.value }}</span>
+        <div v-if="selectedMarker.type === 'emoji'"
+            style="display: flex; flex-direction: column; align-items: center; gap: var(--space-small);">
+            <div class="preview">{{ selectedMarker.value }}</div>
+            <Select placeholder="Select Category" fluid :options="emojiCategories" v-model="selectedMarker.category" />
+            <div class="inset-control emoji-picker">
+                <div v-for="emoji in filterEmojisByCategory(selectedMarker.category)" :key="emoji.code"
+                    class="emoji-item" @click="selectEmoji(emoji)">
+                    {{ emoji.emoji }}
+                </div>
             </div>
+        </div>
+
+        <div v-if="selectedMarker.type === 'html'"
+            style="display: flex; flex-direction: column; align-items: center; gap: var(--space-small);">
+            <div class="preview"></div>
+            <Textarea v-model="selectedMarker.value" placeholder="Enter HTML code" rows="5" cols="30" />
         </div>
 
         <Button label="Save" @click="save" :disabled="!selectedMarker" />
@@ -68,58 +108,84 @@ function onSelectMarker(marker: Marker) {
     gap: var(--space-xlarge);
 }
 
-.marker-preview {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 1rem;
-    border: 2px solid var(--p-primary-500);
-
-    font-size: var(--fs-xlarge);
-}
-
-.marker-filter {
-    width: 100%;
-    margin-bottom: var(--space-small);
-    position: sticky;
-    top: 0;
-}
-
-.marker-picker {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-
-    gap: var(--space-small);
-
-    width: 100%;
-    height: 300px;
-    overflow-y: auto;
-
-    background-color: var(--p-primary-50);
-    border-radius: var(--br-medium);
-
-    padding: var(--space-small);
-}
-
-.marker-item {
-    font-size: var(--fs-large);
-    color: var(--p-primary-500);
-    width: 30px;
-    height: 30px;
-    border-radius: 15px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.marker-item:hover {
-    color: var(--p-primary-700);
+.preview {
+    font-size: 3rem;
+    text-align: center;
     background-color: var(--p-primary-100);
+    border: 2px solid var(--p-primary-200);
+    border-radius: var(--br-medium);
+    padding: var(--space-small);
+
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+
+    box-shadow: var(--shadow-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden; 
+}
+
+.emoji-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: var(--space-small);
+    font-size: var(--fs-large);
+    padding: var(--space-small);
+    width: 300px;
+    height: 200px;
+    border-radius: var(--br-medium);
+    overflow-y: auto;
+}
+
+.emoji-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.emoji-item:hover {
+    transform: scale(1.1);
+    background-color: var(--p-primary-50);
+    border: 2px solid var(--p-primary-200);
+}
+
+.knob-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-small);
+}
+
+.color-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-small);
+}
+
+.marker-controls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-large);
+}
+
+.color-container :deep(.p-colorpicker-preview) {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 5px solid var(--p-primary-100);
 }
 </style>
