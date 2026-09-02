@@ -19,6 +19,12 @@ const currentBasemap = ref<keyof typeof basemaps>(props.basemap ?? 'esri');
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: MaplibreMap | null = null;
 
+const asHexValue = (value: string) => {
+    if (value.startsWith('#')) {
+        return value;
+    }
+    return '#' + value;
+};
 
 function rasterStyle(basemapKey: keyof typeof basemaps): StyleSpecification {
 
@@ -58,6 +64,8 @@ async function addLayer(layer: Layer) {
     if (!map || !layer.uploaded) return;
     if (map.getLayer(layer.name)) return;
 
+    console.log("Adding layer", layer); 
+
     if (layer.filetype === 'geojson') {
         const url = `${import.meta.env.VITE_API_BASE_URL}${layer.path}`;
 
@@ -68,28 +76,51 @@ async function addLayer(layer: Layer) {
             });
         }
 
-        map.addLayer({
-            id: layer.name,
-            type: 'circle',
-            source: layer.name,
-            paint: {
-                'circle-radius': 60,
-                'circle-color': '#ff0000',
-                'circle-stroke-width': 1,
-                'circle-stroke-color': '#ffffff',
-            },
-        });
+        switch(layer?.marker?.type) {
+            case 'dot':
+                map.addLayer({
+                    id: layer.name,
+                    type: 'circle',
+                    source: layer.name,
+                    paint: {
+                        'circle-radius': layer.marker.style['circle-radius'],
+                        'circle-color': asHexValue(layer.marker.style['circle-color']),
+                        'circle-stroke-width': layer.marker.style['circle-stroke-width'],
+                        'circle-stroke-color': asHexValue(layer.marker.style['circle-stroke-color']),
+                    },
+                });
+                break;
+
+            case 'emoji':
+                map.addLayer({
+                    id: layer.name,
+                    type: 'symbol',
+                    source: layer.name,
+                    layout: {
+                        'text-field': layer.marker.value                    }
+                });
+                break;
+        }
     }
 }
 onMounted(() => {
     if (!mapContainer.value) return;
 
+    const mapprops = JSON.parse(props.section.content);
+
     map = new maplibregl.Map({
         container: mapContainer.value,
-        style: resolveStyle(currentBasemap.value),
-        center: [13.350103005033793, 52.51451583081903], // [lng, lat] — reversed vs. Leaflet!
-        zoom: 18,
+        style: resolveStyle(mapprops.basemap) || resolveStyle(currentBasemap.value),
+        center: mapprops.startPosition || [13.350103005033793, 52.51451583081903],
+        zoom: mapprops.zoom || 18,
         attributionControl: { compact: false }
+    });
+
+    map.on('load', () => {
+        if (!props.section.content) return;
+        JSON.parse(props.section.content).layers.forEach((layer: Layer) => {
+            addLayer(layer);
+        });
     });
 });
 

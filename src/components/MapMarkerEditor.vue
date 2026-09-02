@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 
-import { ref, inject } from 'vue';
+import { ref, inject, computed } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import Knob from 'primevue/knob';
@@ -10,16 +10,20 @@ import emojis from '@/assets/emojis.json';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 
+export type Marker =
+    | { type: 'dot'; value: string; category: string; style: { mode: 'circle'; 'circle-radius': number; 'circle-color': string; 'circle-stroke-width': number; 'circle-stroke-color': string } }
+    | { type: 'emoji'; value: string; category: string; style: { mode: 'symbol'; value: string; 'text-size': number; } }
+    | { type: 'html'; value: string; category: string; style: { mode: 'html'; value: string; size: number } };
 
-type MarkerStyle =
-    | { mode: 'circle'; 'circle-radius': number; 'circle-color': string; 'circle-stroke-width': number; 'circle-stroke-color': string }
-    | { mode: 'symbol'; value: string; 'text-size': number; 'text-halo-color': string; 'text-halo-width': number }
-    | { mode: 'html'; value: string; size: number; };
-
-export type Marker = { type: 'dot' | 'emoji' | 'html'; value: string; category: string, style: MarkerStyle };
 export type Emoji = { code: string[]; emoji: string; name: string; category: string; subcategory: string };
 
 const emojiCategories = Array.from(new Set(emojis.map(e => e.category))).sort();
+
+const defaultHTMLMarker = `<div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-map-pin">
+        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+    </svg>`
 
 const dialogRef = inject('dialogRef') as any;
 const selectedMarker = ref<Marker>({
@@ -31,6 +35,28 @@ function filterEmojisByCategory(category: string) {
     if (!category) return emojis;
     return emojis.filter(e => e.category === category);
 }
+
+function onChangeMarkerType(type: 'dot' | 'emoji' | 'html') {
+    selectedMarker.value.type = type;
+    switch(type) {
+        case 'dot':
+            selectedMarker.value.style = { mode: 'circle', 'circle-radius': 15, 'circle-color': '#EF6F6C', 'circle-stroke-width': 1, 'circle-stroke-color': '#FEB95F' };
+            break;
+        case 'emoji':
+            selectedMarker.value.style = { mode: 'symbol', value: '', 'text-size': 24 };
+            break;
+        case 'html':
+            selectedMarker.value.style = { mode: 'html', value: defaultHTMLMarker, size: 24 };
+            break;
+    }
+}
+
+const asHexValue = computed(() => (value: string) => {
+    if (value.startsWith('#')) {
+        return value;
+    }
+    return '#' + value;
+});
 
 function selectEmoji(emoji: Emoji) {
     selectedMarker.value.type = 'emoji';
@@ -47,13 +73,28 @@ function save() {
 <template>
     <div class="container">
 
-        <SelectButton v-model="selectedMarker.type" :options="['dot', 'emoji', 'html']" fluid />
+        <SelectButton v-model="selectedMarker.type" :options="['dot', 'emoji', 'html']"
+            @change="onChangeMarkerType($event.value)" fluid />
+
+        <div v-if="selectedMarker.type === 'dot'" class="preview">
+            <div class="dot-marker" :style="{
+                width: selectedMarker.style['circle-radius'] * 2 + 'px',
+                height: selectedMarker.style['circle-radius'] * 2 + 'px',
+                backgroundColor: asHexValue(selectedMarker.style['circle-color']),
+                border: selectedMarker.style['circle-stroke-width'] + 'px solid ' + asHexValue(selectedMarker.style['circle-stroke-color'])
+            }"></div>
+        </div>
 
         <div v-if="selectedMarker.type === 'dot'" class="marker-controls">
 
             <div class="knob-container">
                 <label>Radius </label>
                 <Knob v-model="selectedMarker.style['circle-radius']" :min="10" :max="40" valueTemplate="{value}px" />
+                <!-- <Button label="Function">
+                    <template #icon>
+                        <i class="material-symbols-outlined">function</i>
+                    </template>
+                </Button> -->
             </div>
 
             <div class="knob-container">
@@ -64,14 +105,14 @@ function save() {
 
             <div class="color-container">
                 <label>Fill Color </label>
-                <ColorPicker v-model="selectedMarker.style['circle-color']" />
-                <InputText size="small" style="width: 100px;" v-model="selectedMarker.style['circle-color']" />
+                <ColorPicker mode="hex" v-model="selectedMarker.style['circle-color']" />
+                <InputText size="small" style="width: 100px;" :value="asHexValue(selectedMarker.style['circle-color'])" />
             </div>
 
             <div class="color-container">
                 <label>Stroke Color </label>
-                <ColorPicker v-model="selectedMarker.style['circle-stroke-color']" />
-                <InputText size="small" style="width: 100px;" v-model="selectedMarker.style['circle-stroke-color']" />
+                <ColorPicker mode="hex" v-model="selectedMarker.style['circle-stroke-color']" />
+                <InputText size="small" style="width: 100px;" :value="asHexValue(selectedMarker.style['circle-stroke-color'])" />
             </div>
         </div>
 
@@ -80,8 +121,8 @@ function save() {
             <div class="preview">{{ selectedMarker.value }}</div>
             <Select placeholder="Select Category" fluid :options="emojiCategories" v-model="selectedMarker.category" />
             <div class="inset-control emoji-picker">
-                <div v-for="emoji in filterEmojisByCategory(selectedMarker.category)" :key="emoji.code"
-                    class="emoji-item" @click="selectEmoji(emoji)">
+                <div v-for="emoji in filterEmojisByCategory(selectedMarker.category)" class="emoji-item"
+                    @click="selectEmoji(emoji)">
                     {{ emoji.emoji }}
                 </div>
             </div>
@@ -89,8 +130,10 @@ function save() {
 
         <div v-if="selectedMarker.type === 'html'"
             style="display: flex; flex-direction: column; align-items: center; gap: var(--space-small);">
-            <div class="preview"></div>
-            <Textarea v-model="selectedMarker.value" placeholder="Enter HTML code" rows="5" cols="30" />
+            <div class="preview">
+                <iframe class="htmlmarker" :srcdoc="selectedMarker.value" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+            <Textarea v-model="selectedMarker.value" placeholder="Enter HTML code" rows="10" cols="60" />
         </div>
 
         <Button label="Save" @click="save" :disabled="!selectedMarker" />
@@ -124,8 +167,13 @@ function save() {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+}
 
-    overflow: hidden; 
+.htmlmarker {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .emoji-picker {
@@ -160,6 +208,12 @@ function save() {
     border: 2px solid var(--p-primary-200);
 }
 
+.dot-marker {
+    border-radius: 50%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
 .knob-container {
     display: flex;
     flex-direction: column;
@@ -177,8 +231,10 @@ function save() {
 }
 
 .marker-controls {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex; 
+    flex-direction: row; 
+    justify-content: center;
+    align-items: flex-start;
     gap: var(--space-large);
 }
 

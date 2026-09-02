@@ -1,6 +1,7 @@
 import { uploadApi } from "./api";
 import { type SlideSection } from "@/services/slide_service";
 import { basemaps } from '@/utils/map_utils';
+import type { Marker } from '@/components/MapMarkerEditor.vue';
 
 export interface Layer {
     id: number | null;
@@ -19,10 +20,7 @@ export interface MapProperties {
     layers: Layer[];
 }
 
-export type Marker = { type: 'icon' | 'emoji'; value: string; category: string };
-
-
-export function saveMapLayer(layer: Omit<MapLayer, "id">, sectionId: number): Promise<any> {
+export function saveMapLayer(layer: Omit<Layer, "id">, sectionId: number): Promise<any> {
     
     // Create a FormData object to hold the file and other properties
     const form = new FormData();

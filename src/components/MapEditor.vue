@@ -9,11 +9,9 @@ import FileUpload from 'primevue/fileupload';
 import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
-import type { Marker } from '@/components/MapMarkerEditor.vue';
-import { type MapLayer, saveMapLayer } from '@/services/map_service';
 import Button from 'primevue/button';
-import { slides } from '@/globals/slides';
-import { type MapProperties, type Layer } from '@/services/map_service';
+import { type MapProperties, type Layer, saveMapLayer } from '@/services/map_service';
+
 const props = defineProps<{
     slide: Slide | null,
     slideSection: SlideSection,
@@ -32,6 +30,14 @@ const emit = defineEmits<{
 }>()
 
 const selectedBasemap = ref<keyof typeof basemaps>('openfreemap_bright');
+
+const asHexValue = computed(() => (value: string) => {
+    if (value.startsWith('#')) {
+        return value;
+    }
+    return '#' + value;
+});
+
 
 const basemapOptions = computed(() =>
     (Object.keys(basemaps) as (keyof typeof basemaps)[]).map(key => ({
@@ -96,7 +102,7 @@ function openMarkerEditor(item: Layer) {
         props: {
             header: "Edit Marker",
             modal: true,
-            style: { width: '400px', height: '600px' },
+            style: { width: '600px', height: '600px' },
         },
         data: { layer: item },
         onClose: (opt) => {
@@ -112,38 +118,63 @@ function openMarkerEditor(item: Layer) {
 
 <template>
     <div class="editor-container">
-        <h1 style="margin-bottom: 0;" class="dashboard_label">Layer</h1>
-        <small class="layerinfo">To be rendered properly layers need to be projected to the Web Mercator coordinate system. (WGS84;
-            EPSG:4326)</small>
-        <FileUpload style="margin-left: auto" mode="basic" chooseLabel="Add File" :multiple="true" class="file-upload"
-            @select="onFileSelect" />
+
+        <!-- <small class="layerinfo">Note: To be rendered properly layers need to be projected to the Web Mercator coordinate
+            system. (WGS84; EPSG:4326). You can only upload Files to existing slides.
+        </small> -->
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <h1 style="margin-bottom: 0;" class="dashboard_label">Layer</h1>
+            <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Add Layer"
+                :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
+        </div>
+
         <div class="label-container">
             <DataView :value="layers" layout="list" class="layer-container">
                 <template #list="slotProps">
                     <div v-for="(item, i) in slotProps.items" :key="i" class="layer-item">
-                        <div class="marker-container" @click="openMarkerEditor(item)">
 
-                            <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                                <span v-if="item.marker">
-                                    <i class="material-symbols-outlined marker">{{ item.marker.value }}</i>
-                                </span>
-                                <span v-else>
-                                    <i class="material-symbols-outlined marker">explore_nearby</i>
-                                </span>
+                        <!-- Map Marker for Layer -->
+                        <span>
+                            <div class="marker-container" @click="openMarkerEditor(item)">
+                                <div v-if="item.marker?.type === 'dot'">
+                                    <div class="dot-marker" :style="{
+                                        width: item.marker.style['circle-radius'] * 2 + 'px',
+                                        height: item.marker.style['circle-radius'] * 2 + 'px',
+                                        backgroundColor: asHexValue(item.marker.style['circle-color']),
+                                        border: item.marker.style['circle-stroke-width'] + 'px solid ' + asHexValue(item.marker.style['circle-stroke-color'])
+                                    }"></div>
+                                </div>
+
+                                <div v-if="item.marker?.type === 'emoji'">
+                                    <span class="marker">{{ item.marker.value }}</span>
+                                </div>
                             </div>
+                        </span>
 
-                        </div>
                         <div
                             style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
                             <span class="filename">{{ item.name }}</span>
-                            <Tag severity="success" :value="item.filetype" v-if="item.filetype" />
-                        </div>
-                        <div v-if="item.uploaded">
-                            <Tag severity="success" value="Uploaded" />
-                        </div>
+                            <Tag  v-if="item.uploaded" severity="success" value="Uploaded" />
+                            <!-- <Tag severity="contrast" :value="item.filetype" v-if="item.filetype" /> -->
+                    </div>
 
-                        <Button label="Upload" @click="uploadLayer(item, i)" class="upload-btn"
-                            :disabled="!props.slideSection?.id"></Button>
+                        <div class="layer-controls">
+                            <Button @click="uploadLayer(item, i)" size="small" rounded
+                                :disabled="!props.slideSection?.id">
+                                <template #icon>
+                                    <i class="material-symbols-outlined"
+                                        style="font-size: var(--fs-medium);">upload_2</i>
+                                </template>
+                            </Button>
+
+                            <Button rounded size="small">
+                                <template #icon>
+                                    <i class="material-symbols-outlined"
+                                        style="font-size: var(--fs-medium);">control_point_duplicate</i>
+                                </template>
+                            </Button>
+                        </div>
                     </div>
                 </template>
             </DataView>
@@ -170,7 +201,7 @@ function openMarkerEditor(item: Layer) {
     gap: 1rem;
 }
 
-.layerinfo{
+.layerinfo {
     margin: none;
     padding: none;
     font-size: var(--fs-medium);
@@ -178,7 +209,7 @@ function openMarkerEditor(item: Layer) {
 }
 
 .layer-container {
-    max-height: 300px;
+    height: 250px;
     overflow-y: auto;
     width: 100%;
     display: flex;
@@ -186,13 +217,14 @@ function openMarkerEditor(item: Layer) {
     gap: var(--space-small);
     border-top: 1px solid var(--p-primary-500);
     border-bottom: 1px solid var(--p-primary-500);
-    padding-top: var(--space-small);
+    padding: var(--space-small)
 }
 
 .layer-item {
     display: flex;
     align-items: center;
     flex-direction: row;
+
     gap: var(--space-medium);
     padding: var(--space-small);
     background-color: var(--p-primary-50);
@@ -201,27 +233,44 @@ function openMarkerEditor(item: Layer) {
     margin-bottom: var(--space-small);
 }
 
+.layer-controls {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    margin-left: auto;
+}
+
+.dot-marker {
+    border-radius: 50%;
+    max-width: 100%;
+    max-height: 100%;
+
+    transform: scale(0.7);
+}
+
 .marker-container {
     width: 60px;
     height: 60px;
     border-radius: var(--br-medium);
     background-color: white;
     box-shadow: var(--shadow-light);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden;
 }
 
 .marker-container:hover {
     box-shadow: var(--shadow-dark);
     border: 1px solid var(--p-primary-400);
     cursor: pointer;
-
-    .marker {
-        color: var(--p-primary-400);
-    }
 }
 
 .marker {
     font-size: var(--fs-xlarge);
-    color: var(--p-primary-200);
 }
 
 .filename {
@@ -231,7 +280,7 @@ function openMarkerEditor(item: Layer) {
     color: var(--p-primary-500);
 }
 
-.upload-btn {
+.layer-btn {
     margin-left: auto;
 }
 
