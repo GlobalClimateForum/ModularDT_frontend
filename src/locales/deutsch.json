@@ -69,7 +69,8 @@
     "name": "Teilnehmer",
     "greeting": "Decition Theatre Teilnehmner",
     "waiting" :"Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
-    "seat": "Platz"
+    "seat": "Platz",
+    "live_presentation_state": "Live Teilnehmer status"
   },
   "monitor": {
     "greeting": "Decition Theatre Monitor",

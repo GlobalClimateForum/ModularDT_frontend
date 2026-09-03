@@ -1,13 +1,12 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref, computed, Transition } from 'vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import router from '@/router';
 import Badge from 'primevue/badge';
-import { Transition } from "vue";
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from "@/services/slide_service"
@@ -15,6 +14,7 @@ import type { Scene } from "@/services/scene_service"
 import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
+import wsService from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -34,6 +34,10 @@ import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 const { t } = useI18n();
 const livePresentationState = useLivePresentationState()
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
+
+const channelId = `moderator/`
+const wsUrlMonitor = new URL('/ws/moderator/', import.meta.env.VITE_API_BASE_URL)
+const socketUrl = wsUrlMonitor + ``
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges'>('slides');
 //const participants = ref<any[]>([]);
@@ -156,10 +160,32 @@ const items = computed(() => [
   },
 ]);
 
+const handleMessage = (data) => {
+  //console.log("got message: ", data)
+  try {
+    if (data.event_type === 'presentation_start' || data.message) {
+        livePresentationState.value.active = true
+        livePresentationState.value.presentation = data.presentation_id || 1
+        livePresentationState.value.current_scene = data.current_scene || 1
+    }
+  } catch (e) {
+    console.error('Error processing WebSocket message:', e)
+  }
+}
+
+
 onMounted(() => {
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
   liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   currentDashboard.value = 'slides';
 });
+
+// important: close the socket when the component is unmounted to avoid memory leaks
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
+})
 
 function handleSlideEdit(slide: Slide) {
   currentSlide.value = slide

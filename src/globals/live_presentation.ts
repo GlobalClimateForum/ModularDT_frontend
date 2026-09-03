@@ -91,7 +91,6 @@ export const whatYouSeeOnMonitors = computed(() => {
       } else if (newCount < currentCount) {
         sceneOnMonitors.value.splice(newCount)
         liveSlidesOnMonitors.value.splice(newCount)
-
       }
     },
     { immediate: true }

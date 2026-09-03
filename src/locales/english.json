@@ -69,7 +69,8 @@
     "name": "Participant",
     "greeting": "Decition Theatre Participant",
     "waiting" :"Please wait until the participant slideshow is started by the moderator.",
-    "seat": "Seat"
+    "seat": "Seat",
+    "live_presentation_state": "Participant live presentation state"
   },
   "monitor": {
     "greeting": "Decition Theatre Monitor",

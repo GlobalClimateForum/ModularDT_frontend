@@ -1,37 +1,45 @@
 <script setup lang="ts">
+// Vue-stuff
+import { onMounted, ref, nextTick } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
-import type { Slide } from "@/services/slide_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
 import { FilterMatchMode } from '@primevue/core/api'
+import draggable from 'vuedraggable';
+import { useConfirm } from "primevue/useconfirm";
+import { useI18n } from 'vue-i18n';
+// globals and services
+import type { Slide } from "@/services/slide_service"
 import { formatDate } from '@/utils/date_utils';
 import { saveSlideshow, type Slideshow } from '@/services/slideshow_service'
-import draggable from 'vuedraggable';
-
-//import { scenes, fetchScenes } from '@/globals/scenes';
 import { slideshows, fetchSlideshows } from '@/globals/slideshows';
 import { updateSlideshow, deleteSlideshow, startSlideshow } from "@/services/slideshow_service";
-import { onMounted, ref, nextTick } from 'vue';
 import '@/assets/main.css'
-import { useI18n } from 'vue-i18n';
-import { useConfirm } from "primevue/useconfirm";
 import { slides, fetchSlides } from '@/globals/slides';
 import { dialogService } from '@/services/dialog_service';
 import { participants } from '@/globals/participants';
-
-//
+import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+// components
 import SlideView from '@/components/SlideView.vue';
+import type { Presentation } from '@/services/presentation_service';
 
+
+interface SelectedSlide {
+    id: string;
+    uniqueId: string;
+    name: string;
+    description: string;
+}
 
 const { t } = useI18n();
 const confirm = useConfirm();
 
 const selectedSlide = ref<Slide | null>(null);
-//const editingRows = ref<Scene[]>([]);
+const editingRows = ref<Presentation[]>([]);
 
 const selectedSlideshow = ref<Slideshow | null>(null);
 const slideshowName = ref<string>("");
@@ -41,36 +49,16 @@ const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-interface SelectedSlide {
-    id: string;
-    uniqueId: string;
-    name: string;
-    description: string;
-}
-
 const selectedOrder = ref<SelectedSlide[]>([]);
+
+const colLeftSize = ref(35);
+const colRightSize = ref(65);
+
 
 onMounted(() => {
     fetchSlides();
     fetchSlideshows();
 });
-
-/*
-function onRowEditSaveScene(event: any) {
-    const { id, name } = event.newData
-    if (name === event.data.name) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
-    } else {
-        updateScene(id, { name: name }).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 });
-            scenes.value[event.index] = { ...response.data };
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update scene', life: 3000 });
-            console.error("Error updating scene:", error)
-        })
-    }
-}
-*/
 
 function onRowClick(event: any) {
     const slideshow = event.data;
@@ -108,9 +96,6 @@ function onRowEditSaveSlideshow(event: any) {
         })
     }
 }
-
-const colLeftSize = ref(35);
-const colRightSize = ref(65);
 
 function onDeleteSlideshow(slideshow: Slideshow) {
     if (slideshow.id) {
@@ -197,15 +182,16 @@ const onPlaySlideshow = async (slideshow: Slideshow) => {
     const selected = await dialogService.openOptionDialog(options, `${t('select_participants')}`);
 
     if (selected) {
-        console.log('Ausgewählt:', selected);
         for (const participant of selected) {
             console.log(`Starting slideshow for participant seat: ${participant.id}`);
             await startSlideshow(slideshow, participant.id);
+            updateLiveParticipantsSlideshow({
+                participant_seat: participant.id,
+                slideshow_id: slideshow.id,
+                current_slide_index: 1
+            })
         }
-    } else {
-        console.log('Abgebrochen');
     }
-
     //startPresentation(slideshowId)
     //emit('live')
 }
@@ -288,9 +274,8 @@ const removeItem = (index: number) => {
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <h2 class="dashboard_label">{{ $t('moderator.nav.slides') }}</h2>
                     <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                        responsiveLayout="scroll" class="my-table" v-model:editingRows="editingRows"
-                        v-model:selection="selectedSlide" selectionMode="single" :globalFilterFields="['name', 'tags']"
-                        v-model:filters="filters">
+                        responsiveLayout="scroll" class="my-table" v-model:selection="selectedSlide"
+                        selectionMode="single" :globalFilterFields="['name', 'tags']" v-model:filters="filters">
 
                         <Column field="name" header="">
                             <template #editor="slotProps">
