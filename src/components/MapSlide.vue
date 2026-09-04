@@ -19,6 +19,10 @@ const currentBasemap = ref<keyof typeof basemaps>(props.basemap ?? 'esri');
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: MaplibreMap | null = null;
 
+defineExpose({
+    getCurrentMapPosition
+});
+
 const asHexValue = (value: string) => {
     if (value.startsWith('#')) {
         return value;
@@ -62,11 +66,14 @@ function resolveStyle(key: keyof typeof basemaps): string | StyleSpecification {
 
 async function addLayer(layer: Layer) {
     if (!map || !layer.uploaded) return;
-    if (map.getLayer(layer.name)) return;
 
-    console.log("Adding layer", layer); 
 
     if (layer.filetype === 'geojson') {
+
+        if (map.getLayer(layer.name)) {
+            map.removeLayer(layer.name);
+        };
+
         const url = `${import.meta.env.VITE_API_BASE_URL}${layer.path}`;
 
         if (!map.getSource(layer.name)) {
@@ -76,7 +83,7 @@ async function addLayer(layer: Layer) {
             });
         }
 
-        switch(layer?.marker?.type) {
+        switch (layer?.marker?.type) {
             case 'dot':
                 map.addLayer({
                     id: layer.name,
@@ -97,16 +104,27 @@ async function addLayer(layer: Layer) {
                     type: 'symbol',
                     source: layer.name,
                     layout: {
-                        'text-field': layer.marker.value                    }
+                        'text-field': layer.marker.value
+                    }
                 });
                 break;
         }
     }
 }
+
+
+function getCurrentMapPosition(): { center: [number, number], zoom: number } | null {
+    if (!map) return null;
+    return {
+        center: map.getCenter().toArray() as [number, number],
+        zoom: map.getZoom()
+    };
+}
+
 onMounted(() => {
     if (!mapContainer.value) return;
 
-    const mapprops = JSON.parse(props.section.content);
+    const mapprops = props.section.content ? JSON.parse(props.section.content) : { basemap: currentBasemap.value, startPosition: [13.350103005033793, 52.51451583081903], zoom: 18, layers: [] };
 
     map = new maplibregl.Map({
         container: mapContainer.value,

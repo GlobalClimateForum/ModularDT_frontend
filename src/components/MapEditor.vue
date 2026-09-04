@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, defineAsyncComponent } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted } from 'vue';
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { basemaps } from '@/utils/map_utils';
 import Select from 'primevue/select';
@@ -11,18 +11,38 @@ import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
 import Button from 'primevue/button';
 import { type MapProperties, type Layer, saveMapLayer } from '@/services/map_service';
+import { localMapLayer } from '@/services/map_service';
+
+const DEFAULT_START_POSITION: [number, number] = [13.350103005033793, 52.51451583081903];
 
 const props = defineProps<{
     slide: Slide | null,
     slideSection: SlideSection,
+    startPosition: [number, number]
 }>()
+
+const existingLayers = ref<Layer[] | null>(null);
+
+onMounted(async () => {
+    if (props.slideSection.content) {
+        const mapProperties: MapProperties = JSON.parse(props.slideSection.content);
+        selectedBasemap.value = mapProperties.basemap;
+        layers.value = mapProperties.layers || [];
+        sPosition.value = mapProperties.startPosition?.join(', ') || DEFAULT_START_POSITION.join(', ');
+        existingLayers.value = await localMapLayer();
+    } else {
+        selectedBasemap.value = 'openfreemap_bright';
+        layers.value = [];
+        sPosition.value = DEFAULT_START_POSITION.join(', ');
+    }
+});
+
 
 const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
 
 const dialog = useDialog();
-
-const layers = ref<Layer[]>([
-]);
+const layers = ref<Layer[]>([]);
+const sPosition = ref<string>('');
 
 const emit = defineEmits<{
     (e: 'basemapUpdated', key: keyof typeof basemaps): void
@@ -37,6 +57,7 @@ const asHexValue = computed(() => (value: string) => {
     }
     return '#' + value;
 });
+
 
 
 const basemapOptions = computed(() =>
@@ -77,6 +98,12 @@ function onFileSelect(event: { files: File[] }) {
     layers.value.push(...newLayers);
 }
 
+function updateLayer(layer: Layer, idx: number) {
+    layers.value[idx] = layer;
+    saveMapProperties();
+}
+
+
 function uploadLayer(layer: Layer, idx: number) {
 
     if (!props.slideSection?.id) {
@@ -85,7 +112,6 @@ function uploadLayer(layer: Layer, idx: number) {
     }
     saveMapLayer(layer, props.slideSection.id)
         .then((response) => {
-            console.log('upload response:', response.data);
             layer.uploaded = true;
             layer.path = response.data.path.replace(/^\//, '');
             layer.id = response.data.id;
@@ -108,7 +134,7 @@ function openMarkerEditor(item: Layer) {
         onClose: (opt) => {
             const result = opt?.data;
             if (result) {
-                item.marker = result;
+                updateLayer({ ...item, marker: result }, layers.value.findIndex((l) => l === item));
             }
         },
     });
@@ -125,9 +151,18 @@ function openMarkerEditor(item: Layer) {
 
         <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <h1 style="margin-bottom: 0;" class="dashboard_label">Layer</h1>
-            <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Add Layer"
-                :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
+            <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
+
+                <Select v-model="existingLayers" :options="layers" optionLabel="name" optionValue="id"
+                    placeholder="Add Existing Layer" />
+
+                <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Upload Layer"
+                    :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
+
+
+            </div>
         </div>
+
 
         <div class="label-container">
             <DataView :value="layers" layout="list" class="layer-container">
@@ -155,9 +190,9 @@ function openMarkerEditor(item: Layer) {
                         <div
                             style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
                             <span class="filename">{{ item.name }}</span>
-                            <Tag  v-if="item.uploaded" severity="success" value="Uploaded" />
+                            <Tag v-if="item.uploaded" severity="success" value="Uploaded" />
                             <!-- <Tag severity="contrast" :value="item.filetype" v-if="item.filetype" /> -->
-                    </div>
+                        </div>
 
                         <div class="layer-controls">
                             <Button @click="uploadLayer(item, i)" size="small" rounded
@@ -186,9 +221,17 @@ function openMarkerEditor(item: Layer) {
             <Select v-model="selectedBasemap" :options="basemapOptions" optionLabel="label" optionValue="value"
                 @change="onChangeBasemap" fluid />
         </div>
-        <div class="label-container">
-            <label>Start Position</label>
-            <InputText placeholder="Paste WGS84 Coordinate"></InputText>
+
+        <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: flex-end; width: 100%">
+            <div class="label-container">
+                <label>Start Position</label>
+                <InputText v-model="sPosition" placeholder="Paste WGS84 Coordinate" fluid></InputText>
+            </div>
+            <Button rounded @click="loadCurrentMapPosition()">
+                <template #icon>
+                    <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">my_location</i>
+                </template>
+            </Button>
         </div>
     </div>
 

@@ -1,4 +1,4 @@
-import { uploadApi } from "./api";
+import { uploadApi, api } from "./api";
 import { type SlideSection } from "@/services/slide_service";
 import { basemaps } from '@/utils/map_utils';
 import type { Marker } from '@/components/MapMarkerEditor.vue';
@@ -32,4 +32,18 @@ export function saveMapLayer(layer: Omit<Layer, "id">, sectionId: number): Promi
     if (layer.marker) form.append('marker', JSON.stringify(layer.marker));
     form.append('section_id', sectionId.toString());
     return uploadApi.post('maps/layers/', form);
+}
+
+
+
+export async function localMapLayer() {
+    const response = await api.get('maps/layers/');
+    const data = response.data;
+    return data.map((layer: any) => ({
+        id: layer.id,
+        name: layer.name,
+        filetype: layer.filetype,
+        path: layer.path,
+        marker: layer.marker ? JSON.parse(layer.marker) : undefined,
+    }));
 }
