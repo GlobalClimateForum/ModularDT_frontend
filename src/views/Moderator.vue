@@ -220,7 +220,7 @@ function handleScenes() {
         </Button>
       </div>
 
-      <Menu :model="items" class="panel">
+      <Menu :model="items" class="panel" style="overflow-y: auto;" :height="'calc(80vh)'">
         <template #submenulabel="{ item }">
           <h2>{{ item.label }}</h2>
         </template>
@@ -316,7 +316,7 @@ function handleScenes() {
 }
 
 .content-title {
-  font-size: var(--fs-large);
+  font-size: var(--fs-medium);
   font-weight: 600;
 }
 
@@ -344,10 +344,9 @@ function handleScenes() {
 }
 
 :deep(.p-menu) {
-  padding: var(--space-small);
-  border: none;
-  border-radius: var(--br-large);
-  background-color: var(--surface);
+    border: none;
+    padding: var(--space-medium);
+    border-radius: var(--br-medium);
 }
 
 .active-item {
