@@ -87,7 +87,7 @@ const items = computed(() => [
       },
       {
         key: 'liveparticipants',
-        label: "Live " +  t('moderator.nav.participants'), 
+        label: "Live " + t('moderator.nav.participants'),
         materialIcon: 'tune',
         command: () => { currentDashboard.value = 'live_participants'; }
       }
@@ -164,9 +164,9 @@ const handleMessage = (data) => {
   //console.log("got message: ", data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
-        livePresentationState.value.active = true
-        livePresentationState.value.presentation = data.presentation_id || 1
-        livePresentationState.value.current_scene = data.current_scene || 1
+      livePresentationState.value.active = true
+      livePresentationState.value.presentation = data.presentation_id || 1
+      livePresentationState.value.current_scene = data.current_scene || 1
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -220,9 +220,9 @@ function handleScenes() {
         </Button>
       </div>
 
-      <Menu :model="items" class="panel" style="overflow-y: auto;" :height="'calc(80vh)'">
+      <Menu :model="items" class="panel" style="overflow-y: auto;">
         <template #submenulabel="{ item }">
-          <h2>{{ item.label }}</h2>
+          <h2 class="group-label">{{ item.label }}</h2>
         </template>
         <template #item="{ item, props }">
           <a :class="{ 'p-menu-item-link': true, 'active-item': currentDashboard === item.key }" v-bind="props.action">
@@ -252,7 +252,7 @@ function handleScenes() {
               <div v-if="livePresentationState.active">
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
                 font-size: var(--fs-small);"> {{presentations.find(p => p.id ===
-                  livePresentationState.presentation)?.name }} </p>
+                  livePresentationState.presentation)?.name}} </p>
               </div>
               <div v-else>
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
@@ -344,9 +344,35 @@ function handleScenes() {
 }
 
 :deep(.p-menu) {
-    border: none;
-    padding: var(--space-medium);
-    border-radius: var(--br-medium);
+  border: none;
+  padding: 0 var(--space-small);
+  border-radius: var(--br-medium);
+}
+
+:deep(.p-menu-submenu-label) {
+  padding: var(--space-small) var(--space-small) 0;
+}
+
+:deep(.p-menu-list > li:first-child) .group-label { margin-top: 0; }
+
+.group-label {
+  margin: 0; 
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-primary-500); 
+}
+
+.group-label {
+  color: var(--p-primary-500);
+  font-size: var(--fs-small) !important;
+  font-weight: 600;
+  padding: 0;
+}
+
+:deep(.p-menu-item-link) .material-symbols-outlined {
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .active-item {
@@ -368,7 +394,7 @@ function handleScenes() {
 .menu-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-large);
+  gap: var(--space-small);
 }
 
 .status-panel {
@@ -376,12 +402,14 @@ function handleScenes() {
   flex-direction: column;
   gap: var(--space-small);
   background-color: var(--surface);
-  padding: var(--space-medium);
+  padding:  var(--space-medium) 0;
+  border-radius: var(--br-medium); 
 }
 
 .status-panel ul {
   list-style: none;
   margin: 0;
   padding-left: var(--space-medium);
+  overflow-y: auto;
 }
 </style>
