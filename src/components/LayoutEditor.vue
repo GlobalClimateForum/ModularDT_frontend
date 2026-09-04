@@ -88,13 +88,16 @@ watch(() => props.layout, (newLayout) => {
             <template #end>
                 <div class="layout-btn-controls">
                     <div class="label-container" center>
-                        <label for="showFrame">show frame</label>
-                        <Button small rounded @click="showFrame = !showFrame; emit('showframe', showFrame)">
+                        <label for="showFrame">section frame</label>
+                        <ToggleSwitch></ToggleSwitch>
+                        
+                        
+                        <!-- <Button small rounded text @click="showFrame = !showFrame; emit('showframe', showFrame)">
                             <template #icon>
                                 <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
                                 <i v-else class="material-symbols-outlined">grid_on</i>
                             </template>
-                        </Button>
+                        </Button> -->
                     </div>
 
                     <div class="label-container" center v-if="props.autoSizeButton">
@@ -108,8 +111,8 @@ watch(() => props.layout, (newLayout) => {
                     </div>
 
                     <div class="label-container" center>
-                        <label>Background</label>
-                        <ColorPicker @change="emit('bgcolor', $event.value)"></ColorPicker>
+                        <label>background</label>
+                        <ColorPicker class="background-btn" @change="emit('bgcolor', $event.value)"></ColorPicker>
                     </div>
 
                 </div>
@@ -127,7 +130,7 @@ watch(() => props.layout, (newLayout) => {
 
 .layout-btn-controls {
     display: flex;
-    align-items: center;
+    align-items: flex-start; 
     gap: 1.5rem;
 }
 
@@ -135,6 +138,22 @@ watch(() => props.layout, (newLayout) => {
     opacity: 0.5;
     pointer-events: none;
 }
+
+.background-btn :deep(.p-colorpicker-preview) {
+    width: 50px;
+    height: 40px;
+    border-radius: var(--br-small);
+    border: 5px solid var(--p-primary-200);
+}
+
+.background-btn :deep(.p-colorpicker-preview:focus) {
+    width: 50px;
+    height: 40px;
+    border-radius: var(--br-small);
+    border: 5px solid var(--p-primary-400);
+    outline: none;
+}
+
 
 .layout-btn {
     display: flex;
@@ -157,6 +176,7 @@ watch(() => props.layout, (newLayout) => {
     border-color: var(--p-primary-400);
     background: var(--p-primary-200);
 }
+
 
 .col-preview {
     display: flex;
