@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // Vue-stuff
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n';
 // globals and services
@@ -12,6 +12,7 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
 import type { Slideshow } from "@/services/slideshow_service"
+import { sendModeratorUpdate, sendUpdateParticipantParameter } from "@/services/moderator_service";
 
 //const parameterChanges = ref<ParameterChange[]>([])
 //const panels = ref<any[]>([])
@@ -29,8 +30,15 @@ const slideshowActive = ref<Boolean>(false)
 const mySlideshow = ref<Slide[] | null>(null);
 const myCurrentSlide = ref<Slide | null>(null);
 let currentSlideIndex = -1
+let mySlideshowId = -1
 
 let stop: (() => void) | undefined
+
+function updateParticipantParameter(parameter_name: string, value: string) {
+    sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
+}
+
+provide('updateParticipantParameter', updateParticipantParameter);
 
 const handleMessage = (data) => {
   console.log("got message: ", data)
@@ -41,12 +49,14 @@ const handleMessage = (data) => {
       if ((mySlideshow.value) && (mySlideshow.value.length > 0)) {
         myCurrentSlide.value = mySlideshow.value[0]
         currentSlideIndex = 0
+        mySlideshowId = data.slideshow_id
       }
     }
     if (data.event_type === 'stop_slideshow' || data.message) {
       slideshowActive.value = false
       myCurrentSlide.value = null
       currentSlideIndex = -1
+      mySlideshowId = -1
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -57,6 +67,12 @@ const nextSlide = () => {
   if ((mySlideshow.value) && (currentSlideIndex < mySlideshow.value.length - 1)) {
     currentSlideIndex++
     myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
+    sendModeratorUpdate({
+      event_type: "participant_slideshow_update",
+      sender: `${currentId.value}`,
+      slideshow_id: mySlideshowId,
+      current_slide_index: currentSlideIndex
+    })
   }
 };
 
@@ -64,6 +80,12 @@ const previousSlide = () => {
   if ((mySlideshow.value) && (currentSlideIndex > 0)) {
     currentSlideIndex--
     myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
+    sendModeratorUpdate({
+      event_type: "participant_slideshow_update",
+      sender: `${currentId.value}`,
+      slideshow_id: mySlideshowId,
+      current_slide_index: currentSlideIndex
+    })
   }
 };
 
@@ -99,11 +121,13 @@ const handleSwipe = () => {
     previousSlide();
   }
 };
+
 onMounted(() => {
   //stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
   window.addEventListener('keydown', handleKeyDown)
+  //window.updateParticipantParameter = updateParticipantParameter;
 })
 
 /*
@@ -115,6 +139,7 @@ onUnmounted(() => {
   wsService.off(channelId, 'message', handleMessage)
   wsService.disconnect(channelId)
   window.removeEventListener('keydown', handleKeyDown)
+  //delete window.updateParticipantParameter;
 })
 </script>
 
@@ -124,7 +149,8 @@ onUnmounted(() => {
       :sections="myCurrentSlide?.sections ? myCurrentSlide?.sections : []" class="slide-preview" />
     <div class="controls">
       <button class="nav-btn prev" @click="previousSlide" :disabled="currentSlideIndex <= 0">◀</button>
-      <button class="nav-btn next" @click="nextSlide" :disabled="currentSlideIndex === (mySlideshow && mySlideshow.length - 1)">▶</button>
+      <button class="nav-btn next" @click="nextSlide"
+        :disabled="currentSlideIndex === (mySlideshow && mySlideshow.length - 1)">▶</button>
     </div>
   </div>
   <div v-else class="welcome">
@@ -154,17 +180,21 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  user-select: none;  /* prevent marking text when swiping */
+  user-select: none;
+  /* prevent marking text when swiping */
   touch-action: pan-y;
 }
 
 /* Common styles for both buttons (centered in the middle) */
 .nav-btn {
   position: absolute;
-  top: 50%;                  /* Schiebt die Oberkante des Buttons in die exakte Bildschirmmitte */
-  transform: translateY(-50%); /* Zieht den Button um die eigene halbe Höhe hoch -> perfekt zentriert */
-  z-index: 10;               /* Stellt sicher, dass die Buttons über dem Inhalt liegen */
-  
+  top: 50%;
+  /* Schiebt die Oberkante des Buttons in die exakte Bildschirmmitte */
+  transform: translateY(-50%);
+  /* Zieht den Button um die eigene halbe Höhe hoch -> perfekt zentriert */
+  z-index: 10;
+  /* Stellt sicher, dass die Buttons über dem Inhalt liegen */
+
   /* nice design (optional) */
   padding: 16px;
   font-size: 24px;
@@ -185,10 +215,12 @@ onUnmounted(() => {
 }
 
 .prev {
-  left: 20px;   /* Abstand zum linken Rand */
+  left: 20px;
+  /* Abstand zum linken Rand */
 }
 
 .next {
-  right: 20px;  /* Abstand zum rechten Rand */
+  right: 20px;
+  /* Abstand zum rechten Rand */
 }
 </style>

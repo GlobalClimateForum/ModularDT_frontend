@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, provide } from 'vue'
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
@@ -32,6 +32,15 @@ const activeMonitor = computed(() => {
 
 //let socket: WebSocket | null = null
 const connectionStatus = ref('Connecting...')
+
+function updateParticipantParameter(parameter_name: string, value: string) {
+    // This is a Dummy for the Monitor view. In the Monitor view the interactive slides
+    // for the participant should not appear, but you never know what the user does. 
+    // If an interactive slide is displayed and this function is missing the monitor view would crash.
+    // However, in the monitor view this function does not have to do anything
+}
+
+provide('updateParticipantParameter', updateParticipantParameter);
 
 // The slide to be displayed, which is the currentSlide with the latest parameter changes applied
 const displaySlide = computed(() => {

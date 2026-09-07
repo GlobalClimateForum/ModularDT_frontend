@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, onUnmounted, ref, computed, Transition } from 'vue';
+import { onMounted, onUnmounted, ref, computed, Transition, provide } from 'vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
@@ -14,6 +14,8 @@ import type { Scene } from "@/services/scene_service"
 import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
+import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+import { participant_parameters } from '@/globals/participant_parameters';
 import wsService from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
@@ -161,17 +163,35 @@ const items = computed(() => [
 ]);
 
 const handleMessage = (data) => {
-  //console.log("got message: ", data)
   try {
-    if (data.event_type === 'presentation_start' || data.message) {
-      livePresentationState.value.active = true
-      livePresentationState.value.presentation = data.presentation_id || 1
-      livePresentationState.value.current_scene = data.current_scene || 1
+    if (data.event_type === 'participant_slideshow_update' || data.message) {
+      updateLiveParticipantsSlideshow({
+        participant_seat: Number(data.sender),
+        slideshow_id: data.slideshow_id,
+        current_slide_index: data.current_slide_index
+      });
+    }
+    if (data.event_type === 'update_participant_parameter' || data.message) {
+      console.log(data)
+      /* {
+        event_type: "update_participant_parameter",
+        paricipant: sender,
+        parameter_name: parameter_name,
+        value: value
+      } */
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
   }
 }
+
+function updateParticipantParameter(parameter_name: string, value: string) {
+    // This is a Dummy for the Moderator view. In the slide preview the interactive slides
+    // for the participant are also rendered. If this function is missing the preview would crash.
+    // However, in the moderator view this function does not have to do anything
+}
+
+provide('updateParticipantParameter', updateParticipantParameter);
 
 
 onMounted(() => {
@@ -203,6 +223,10 @@ function handleLiveSwitch() {
 
 function handleScenes() {
   currentDashboard.value = 'scenes'
+}
+
+function handleLiveparticipants() {
+  currentDashboard.value = 'live_participants'
 }
 </script>
 
@@ -267,7 +291,7 @@ function handleScenes() {
     <SplitterPanel :size="85" class="panel">
       <Transition name="fade">
         <component :is="currentView" v-bind="viewProps" :key="currentDashboard" @edit-slide="handleSlideEdit"
-          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes" />
+          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes" @liveparticipants="handleLiveparticipants"/>
       </Transition>
     </SplitterPanel>
   </Splitter>

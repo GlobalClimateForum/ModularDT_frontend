@@ -43,6 +43,7 @@ export const startSlideshow = async (slideshow: Slideshow, participantseat: numb
         await sendParticipantUpdate(participantseat, {
           event_type: "start_slideshow",
           receiver: participantseat,
+          slideshow_id: slideshow.id,
           slides: slideshow.slides
         });
         console.log("Slideshow ", slideshow.name, " started for participant seat ", participantseat);
