@@ -54,6 +54,9 @@ const selectedOrder = ref<SelectedSlide[]>([]);
 const colLeftSize = ref(35);
 const colRightSize = ref(65);
 
+const emit = defineEmits<{
+    'liveparticipants': [];
+}>();
 
 onMounted(() => {
     fetchSlides();
@@ -188,12 +191,12 @@ const onPlaySlideshow = async (slideshow: Slideshow) => {
             updateLiveParticipantsSlideshow({
                 participant_seat: participant.id,
                 slideshow_id: slideshow.id,
-                current_slide_index: 1
+                current_slide_index: 0
             })
         }
+        emit('liveparticipants')
     }
-    //startPresentation(slideshowId)
-    //emit('live')
+    
 }
 
 const onDragStart = (event: DragEvent, item: Slide) => {

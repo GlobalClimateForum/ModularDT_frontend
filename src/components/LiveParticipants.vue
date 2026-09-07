@@ -25,17 +25,20 @@ onMounted(() => {
 
 function getParticipantNameAndSeat(lps: liveParticipantSlideshow) {
     const index = participants.value.findIndex(item => item.seat === lps.participant_seat);
+    if (index === -1 || !slideshows.value[index]) return null;
     return participants.value[index].name + ` (Seat ` + participants.value[index].seat + `)`
 }
 
 function getSlideshowName(lps: liveParticipantSlideshow) {
     const index = slideshows.value.findIndex(item => item.id === lps.slideshow_id);
+    if (index === -1 || !slideshows.value[index]) return null;
     return slideshows.value[index].name
 }
 
 function getCurrentSlide(lps: liveParticipantSlideshow) {
     const index = slideshows.value.findIndex(item => item.id === lps.slideshow_id);
-    return slideshows.value[index].slides[lps.current_slide_index-1]
+    if (index === -1 || !slideshows.value[index]) return null;
+    return slideshows.value[index].slides[lps.current_slide_index]
 }
 
 async function stopSingleParticipantSlideshow(lps: liveParticipantSlideshow) {
@@ -58,8 +61,7 @@ async function stopAllParticipantSlideshows() {
             <SplitterPanel :size="75" class="sub-panel">
                 <div class="panel-content" style="padding: var(--space-large);">
                     <div class="header-row">
-                        <!--<h1 class="dashboard_label">{{ $t('participant.live_presentation_state') }}</h1>-->
-                        <h1 class="dashboard_label">Test</h1>
+                        <h1 class="dashboard_label">{{ $t('participant.live_presentation_state') }}</h1>
                         <Button label="Stop all" @click="stopAllParticipantSlideshows" rounded>
                             <template #icon>
                                 <i class="material-symbols-outlined">stop_circle</i>
@@ -93,10 +95,12 @@ async function stopAllParticipantSlideshows() {
                                             </div>
 
                                             <div class="slideshow-item">
+                                                <template v-if="getCurrentSlide(participants_slideshow)">
                                                 <SlideView class="slide-view" :preview="false"
                                                     :slide="getCurrentSlide(participants_slideshow)"
-                                                    :sections="getCurrentSlide(participants_slideshow).sections ?? []"
+                                                    :sections="getCurrentSlide(participants_slideshow)?.sections ?? []"
                                                     :showFrame="false" :shadow="true" style="pointer-events: none;" />
+                                                    </template>
                                             </div>
                                         </div>
                                     </td>

@@ -90,7 +90,7 @@ function confirmedUpdateSlide() {
         tags: currentSlide.value.tags,
     };
 
-    return updateSlide(currentSlide.value.id,slide).then(response => {
+    return updateSlide(currentSlide.value.id, slide, sections).then(response => {
         fetchSlides();
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
     }).catch(error => {
@@ -204,7 +204,7 @@ function removeSection(index: number) {
 // Handler to update the content of a section when the CodeEditor emits a contentUpdated event
 function updateSectionContent(index: number, newContent: string) {
 
-    console.log(`Updating content of section ${index} to:`, newContent)
+    // console.log(`Updating content of section ${index} to:`, newContent)
 
     const updatedSections = [...slideSections.value]
     updatedSections[index] = { ...updatedSections[index], content: newContent }
