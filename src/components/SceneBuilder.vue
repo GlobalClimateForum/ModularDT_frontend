@@ -249,7 +249,8 @@ function emptyScreens() {
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button small rounded @click="scene[index] = null">
+                        <Button size="small" text round
+                            @click="scene[index] = null">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>
@@ -372,19 +373,6 @@ function emptyScreens() {
     height: 200px;
     position: relative;
     overflow: hidden;
-}
-
-.monitor-info {
-    position: absolute;
-    bottom: 0;
-    z-index: 10;
-    width: 100%;
-    background-color: var(--p-primary-500);
-
-    display: flex;
-    justify-content: space-between;
-    padding: 0.25rem 0.5rem;
-
 }
 
 .monitor-label-container {

@@ -409,7 +409,7 @@ watch(currentSectionIndex, (i) => {
                 </Toolbar>
 
                 <!-- Slide Preview -->
-                <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
+                <SlideView class="slide-preview" v-if="currentSlide" :preview="false" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
                     :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
 

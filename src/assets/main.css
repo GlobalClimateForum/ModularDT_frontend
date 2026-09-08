@@ -24,6 +24,7 @@
 
   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-dark: 0 2px 4px rgba(0, 0, 0, 0.2);
+
   --shadow-controls-inset: inset 0 0 5px 2px var(--p-primary-200);
 
   --bg-main: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
@@ -36,6 +37,7 @@
   --text-color-secondary: #adb5bd;
   --shadow-light: 0 2px 4px rgba(255, 255, 255, 0.1);
   --shadow-dark: 0 2px 4px rgba(255, 255, 255, 0.2);
+  --shadow-controls-inset: inset 0 0 6px 0 var(--surface-dark);
 }
 
 @font-face {
@@ -61,6 +63,66 @@ body {
   border: none;
   border-radius: var(--br-large);
   box-shadow: 0 4px 20px rgba(20, 20, 43, 0.08);
+}
+
+.monitor-info {
+  background-color: var(--surface);
+
+  .p-button {
+    color: var(--p-primary-500);
+  }
+
+  .p-button:hover {
+    background-color: var(--p-primary-300);
+  }
+
+  .monitor-label {
+    color: var(--p-primary-500) !important;
+  }
+
+  .assigned-slide-label{
+    color: var(--p-primary-500) !important;
+    font-weight: bold !important;
+  }
+
+}
+
+.dark-mode .monitor-info {
+  color: var(--p-primary-50);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+
+  .p-button {
+    color: var(--p-primary-50);
+  }
+
+   .monitor-label {
+    color: var(--p-primary-50) !important;
+  }
+
+  .assigned-slide-label{
+    color: var(--p-primary-50) !important;
+    font-weight: bold !important;
+  }
+
+}
+
+.monitor-info {
+
+
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem;
+
+  color: var(--p-primary-900) !important;
+
 }
 
 
@@ -105,6 +167,11 @@ body,
   background-color: var(--p-primary-100);
   border-radius: var(--br-medium);
   box-shadow: var(--shadow-controls-inset);
+}
+
+.dark-mode .inset-control {
+  border: 2px solid var(--surface);
+  background-color: var(--surface-dark);
 }
 
 .sub-panel {
