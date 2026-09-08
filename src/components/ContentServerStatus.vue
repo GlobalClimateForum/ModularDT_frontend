@@ -37,7 +37,7 @@ function stripContentServerUrl(url: string): string {
 
 
 <template>
-    <div class="label-container">
+    <div>
         <span v-if="props.size !== 'small'">
             <label for="register-content-server">Content Server Status</label>
             <Message :severity="statusclass">

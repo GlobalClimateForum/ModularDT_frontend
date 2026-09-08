@@ -35,7 +35,7 @@ function stripBackendServerUrl(url: string): string {
 
 
 <template>
-    <div class="label-container">
+    <div>
         <span v-if="props.size !== 'small'">
             <label for="register-backend-server">Backend Server Status</label>
             <Message :severity="statusclass">
