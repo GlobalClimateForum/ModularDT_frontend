@@ -7,13 +7,18 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
+import Toolbar from 'primevue/toolbar';
 
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
+import BackendServerStatus from '@/components/BackendServerStatus.vue';
 
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
+
+import palettes from '@/assets/palettes.json'
+import '@/assets/main.css'
 
 const { availableLocales } = useI18n()
 const toast = useToast();
@@ -26,7 +31,7 @@ const translatedLocales = computed(() => {
 });
 
 // save function - todo
-const saveSettings = async() => {
+const saveSettings = async () => {
   const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
@@ -70,116 +75,98 @@ const testConnection = async () => {
 </script>
 
 <template>
-  <div class="settings-container">
+  <form @submit.prevent="saveSettings" class="settings-form">
 
-    <form @submit.prevent="saveSettings" class="settings-form">
-      <!-- CS URL -->
-       <ContentServerStatus />
-      <div class="form-group">
-        <label for="cs_url" class="form-label">{{ $t('moderator.settings.cs_url') }}</label>
-        <div class="input-with-button">
-          <InputText id="cs_url" v-model.trim="settings.cs_url" type="text" fluid required />
-          <Button type="button" label="Test" @click="testConnection" class="test-btn" />
+    <Toolbar fluid>
+      <template #start>
+        <h1 class="dashboard_label">
+          Global Settings
+        </h1>
+      </template>
+
+      <template #end>
+        <Button type="button" :label="$t('moderator.save')" class="save-btn" @click="saveSettings" />
+      </template>
+    </Toolbar>
+
+    <div class="settings-container">
+
+      <div class="sub-panel">
+        <h1 class="dashboard_label">
+          Appearance
+        </h1>
+
+        <div class="label-container">
+          <label for="background_url" class="form-label">{{ $t('moderator.settings.background_image') }}</label>
+          <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
         </div>
       </div>
 
-      <!-- number of screens -->
-      <div class="form-group">
-        <label for="number_of_screens" class="form-label">{{ $t('moderator.settings.numberscreens') }}</label>
-        <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
-          fluid />
+      <div class="sub-panel">
+        <h1 class="dashboard_label">
+          Server
+        </h1>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-medium); width: 100%;">
+          <BackendServerStatus />
+          <ContentServerStatus />
+          <div class="label-container">
+            <label for="cs_url">{{ $t('moderator.settings.cs_url') }}</label>
+            <InputText id="cs_url" v-model.trim="settings.cs_url" type="text" fluid required />
+          </div>
+
+        </div>
+
+
       </div>
 
-      <!-- background -->
-      <div class="form-group">
-        <label for="background_url" class="form-label">{{ $t('moderator.settings.background_image') }}</label>
-        <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
+      <div class="sub-panel">
+        <h1 class="dashboard_label">
+          Language
+        </h1>
+
+        <div class="label-container">
+          <label for="language" class="form-label">{{ $t('moderator.settings.language') }}</label>
+          <!-- Select-Komponente für das Dropdown-Menü -->
+          <Select id="language" v-model="settings.language" :options="translatedLocales" optionLabel="label"
+            optionValue="value" fluid />
+        </div>
+
       </div>
 
-      <!-- language -->
-      <div class="form-group">
-        <label for="language" class="form-label">{{ $t('moderator.settings.language') }}</label>
-        <!-- Select-Komponente für das Dropdown-Menü -->
-        <Select id="language" v-model="settings.language" :options="translatedLocales" optionLabel="label"
-          optionValue="value" fluid />
+      <div class="sub-panel">
+        <h1 class="dashboard_label">Presentation</h1>
+        <div class="label-container">
+          <label for="number_of_screens" class="form-label">{{ $t('moderator.settings.numberscreens') }}</label>
+          <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
+            fluid />
+        </div>
       </div>
 
-      <!-- Button -->
-      <Button type="button" :label="$t('moderator.save')" class="save-btn" @click="saveSettings" />
-    </form>
-  </div>
+ 
+    </div>
+  </form>
+
 </template>
 
 <style scoped>
+.sub-panel {
+  background-color: var(--surface);
+  border-radius: var(--br-small);
+  box-shadow: var(--shadow-light); 
+}
+
 .settings-container {
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-family: sans-serif;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--p-content-background, #f8f9fa);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-large);
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--space-large);
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
 
-.form-label {
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.custom-select {
-  padding: 8px 12px;
-  font-size: 1rem;
-}
-
-.save-btn {
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-  max-width: 160px;
-  min-width: max-content;
-}
-
-.test-btn {
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.input-with-button {
-  display: flex;
-  gap: 15px;
-  /* gap between input field and button */
-  width: 100%;
-}
-
-.input-with-button input {
-  flex: 1;
-  width: 100%;
-}
 </style>
