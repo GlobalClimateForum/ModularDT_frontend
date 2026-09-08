@@ -43,6 +43,19 @@ watch(() => settings.value?.palette, (newPalette) => {
   }
 }, { immediate: true })
 
+watch(
+  () => settings.value.theme,
+  (mode) => {
+    if (mode === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark-mode', prefersDark);
+    } else {
+      document.documentElement.classList.toggle('dark-mode', mode === 'dark');
+    }
+  },
+  { immediate: true }
+);
+
 onBeforeMount(async () => {
   await fetchSettings();
   isSettingsLoaded.value = true

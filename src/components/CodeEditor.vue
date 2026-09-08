@@ -280,6 +280,7 @@ watch(() => props.slideSection.content, (newContent) => {
 
 .editor-host :deep(.cm-activeLine) {
     background-color: var(--p-primary-200);
+    color: var(--p-primary-900);
 }
 
 .editor-host :deep(.cm-line) {
@@ -297,6 +298,7 @@ watch(() => props.slideSection.content, (newContent) => {
 .editor-host :deep(.cm-content) {
     font-family: "Fira Code", monospace;
     font-variant-ligatures: contextual;
+    background-color: var(--surface);
 }
 
 .editor-toolbar {

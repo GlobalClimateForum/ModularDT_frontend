@@ -4,13 +4,8 @@
   --surface: white;
   --surface-dark: #f0f2f5;
 
-  /* --surface: #14142b;
-  --surface-dark: black; */
-
-  --secondary: #419d78ff;
-  --accent: #e0a458ff;
-
   --text-color: #14142b;
+  --text-color-secondary: #6c757d;
 
   --br-small: 4px;
   --br-medium: 8px;
@@ -32,7 +27,15 @@
   --shadow-controls-inset: inset 0 0 5px 2px var(--p-primary-200);
 
   --bg-main: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+}
 
+.dark-mode {
+  --surface: #18181b;
+  --surface-dark: #27272a;
+  --text-color: white;
+  --text-color-secondary: #adb5bd;
+  --shadow-light: 0 2px 4px rgba(255, 255, 255, 0.1);
+  --shadow-dark: 0 2px 4px rgba(255, 255, 255, 0.2);
 }
 
 @font-face {
