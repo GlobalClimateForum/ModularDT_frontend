@@ -6,32 +6,24 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 import 'material-symbols'
-import "primeicons/primeicons.css"; 
+import "primeicons/primeicons.css";
 import 'animate.css';
 import ToastService from 'primevue/toastservice';
 import { definePreset } from '@primeuix/themes';
 import i18n from './i18n/index.ts';
 import ConfirmationService from "primevue/confirmationservice";
 import DialogService from 'primevue/dialogservice';
+import palettes from '@/assets/palettes.json'
 
 const primecolors = definePreset(Aura, {
   semantic: {
-    primary: {
-      50:  '#eef2ff',
-      100: '#e0e7ff',
-      200: '#c7d2fe',
-      300: '#a5b4fc',
-      400: '#818cf8',
-      500: '#6366f1',
-      600: '#4f46e5',
-      700: '#4338ca',
-      800: '#3730a3',
-      900: '#312e81',
-      950: '#1e1b4b'
-    }
+    primary: palettes.indigo,
   }
 });
 
+export function toggleDark() {
+  document.documentElement.classList.toggle('dark-mode')
+}
 
 const app = createApp(App)
 app.use(createPinia())
@@ -41,8 +33,19 @@ app.use(ToastService)
 app.use(DialogService);
 
 app.use(PrimeVue, {
-  theme: { preset: primecolors }
+  theme: {
+    preset: primecolors,
+    options: {
+      darkModeSelector: '.dark-mode',   // class-based toggle
+      // darkModeSelector: 'system',    // follow OS preference
+      cssLayer: {
+        name: 'primevue',
+        order: 'theme, base, primevue'  // control layer precedence vs your CSS
+      }
+    }
+  }
 })
+
 app.use(ConfirmationService)
 app.mount('#app')
 

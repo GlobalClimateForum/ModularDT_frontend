@@ -7,7 +7,9 @@ export const settings = ref({
   number_of_screens: 4,
   background_image: '',
   language: 'en',
-  avatar_style: 'glyphs'
+  avatar_style: 'glyphs',
+  palette: 'indigo', 
+  theme: 'system'
 })
 
 // This function returns always the SAME instance

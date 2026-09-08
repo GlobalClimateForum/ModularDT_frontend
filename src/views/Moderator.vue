@@ -288,7 +288,7 @@ function handleLiveparticipants() {
       </div>
 
     </SplitterPanel>
-    <SplitterPanel :size="85" class="panel">
+    <SplitterPanel :size="85" class="fixed" >
       <Transition name="fade">
         <component :is="currentView" v-bind="viewProps" :key="currentDashboard" @edit-slide="handleSlideEdit"
           @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes" @liveparticipants="handleLiveparticipants"/>
@@ -298,7 +298,7 @@ function handleLiveparticipants() {
 </template>
 
 <style scoped>
-.panel {
+.fixed {
   position: relative;
   overflow: hidden;
 }

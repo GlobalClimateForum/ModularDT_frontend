@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
 
@@ -8,6 +9,7 @@ import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
+import SelectButton from 'primevue/selectbutton';
 
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
@@ -23,6 +25,19 @@ import '@/assets/main.css'
 const { availableLocales } = useI18n()
 const toast = useToast();
 
+const availablePalettes = computed(() => {
+  return Object.keys(palettes).map(key => ({
+    label: key,
+    value: key
+  }));
+});
+
+const themeOptions = [
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'System', value: 'system' }
+];
+
 const translatedLocales = computed(() => {
   return availableLocales.map(locale => ({
     label: LANGUAGE_NAMES[locale] || locale,
@@ -32,11 +47,14 @@ const translatedLocales = computed(() => {
 
 // save function - todo
 const saveSettings = async () => {
+  
   const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
     background_image: settings.value.background_image,
-    language: settings.value.language
+    language: settings.value.language,
+    palette: settings.value.palette,
+    theme: settings.value.theme
   };
 
   await updateSettings(current_settings).then(response => {
@@ -47,6 +65,11 @@ const saveSettings = async () => {
   });
   await fetchSettings()
 }
+
+const onPaletteChange = ({ value }: { value: string }) => {
+  updatePrimaryPalette(palettes[value]);
+  settings.value.palette = value;
+};
 
 // better: go via backend.
 const testConnection = async () => {
@@ -100,6 +123,39 @@ const testConnection = async () => {
           <label for="background_url" class="form-label">{{ $t('moderator.settings.background_image') }}</label>
           <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
         </div>
+
+        <div class="label-container">
+          <label>Main Color</label>
+          
+          <Select fluid v-model="settings.palette" :options="availablePalettes" optionLabel="label" optionValue="value"
+            @change="onPaletteChange">
+            <template #option="{ option }">
+              <div class="color-option">
+                <div class="palette">
+                  <div v-for="(hex, step) in palettes[option.value]" :key="step" class="swatch"
+                    :style="{ backgroundColor: hex }">
+                  </div>
+                </div>
+                <p>{{ option.value }}</p>
+              </div>
+            </template>
+            <template #value="{ value }">
+              <div class="color-option" v-if="value">
+                <div class="palette">
+                  <div v-for="(hex, step) in palettes[value]" :key="step" class="swatch"
+                    :style="{ backgroundColor: hex }"></div>
+                </div>
+                <p>{{ value }}</p>
+              </div>
+              <span v-else>Select a palette</span>
+            </template>
+          </Select>
+        </div>
+
+        <div class="label-container">
+          <label>Theme</label>
+          <SelectButton fluid v-model="settings.theme" :options="themeOptions" optionLabel="label" optionValue="value" />
+        </div>
       </div>
 
       <div class="sub-panel">
@@ -114,10 +170,7 @@ const testConnection = async () => {
             <label for="cs_url">{{ $t('moderator.settings.cs_url') }}</label>
             <InputText id="cs_url" v-model.trim="settings.cs_url" type="text" fluid required />
           </div>
-
         </div>
-
-
       </div>
 
       <div class="sub-panel">
@@ -143,17 +196,40 @@ const testConnection = async () => {
         </div>
       </div>
 
- 
+
     </div>
   </form>
 
 </template>
 
 <style scoped>
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+
+  p {
+    margin: 0;
+    font-size: var(--fs-medium);
+    font-style: italic;
+    text-transform: capitalize;
+  }
+}
+
+.palette {
+  display: flex;
+  flex-direction: row;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+}
+
 .sub-panel {
   background-color: var(--surface);
   border-radius: var(--br-small);
-  box-shadow: var(--shadow-light); 
+  box-shadow: var(--shadow-light);
 }
 
 .settings-container {
@@ -167,6 +243,4 @@ const testConnection = async () => {
   flex-direction: column;
   gap: var(--space-large);
 }
-
-
 </style>

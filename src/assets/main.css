@@ -55,7 +55,6 @@ body {
 }
 
 .panel {
-  background: var(--surface);
   border: none;
   border-radius: var(--br-large);
   box-shadow: 0 4px 20px rgba(20, 20, 43, 0.08);

@@ -5,9 +5,11 @@ export interface Settings {
     number_of_screens: number;
     background_image: string;
     language: string;
+    avatar_style: string;
+    palette: string;
+    theme: string;
 }
 
 export const getSettings = () => api.get("/settings/");
-
 export const updateSettings = (settings: Settings) => api.patch("/settings/", settings);
 

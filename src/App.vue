@@ -4,6 +4,7 @@ import { onMounted, onBeforeMount, watch, ref } from 'vue'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import ConfirmDialog from "primevue/confirmdialog";
+import ProgressSpinner from 'primevue/progressspinner'
 import { useI18n } from 'vue-i18n'
 // globals and services
 import type { Slide } from "@/services/slide_service"
@@ -18,6 +19,9 @@ import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import DynamicDialog from 'primevue/dynamicdialog';
 import OptionDialog from '@/components/OptionDialog.vue';
+import { updatePrimaryPalette } from '@primeuix/themes';
+
+import palettes from '@/assets/palettes.json'
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -30,6 +34,12 @@ watch(() => settings.value?.cs_url, (url) => {
 watch(() => settings.value?.language, (newLanguage) => {
   if (newLanguage) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
     locale.value = newLanguage
+  }
+}, { immediate: true })
+
+watch(() => settings.value?.palette, (newPalette) => {
+  if (newPalette) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
+    updatePrimaryPalette(palettes[newPalette]);
   }
 }, { immediate: true })
 
@@ -53,7 +63,8 @@ onMounted(async () => {
   <Toast position="bottom-right" />
   <RouterView v-if="isSettingsLoaded" />
   <div v-else class="loading-screen">
-    Load Settings...
+    <ProgressSpinner  animationDuration="1s" style="width: 100px; height: 100px" />
+    <p style="color: black">Load Settings ...</p>
   </div>
   <DynamicDialog />
   <ConfirmDialog />
@@ -62,13 +73,23 @@ onMounted(async () => {
 
 <style scoped>
 .loading-screen {
-  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+
+  display: flex; 
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 1rem;
-  min-height: 100vh;
-  text-align: center;
-  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+
+  p{
+    text-align: center;
+    font-size: var(--fs-medium);
+    margin-top: 1rem;
+  }
 }
 </style>
