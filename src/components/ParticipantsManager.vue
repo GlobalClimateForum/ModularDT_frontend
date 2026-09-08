@@ -8,6 +8,8 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button';
 import Select from 'primevue/select';
 import { useToast } from 'primevue/usetoast';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from 'primevue/splitterpanel';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 // globals and services
 import "@/assets/main.css";
@@ -24,7 +26,7 @@ type DraftParticipant = Participant & { isNew?: boolean };
 const props = defineProps<{
   participants: Participant[];
 }>();
-*/ 
+*/
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
@@ -124,122 +126,125 @@ function onHandsOff() {
 </script>
 
 <template>
-  <div class="dashboard participants-container">
+  <Splitter class="dashboard">
+    <SplitterPanel class="participants-container">
 
-    <div class="toolbar">
-      <h1 class="dashboard_label">Participants</h1>
+      <div class="toolbar">
+        <h1 class="dashboard_label">Participants</h1>
 
-      <div class="toolbar-actions">
+        <div class="toolbar-actions">
 
-        <InputText v-model="filters.global.value" placeholder="Search participant ..."></InputText>
+          <InputText v-model="filters.global.value" placeholder="Search participant ..."></InputText>
 
-        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select"
-        @change="changeAvatarStyleSetting(selectedStyle)">
-          <template #option="{ option }">
-            <div class="style-option">
-              <img :src="previewUri(option)" width="28" height="28" />
-              <span>{{ prettyName(option) }}</span>
-            </div>
-          </template>
-          <template #value="{ value, placeholder }">
-            <div class="style-option" v-if="value">
-              <img :src="previewUri(value)" width="24" height="24" />
-              <span>{{ prettyName(value) }}</span>
-            </div>
-            <span v-else>{{ placeholder }}</span>
-          </template>
-        </Select>
-
-        <Button rounded @click="onHandsOff">
-          <template #icon>
-            <i class="material-symbols-outlined">do_not_touch</i>
-          </template>
-        </Button>
-
-        <Button rounded @click="onClearSeats">
-          <template #icon>
-            <i class="material-symbols-outlined">chair</i>
-          </template>
-        </Button>
-
-        <Button label="Add" @click="onAddParticipant">
-          <template #icon>
-            <i class="material-symbols-outlined">add</i>
-          </template>
-        </Button>
-      </div>
-    </div>
-
-    <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id"
-      scrollHeight="flex" tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
-      :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
-      :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']" :filterOperator="FilterOperator.OR" scrollable>
-
-      <Column field="seat" header="Seat" style="width: 150px" sortable>
-        <template #body="{ data }">
-          <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
-            @change="persist(data); fetchParticipants();">
-            <template #value="{ value }">
-              <span v-if="value" class="seat">{{ value }}</span>
-              <span v-else>
-                <i style="color: var(--p-primary-500);" class="material-symbols-outlined">remove</i>
-              </span>
+          <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select"
+            @change="changeAvatarStyleSetting(selectedStyle)">
+            <template #option="{ option }">
+              <div class="style-option">
+                <img :src="previewUri(option)" width="28" height="28" />
+                <span>{{ prettyName(option) }}</span>
+              </div>
+            </template>
+            <template #value="{ value, placeholder }">
+              <div class="style-option" v-if="value">
+                <img :src="previewUri(value)" width="24" height="24" />
+                <span>{{ prettyName(value) }}</span>
+              </div>
+              <span v-else>{{ placeholder }}</span>
             </template>
           </Select>
-        </template>
-        <template #editor="{ data }">
-          <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" placeholder="Assign"
-            class="seat-select" />
-        </template>
-      </Column>
 
-      <Column header="" style="width: 72px" bodyStyle="text-align: center">
-        <template #body="{ data }">
-          <img :src="avatarUri(data.name)" width="44" height="44"
-            :class="['avatar', data.seat == null ? 'avatar-unseated' : 'avatar-seated']" />
-        </template>
-      </Column>
+          <Button rounded @click="onHandsOff">
+            <template #icon>
+              <i class="material-symbols-outlined">do_not_touch</i>
+            </template>
+          </Button>
 
-      <Column field="name" header="Name" sortable>
-        <template #body="{ data }">
-          <span class="participant-name">{{ data.name }}</span>
-        </template>
-        <template #editor="{ data, field }">
-          <InputText v-model="data[field]" fluid autofocus />
-        </template>
-      </Column>
+          <Button rounded @click="onClearSeats">
+            <template #icon>
+              <i class="material-symbols-outlined">chair</i>
+            </template>
+          </Button>
 
-      <Column header="Interactions" style="width: 120px" bodyStyle="text-align: center"
-        headerStyle="text-align: center">
-        <template #body="{ data }">
-          <ToggleSwitch v-model="data.interactions" @change="persist(data); fetchParticipants();" />
-        </template>
-      </Column>
+          <Button label="Add" @click="onAddParticipant">
+            <template #icon>
+              <i class="material-symbols-outlined">add</i>
+            </template>
+          </Button>
+        </div>
+      </div>
 
-      <Column :rowEditor="true" style="width: 110px;" bodyStyle="text-align: center">
-        <template #body="{ data, rowIndex, editorInitCallback }">
-          <div class="interactions">
-            <Button text rounded @click="editorInitCallback($event)">
-              <template #icon><i class="material-symbols-outlined">edit</i></template>
-            </Button>
-            <Button text rounded @click="onRowEditDelete({ data, index: rowIndex })">
-              <template #icon><i class="material-symbols-outlined">delete</i></template>
-            </Button>
-          </div>
-        </template>
-        <template #editor="{ editorSaveCallback, editorCancelCallback }">
-          <div class="interactions">
-            <Button text rounded @click="editorSaveCallback($event)">
-              <template #icon><i class="material-symbols-outlined">check</i></template>
-            </Button>
-            <Button text rounded @click="editorCancelCallback($event)">
-              <template #icon><i class="material-symbols-outlined">close</i></template>
-            </Button>
-          </div>
-        </template>
-      </Column>
-    </DataTable>
-  </div>
+      <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" scrollHeight="flex"
+        tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
+        :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
+        :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']"
+        :filterOperator="FilterOperator.OR" scrollable>
+
+        <Column field="seat" header="Seat" style="width: 150px" sortable>
+          <template #body="{ data }">
+            <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
+              @change="persist(data); fetchParticipants();">
+              <template #value="{ value }">
+                <span v-if="value" class="seat">{{ value }}</span>
+                <span v-else>
+                  <i style="color: var(--p-primary-500);" class="material-symbols-outlined">remove</i>
+                </span>
+              </template>
+            </Select>
+          </template>
+          <template #editor="{ data }">
+            <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" placeholder="Assign"
+              class="seat-select" />
+          </template>
+        </Column>
+
+        <Column header="" style="width: 72px" bodyStyle="text-align: center">
+          <template #body="{ data }">
+            <img :src="avatarUri(data.name)" width="44" height="44"
+              :class="['avatar', data.seat == null ? 'avatar-unseated' : 'avatar-seated']" />
+          </template>
+        </Column>
+
+        <Column field="name" header="Name" sortable>
+          <template #body="{ data }">
+            <span class="participant-name">{{ data.name }}</span>
+          </template>
+          <template #editor="{ data, field }">
+            <InputText v-model="data[field]" fluid autofocus />
+          </template>
+        </Column>
+
+        <Column header="Interactions" style="width: 120px" bodyStyle="text-align: center"
+          headerStyle="text-align: center">
+          <template #body="{ data }">
+            <ToggleSwitch v-model="data.interactions" @change="persist(data); fetchParticipants();" />
+          </template>
+        </Column>
+
+        <Column :rowEditor="true" style="width: 110px;" bodyStyle="text-align: center">
+          <template #body="{ data, rowIndex, editorInitCallback }">
+            <div class="interactions">
+              <Button text rounded @click="editorInitCallback($event)">
+                <template #icon><i class="material-symbols-outlined">edit</i></template>
+              </Button>
+              <Button text rounded @click="onRowEditDelete({ data, index: rowIndex })">
+                <template #icon><i class="material-symbols-outlined">delete</i></template>
+              </Button>
+            </div>
+          </template>
+          <template #editor="{ editorSaveCallback, editorCancelCallback }">
+            <div class="interactions">
+              <Button text rounded @click="editorSaveCallback($event)">
+                <template #icon><i class="material-symbols-outlined">check</i></template>
+              </Button>
+              <Button text rounded @click="editorCancelCallback($event)">
+                <template #icon><i class="material-symbols-outlined">close</i></template>
+              </Button>
+            </div>
+          </template>
+        </Column>
+      </DataTable>
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <style scoped>
@@ -261,7 +266,7 @@ function onHandsOff() {
   grid-template-rows: auto 1fr;
   aspect-ratio: var(--grid-aspect);
   width: 100%;
-  height: auto;
+  height: 100%;
   max-height: 100%;
   min-height: 0;
   margin: auto;
@@ -351,5 +356,4 @@ function onHandsOff() {
 :deep(.row-unseated .participant-name) {
   opacity: 0.5;
 }
-
 </style>
