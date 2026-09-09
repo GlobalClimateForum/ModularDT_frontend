@@ -264,11 +264,24 @@ watch(() => props.slideSection.content, (newContent) => {
     box-shadow: inset 0 0 5px 2.5px var(--p-primary-50);
 }
 
+.dark-mode .editor-host :deep(.cm-editor) {
+    border: none;
+}
+
 .editor-host :deep(.cm-gutters) {
     background-color: var(--p-primary-100);
     border: none;
     box-shadow: -5px 0 10px 5px var(--p-primary-50);
+    width: 40px;
 }
+
+.dark-mode .editor-host :deep(.cm-gutters) {
+    background-color: var(--surface-dark);
+    box-shadow: var(--shadow-light); 
+    border: none;
+}
+
+
 
 .editor-host :deep(.cm-lineNumbers .cm-activeLineGutter) {
     border-left: 3px solid var(--p-primary-400);
@@ -283,6 +296,11 @@ watch(() => props.slideSection.content, (newContent) => {
     color: var(--p-primary-900);
 }
 
+.dark-mode .editor-host :deep(.cm-activeLine) {
+    background-color: var(--surface-dark);
+    color: var(--p-primary-50);
+}
+
 .editor-host :deep(.cm-line) {
     font-size: 1rem;
 }
@@ -291,8 +309,8 @@ watch(() => props.slideSection.content, (newContent) => {
     font-size: 1rem;
 }
 
-.editor-host :deep(.cm-activeLineGutter, .cm-activeLine) {
-    background-color: var(--p-primary-200);
+.dark-mode .editor-host :deep(.cm-activeLineGutter, .cm-activeLine) {
+    background-color: transparent;
 }
 
 .editor-host :deep(.cm-content) {
@@ -310,4 +328,21 @@ watch(() => props.slideSection.content, (newContent) => {
     border-left: 1px solid var(--p-primary-200);
     border-right: 1px solid var(--p-primary-200);
 }
+
+.dark-mode .editor-toolbar {
+    background-color: var(--surface-dark);
+    border: none; 
+
+    Button{
+        background-color: transparent; 
+        color: var(--text-color); 
+    }
+
+    Button:hover{
+        background-color: var(--p-primary-500); 
+        color: var(--p-primary-50); 
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+}
+
 </style>

@@ -409,7 +409,7 @@ watch(currentSectionIndex, (i) => {
                 </Toolbar>
 
                 <!-- Slide Preview -->
-                <SlideView class="slide-preview" v-if="currentSlide" :preview="false" :slide="currentSlide"
+                <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
                     :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
 
@@ -456,13 +456,14 @@ watch(currentSectionIndex, (i) => {
     align-items: center;
     justify-content: center;
     padding: 0rem 0.5rem;
-    border: 1px solid var(--p-primary-200);
+    border: none;
     border-radius: var(--br-medium) var(--br-medium) 0 0;
     height: 2.5rem;
     background-color: transparent;
     color: var(--p-primary-700);
     transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 
 :deep(.p-tab:not([data-p-active="true"]):hover) {
     background-color: var(--p-primary-100);

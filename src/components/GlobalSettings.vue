@@ -47,7 +47,7 @@ const translatedLocales = computed(() => {
 
 // save function - todo
 const saveSettings = async () => {
-  
+
   const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
@@ -126,7 +126,7 @@ const testConnection = async () => {
 
         <div class="label-container">
           <label>Main Color</label>
-          
+
           <Select fluid v-model="settings.palette" :options="availablePalettes" optionLabel="label" optionValue="value"
             @change="onPaletteChange">
             <template #option="{ option }">
@@ -154,7 +154,8 @@ const testConnection = async () => {
 
         <div class="label-container">
           <label>Theme</label>
-          <SelectButton fluid v-model="settings.theme" :options="themeOptions" optionLabel="label" optionValue="value" />
+          <SelectButton fluid v-model="settings.theme" :options="themeOptions" optionLabel="label"
+            optionValue="value" />
         </div>
       </div>
 
@@ -175,7 +176,7 @@ const testConnection = async () => {
 
       <div class="sub-panel">
         <h1 class="dashboard_label">
-          Language
+          General
         </h1>
 
         <div class="label-container">
@@ -183,6 +184,30 @@ const testConnection = async () => {
           <!-- Select-Komponente für das Dropdown-Menü -->
           <Select id="language" v-model="settings.language" :options="translatedLocales" optionLabel="label"
             optionValue="value" fluid />
+        </div>
+
+        <div class="label-container">
+          <label>CARTO API Key</label>
+          <InputText v-model="settings.carto_api_key" type="text" fluid />
+        </div>
+
+        <div style="display: flex; flex-direction: row; gap: var(--space-medium); align-items: flex-end; width: 100%;">
+          <div class="label-container">
+            <label>Moderator Pin</label>
+            <InputText v-model="settings.moderator_pin" type="text" fluid />
+          </div>
+          
+          <Button  label="Change" >
+            <template #icon>
+              <i class="material-symbols-outlined">password</i>
+            </template>
+          </Button>
+
+          <Button>
+            <template #icon>
+              <i class="material-symbols-outlined">visibility</i>
+            </template>
+          </Button>
         </div>
 
       </div>
@@ -203,6 +228,12 @@ const testConnection = async () => {
 </template>
 
 <style scoped>
+#cs_url {
+  font-family: 'Fira Code', monospace;
+  font-weight: light;
+  color: var(--text-color);
+}
+
 .color-option {
   display: flex;
   align-items: center;
@@ -230,6 +261,11 @@ const testConnection = async () => {
   background-color: var(--surface);
   border-radius: var(--br-small);
   box-shadow: var(--shadow-light);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  padding-top: 0;
 }
 
 .settings-container {
