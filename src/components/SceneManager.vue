@@ -337,8 +337,8 @@ const removeItem = (index: number) => {
 
 
 <template>
-    <div style="display: flex; flex-direction: column; height: 100vh;"> <!-- Obere Reihe -->
-        <div style="height: 300px; flex: 1; display: flex; width: 100%;">
+    <div style="display: flex; flex-direction: column; height: 100vh; gap: var(--space-small);"> <!-- Obere Reihe -->
+        <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <h2 class="dashboard_label">{{ $t('moderator.nav.scenes') }}</h2>
@@ -401,7 +401,6 @@ const removeItem = (index: number) => {
             </Splitter>
         </div>
         <!-- horizontal line -->
-        <div style="height: 10px; background: #e5e5e5;"></div>
         <!-- Lower panel row -->
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
@@ -451,11 +450,12 @@ const removeItem = (index: number) => {
                         </template>
                     </DataTable>
                 </SplitterPanel>
-                <SplitterPanel :size="colRightSize">
+                <SplitterPanel :size="colRightSize" class="sub-panel">
                     <div v-if="selectedPresentation" style="overflow: auto; height: 100%;">
+                        
                         <div class="target-panel" @dragover.prevent @drop="handleNativeDrop">
                             <div class="header-container">
-                                <h3>{{ t('moderator.order') }}</h3>
+                                <h1 class="dashboard_label">{{ t('moderator.order') }}</h1>
                                 <Button class="button-add-presentation" :label="$t('moderator.save_order')"
                                     icon="pi pi-save" @click="saveOrderToApi" />
                             </div>
@@ -537,15 +537,7 @@ const removeItem = (index: number) => {
     display: none;
 }
 
-:deep(.p-datatable-row-selected) {
-    background: var(--p-primary-50);
-    color: var(--p-primary-900);
-    box-shadow: inset 3px 0 0 var(--p-primary-400);
-    font-weight: 500;
-}
-
 .drop-zone * {
-
     pointer-events: none;
 }
 
@@ -574,10 +566,7 @@ const removeItem = (index: number) => {
 .source-panel,
 .target-panel {
     flex: 1;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 1.5rem;
     min-height: 400px;
 }
 
@@ -587,7 +576,6 @@ const removeItem = (index: number) => {
     border: 2px dashed #cbd5e1;
     border-radius: 6px;
     padding: 1rem;
-    background: #ffffff;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -606,15 +594,21 @@ const removeItem = (index: number) => {
 }
 
 /* Einzelnes gezogenes Element */
+.dark-mode .ordered-item {
+    background: var(--surface-dark);
+    color: var(--text-color);
+    border: none;
+}
+
 .ordered-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background: var(--surface-dark);
+    border: 1px solid var(--p-primary-300);
+    border-radius: var(--br-small);
+    box-shadow: var(--shadow-light);
     cursor: grab;
 }
 

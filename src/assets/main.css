@@ -107,6 +107,22 @@ body {
 
 }
 
+.p-datatable .p-datatable-tbody > tr.p-datatable-row-selected {
+    background: var(--p-primary-50);
+    color: var(--p-primary-900);
+    box-shadow: inset 3px 0 0 var(--p-primary-400);
+    font-weight: 500;
+}
+
+.dark-mode .p-datatable .p-datatable-tbody > tr.p-datatable-row-selected {
+    background: var(--p-primary-700);
+    color: var(--text-color);
+    box-shadow: inset 3px 0 0 var(--p-primary-400);
+    font-weight: 500;
+}
+
+
+
 .monitor-info {
 
 
