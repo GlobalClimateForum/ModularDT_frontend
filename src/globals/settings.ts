@@ -11,6 +11,9 @@ export const settings = ref({
   palette: 'indigo', 
   theme: 'system',
   carto_api_key: '',
+  event_id: null, 
+  dev_mode: false, 
+  pin_set: false
 })
 
 // This function returns always the SAME instance

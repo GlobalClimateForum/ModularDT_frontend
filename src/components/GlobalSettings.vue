@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
+import { useDialog } from 'primevue/usedialog';
 
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -11,11 +12,15 @@ import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import SelectButton from 'primevue/selectbutton';
 import Password from 'primevue/password';
+import ToggleSwitch from 'primevue/toggleswitch';
+import Textarea from 'primevue/textarea';
+import DatePicker from 'primevue/datepicker';
 
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
+import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
 
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
@@ -25,6 +30,8 @@ import '@/assets/main.css'
 
 const { availableLocales } = useI18n()
 const toast = useToast();
+const dialog = useDialog();
+const changePasswordComponent = defineAsyncComponent(() => import('@/components/ChangePasswordDialog.vue'));
 
 const availablePalettes = computed(() => {
   return Object.keys(palettes).map(key => ({
@@ -38,6 +45,9 @@ const themeOptions = [
   { label: 'Dark', value: 'dark' },
   { label: 'System', value: 'system' }
 ];
+
+const eventOptions = ref<EventOption[]>([]);
+const selectedEvent = ref<Event | null>(null);
 
 const translatedLocales = computed(() => {
   return availableLocales.map(locale => ({
@@ -56,7 +66,9 @@ const saveSettings = async () => {
     language: settings.value.language,
     palette: settings.value.palette,
     theme: settings.value.theme,
-    carto_api_key: settings.value.carto_api_key
+    carto_api_key: settings.value.carto_api_key,
+    event_id: selectedEvent.value ? selectedEvent.value.id : null,
+    dev_mode: settings.value.dev_mode
   };
 
   await updateSettings(current_settings).then(response => {
@@ -66,6 +78,9 @@ const saveSettings = async () => {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings', life: 3000 })
   });
   await fetchSettings()
+
+
+
 }
 
 const onPaletteChange = ({ value }: { value: string }) => {
@@ -73,29 +88,36 @@ const onPaletteChange = ({ value }: { value: string }) => {
   settings.value.palette = value;
 };
 
-// better: go via backend.
-const testConnection = async () => {
-  const url = `${settings.value.cs_url}/ping`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Server-Fehler: Status ${response.status}`);
-    }
-
-    const textData = await response.text();
-    console.log('Antwort vom Server:', textData);
-
-    // Falls der Server JSON zurückgibt:
-    // const jsonData = await response.json();
-    // console.log('JSON vom Server:', jsonData);
-
-  } catch (error) {
-    alert(`Connection test failed! ${error.message}`);
-  }
-
+function changePassword() {
+  dialog.open(changePasswordComponent, {
+    props: {
+      header: 'Change Moderator Pin',
+      style: { width: '400px' },
+      modal: true,
+    },
+  });
 }
+
+function onEventChange(event: any) {
+  const id = event.value; // Assuming the event ID is passed as the value
+  console.log("Selected event ID:", id);
+
+  // Fetch the details of the selected event
+  if (id) {
+    getEventById(id).then(response => {
+      console.log("Fetched event details:", response.data);
+      selectedEvent.value = response.data;
+      // You can add additional logic here to handle the fetched event details
+    }).catch(error => {
+      console.error("Error fetching event details:", error);
+    });
+  }
+}
+
+onMounted(async () => {
+  eventOptions.value = await getEventOptions();
+  console.log("Fetched event options:", eventOptions.value);
+});
 
 </script>
 
@@ -196,20 +218,17 @@ const testConnection = async () => {
         <div style="display: flex; flex-direction: row; gap: var(--space-medium); align-items: flex-end; width: 100%;">
           <div class="label-container">
             <label>Moderator Pin</label>
-            <InputText v-model="settings.moderator_pin" type="text" fluid />
+            <Button label="Change" size="small" @click="changePassword">
+              <template #icon>
+                <i class="material-symbols-outlined">password</i>
+              </template>
+            </Button>
           </div>
+        </div>
 
-          <Button label="Change">
-            <template #icon>
-              <i class="material-symbols-outlined">password</i>
-            </template>
-          </Button>
-
-          <Button>
-            <template #icon>
-              <i class="material-symbols-outlined">visibility</i>
-            </template>
-          </Button>
+        <div class="label-container">
+          <label>Development Mode</label>
+          <ToggleSwitch v-model="settings.dev_mode" />
         </div>
 
       </div>
@@ -223,6 +242,35 @@ const testConnection = async () => {
         </div>
       </div>
 
+      <div class="sub-panel">
+        <h1 class="dashboard_label">Event Settings</h1>
+
+        <div class="label-container">
+          <label>Active Event</label>
+          <Select fluid :options="eventOptions" optionLabel="label" optionValue="value"
+            @change="onEventChange($event)"></Select>
+        </div>
+
+        <span style="height: 100%; display: flex; flex-direction: column; gap: var(--space-medium);"
+          v-if="selectedEvent">
+          <div class="label-container">
+            <label>Event Name</label>
+            <InputText v-model="selectedEvent.name" fluid />
+          </div>
+
+          <div class="label-container">
+            <label>Description</label>
+            <Textarea v-model="selectedEvent.description" fluid />
+          </div>
+
+          <div class="label-container">
+            <label>Date</label>
+            <DatePicker v-model="selectedEvent.date" fluid />
+          </div>
+        </span>
+
+
+      </div>
 
     </div>
   </form>
@@ -230,7 +278,6 @@ const testConnection = async () => {
 </template>
 
 <style scoped>
-
 #cs_url {
   font-family: 'Fira Code', monospace;
   font-weight: light;
@@ -286,5 +333,4 @@ const testConnection = async () => {
 .label-container :deep(.p-password) {
   width: 100%;
 }
-
 </style>
