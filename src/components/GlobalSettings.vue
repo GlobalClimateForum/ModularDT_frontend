@@ -10,6 +10,7 @@ import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import SelectButton from 'primevue/selectbutton';
+import Password from 'primevue/password';
 
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
@@ -54,7 +55,8 @@ const saveSettings = async () => {
     background_image: settings.value.background_image,
     language: settings.value.language,
     palette: settings.value.palette,
-    theme: settings.value.theme
+    theme: settings.value.theme,
+    carto_api_key: settings.value.carto_api_key
   };
 
   await updateSettings(current_settings).then(response => {
@@ -188,7 +190,7 @@ const testConnection = async () => {
 
         <div class="label-container">
           <label>CARTO API Key</label>
-          <InputText v-model="settings.carto_api_key" type="text" fluid />
+          <Password v-model="settings.carto_api_key" :feedback="false" toggleMask fluid />
         </div>
 
         <div style="display: flex; flex-direction: row; gap: var(--space-medium); align-items: flex-end; width: 100%;">
@@ -196,8 +198,8 @@ const testConnection = async () => {
             <label>Moderator Pin</label>
             <InputText v-model="settings.moderator_pin" type="text" fluid />
           </div>
-          
-          <Button  label="Change" >
+
+          <Button label="Change">
             <template #icon>
               <i class="material-symbols-outlined">password</i>
             </template>
@@ -228,6 +230,7 @@ const testConnection = async () => {
 </template>
 
 <style scoped>
+
 #cs_url {
   font-family: 'Fira Code', monospace;
   font-weight: light;
@@ -279,4 +282,9 @@ const testConnection = async () => {
   flex-direction: column;
   gap: var(--space-large);
 }
+
+.label-container :deep(.p-password) {
+  width: 100%;
+}
+
 </style>

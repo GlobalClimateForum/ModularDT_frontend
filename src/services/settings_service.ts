@@ -8,6 +8,7 @@ export interface Settings {
     avatar_style: string;
     palette: string;
     theme: string;
+    carto_api_key: string;
 }
 
 export const getSettings = () => api.get("/settings/");

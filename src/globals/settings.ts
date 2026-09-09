@@ -9,7 +9,8 @@ export const settings = ref({
   language: 'en',
   avatar_style: 'glyphs',
   palette: 'indigo', 
-  theme: 'system'
+  theme: 'system',
+  carto_api_key: '',
 })
 
 // This function returns always the SAME instance
