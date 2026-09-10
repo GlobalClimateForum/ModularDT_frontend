@@ -13,6 +13,7 @@ import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
 import type { Slideshow } from "@/services/slideshow_service"
 import { sendModeratorUpdate, sendUpdateParticipantParameter } from "@/services/moderator_service";
+import SlideLink from '@/components/SlideLink.vue'
 
 //const parameterChanges = ref<ParameterChange[]>([])
 //const panels = ref<any[]>([])
@@ -35,10 +36,18 @@ let mySlideshowId = -1
 let stop: (() => void) | undefined
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-    sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
+  sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
+
+function participantSlideLinkHandler(href: string, event: Event) {  
+  console.log('Handler für Link:', href);
+  event.preventDefault() 
+}
+
+provide('slideLinkClickHandler', participantSlideLinkHandler)
+provide('SlideLink', SlideLink)
 
 const handleMessage = (data) => {
   console.log("got message: ", data)

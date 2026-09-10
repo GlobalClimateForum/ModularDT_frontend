@@ -85,19 +85,23 @@ function onRowClick(event: any) {
 }
 
 function onRowEditSaveSlideshow(event: any) {
-    const { id, name } = event.newData
+    const { id, name, slides } = event.newData;
+
     if (name === event.data.name) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
-    } else {
-        updateSlideshow(id, { name: name }).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slideshow updated successfully', life: 3000 });
-            slideshows.value[event.index] = { ...response.data };
-            fetchSlideshows();
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update slideshow', life: 3000 });
-            console.error("Error updating slideshow:", error)
-        })
+        return;
     }
+
+    updateSlideshow(id, { name, slides })
+        .then((response) => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Slideshow updated successfully', life: 3000 });
+            slideshows.value[event.index] = response.data.slideshow;
+            fetchSlideshows();
+        })
+        .catch((error) => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update slideshow', life: 3000 });
+            console.error(error)
+        });
 }
 
 function onDeleteSlideshow(slideshow: Slideshow) {
@@ -196,7 +200,7 @@ const onPlaySlideshow = async (slideshow: Slideshow) => {
         }
         emit('liveparticipants')
     }
-    
+
 }
 
 const onDragStart = (event: DragEvent, item: Slide) => {
@@ -245,12 +249,14 @@ const saveOrderToApi = async () => {
     try {
         // 1. Payload für das Backend vorbereiten
         const slideshowPayload = selectedOrder.value.map((item, index) => ({
-            slide_id: item.id,
+            slide_id: Number(item.id),
             position: index + 1
         }));
 
+        const currentName = selectedSlideshow.value?.name ?? '';
         await updateSlideshow(slideshowId, {
-            slides: slideshowPayload as any
+            name: currentName,
+            slides: slideshowPayload
         });
 
         fetchSlideshows();

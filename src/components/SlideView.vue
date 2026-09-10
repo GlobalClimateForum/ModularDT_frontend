@@ -73,7 +73,6 @@ const autoScale = computed(() => {
 
 // Disconnect the ResizeObserver when the component is unmounted
 onBeforeUnmount(() => resizeObserver?.disconnect())
-
 </script>
 
 <template>
@@ -105,7 +104,6 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
                     :targetSlide="props.targetSlide"/>
             </div>
         </div>
-
     </div>
 </template>
 

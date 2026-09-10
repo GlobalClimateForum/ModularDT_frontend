@@ -15,7 +15,7 @@ import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/liv
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
-import { participant_parameters } from '@/globals/participant_parameters';
+import { updateParticipantParameters, participantParameters } from '@/globals/participant_parameters';
 import wsService from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
@@ -31,6 +31,7 @@ import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
 import LivePariticipants from '@/components/LiveParticipants.vue';
 import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
+import SlideLink from '@/components/SlideLink.vue'
 
 
 const { t } = useI18n();
@@ -172,13 +173,7 @@ const handleMessage = (data) => {
       });
     }
     if (data.event_type === 'update_participant_parameter' || data.message) {
-      console.log(data)
-      /* {
-        event_type: "update_participant_parameter",
-        paricipant: sender,
-        parameter_name: parameter_name,
-        value: value
-      } */
+      updateParticipantParameters(data.parameter_name, data.participant, data.value)
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -192,7 +187,7 @@ function updateParticipantParameter(parameter_name: string, value: string) {
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
-
+provide('SlideLink', SlideLink)
 
 onMounted(() => {
   wsService.connect(channelId, socketUrl)

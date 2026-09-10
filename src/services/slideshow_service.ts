@@ -26,13 +26,15 @@ export const saveSlideshow = (slideshow: Omit<Slideshow, "id" | "created_at" | "
   return api.post("/slideshows/", payload);
 }
 
-export const updateSlideshow = (id: number, slideshow: {slides: {slide_id: number; position: number;}[];}) => {
-  const payload = {
-    slide_positions: slideshow.slides,
+export const updateSlideshow = (id: number, payload: { name: string; slides: { slide_id: number; position: number }[] }) => {  
+  // The Django view expects the key `slide_positions`, not `slides`  
+  const body = {    
+    slide_positions: payload.slides,    
+    name: payload.name,  
   };
-
-  return api.patch(`/slideshows/${id}/`, payload);
-};
+  console.log(body)
+  return api.patch(`/slideshows/${id}/`, body);
+}
 
 export const deleteSlideshow = (id: number) => api.delete(`/slideshows/${id}/`);
 

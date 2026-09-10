@@ -12,6 +12,7 @@ import { participants } from '@/globals/participants';
 import SlideView from '@/components/SlideView.vue';
 import { stopSlideshow } from "@/services/slideshow_service";
 import { deleteLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+import { participantParameters } from '@/globals/participant_parameters';
 
 
 const parameterChanges = ref<ParameterChange[]>([])
@@ -25,8 +26,12 @@ onMounted(() => {
 
 function getParticipantNameAndSeat(lps: liveParticipantSlideshow) {
     const index = participants.value.findIndex(item => item.seat === lps.participant_seat);
-    if (index === -1 || !slideshows.value[index]) return null;
+    if (index === -1 || !participants.value[index]) return null;
     return participants.value[index].name + ` (Seat ` + participants.value[index].seat + `)`
+}
+
+function getParticipantSeat(lps: liveParticipantSlideshow) {
+    return lps.participant_seat.toString()
 }
 
 function getSlideshowName(lps: liveParticipantSlideshow) {
@@ -87,7 +92,9 @@ async function stopAllParticipantSlideshows() {
                                                 <p class="slideshow-label">
                                                     {{ getSlideshowName(participants_slideshow) }}
                                                 </p>
-                                                <Button label="Stop" class="tight-btn" @click="stopSingleParticipantSlideshow(participants_slideshow)" rounded>
+                                                <Button label="Stop" class="tight-btn"
+                                                    @click="stopSingleParticipantSlideshow(participants_slideshow)"
+                                                    rounded>
                                                     <template #icon>
                                                         <i class="material-symbols-outlined">stop_circle</i>
                                                     </template>
@@ -96,17 +103,28 @@ async function stopAllParticipantSlideshows() {
 
                                             <div class="slideshow-item">
                                                 <template v-if="getCurrentSlide(participants_slideshow)">
-                                                <SlideView class="slide-view" :preview="false"
-                                                    :slide="getCurrentSlide(participants_slideshow)"
-                                                    :sections="getCurrentSlide(participants_slideshow)?.sections ?? []"
-                                                    :showFrame="false" :shadow="true" style="pointer-events: none;" />
-                                                    </template>
+                                                    <SlideView class="slide-view" :preview="false"
+                                                        :slide="getCurrentSlide(participants_slideshow)"
+                                                        :sections="getCurrentSlide(participants_slideshow)?.sections ?? []"
+                                                        :showFrame="false" :shadow="true"
+                                                        style="pointer-events: none;" />
+                                                </template>
                                             </div>
                                         </div>
                                     </td>
 
                                     <td class="second-column">
-                                        ...
+                                        <div
+                                            v-if="getParticipantSeat(participants_slideshow) !== null && participantParameters.has(getParticipantSeat(participants_slideshow))">
+                                            <strong>Parameters:</strong>
+                                            <ul v-for="[key, value] in participantParameters.get(getParticipantSeat(participants_slideshow)) " class="parameter-change-list" >
+                                                <li><strong>Parameter:</strong> {{ key }} - <strong>Value:</strong> {{ value }}</li>
+                                            </ul>
+                                        </div>
+
+                                        <div v-else>
+                                            No Parameters found.
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -218,6 +236,7 @@ async function stopAllParticipantSlideshows() {
 
 .second-column {
     width: 75%;
+    padding-left: 35px;
 }
 
 .slideshow-card {
@@ -283,10 +302,9 @@ async function stopAllParticipantSlideshows() {
 
 .tight-btn {
     /* Erster Wert = Oben/Unten, Zweiter Wert = Links/Rechts */
-    padding: 0.25rem 0.5rem !important; 
-    
-    /* Optional: Falls das Icon zu nah am Text klebt */
-    gap: 0.25rem; 
-}
+    padding: 0.25rem 0.5rem !important;
 
+    /* Optional: Falls das Icon zu nah am Text klebt */
+    gap: 0.25rem;
+}
 </style>
