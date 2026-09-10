@@ -225,12 +225,6 @@ onMounted(async () => {
             </Button>
           </div>
         </div>
-
-        <div class="label-container">
-          <label>Development Mode</label>
-          <ToggleSwitch v-model="settings.dev_mode" />
-        </div>
-
       </div>
 
       <div class="sub-panel">
