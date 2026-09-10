@@ -29,6 +29,8 @@ onMounted(() => {
     if (!props.slideSection.mode) {
         props.slideSection.mode = 'html'
         emit('sectionUpdated', { ...props.slideSection, mode: 'html' })
+    }else {
+        selectedMode.value = modeOptions.find(o => o.value === props.slideSection.mode) || modeOptions[0]
     }
 })
 
