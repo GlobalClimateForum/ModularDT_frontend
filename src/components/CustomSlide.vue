@@ -4,6 +4,7 @@ import { defineAsyncComponent, shallowRef, watchEffect, computed } from 'vue';
 import { loadModule, type Options } from 'vue3-sfc-loader';
 import { buildModuleCache } from '@/globals/slide_runtime'
 import { inject, provide } from 'vue';
+import { parameterStore, type ParameterChange } from '@/services/parameter_service'
 
 const props = defineProps<{
     slide: Slide,
@@ -23,7 +24,11 @@ const dynamicComponent = shallowRef<any>(null)
 // Define  the updateParticipantParameter function to be injected from the parent component
 const updateParticipantParameter = inject('updateParticipantParameter', () => { })
 provide('updateParticipantParameter', (name: string, checked: boolean) => {
-    console.log("provide", name, checked)
+      parameterStore.set({
+        section: props.section.id as number,
+        parameter: "TestParameter",
+        value: "Test successfully set"
+    })
 })
 
 // Stable id per section, used for both the wrapper and the CSS prefix
