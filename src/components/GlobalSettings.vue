@@ -94,7 +94,7 @@ function changePassword() {
       header: 'Change Moderator Pin',
       style: { width: '400px' },
       modal: true,
-    },
+    }, 
   });
 }
 

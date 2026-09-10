@@ -45,6 +45,11 @@ async function onChangePin() {
             newPin.value = ''
             confirmPin.value = ''
             oldPinValid.value = false
+            updateSettings({
+                ...settings.value,
+                pin_length: pinLength.value,
+                dev_mode: false
+            });
             alert('Pin changed successfully')
         } else {
             alert('Failed to change pin')
