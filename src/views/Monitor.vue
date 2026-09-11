@@ -34,10 +34,10 @@ const activeMonitor = computed(() => {
 const connectionStatus = ref('Connecting...')
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-    // This is a Dummy for the Monitor view. In the Monitor view the interactive slides
-    // for the participant should not appear, but you never know what the user does. 
-    // If an interactive slide is displayed and this function is missing the monitor view would crash.
-    // However, in the monitor view this function does not have to do anything
+  // This is a Dummy for the Monitor view. In the Monitor view the interactive slides
+  // for the participant should not appear, but you never know what the user does. 
+  // If an interactive slide is displayed and this function is missing the monitor view would crash.
+  // However, in the monitor view this function does not have to do anything
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
@@ -83,7 +83,7 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 const handleMessage = (data) => {
-  //console.log("got message: ", data)
+  console.log("got message: ", data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
@@ -98,6 +98,9 @@ const handleMessage = (data) => {
         livePresentationState.value.active = false
         livePresentationState.value.presentation = -1
         livePresentationState.value.current_scene = 1
+        if (!liveSlidesActive.value) {
+          currentSlide.value = null
+        }
       }
     }
 
@@ -122,6 +125,9 @@ const handleMessage = (data) => {
     if (data.event_type === 'live_slides_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         liveSlidesActive.value = false
+        if (!livePresentationState.value.active) {
+          currentSlide.value = null
+        }
       }
     }
   } catch (e) {

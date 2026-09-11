@@ -43,6 +43,11 @@ provide('updateParticipantParameter', updateParticipantParameter);
 
 function participantSlideLinkHandler(href: string, event: Event) {  
   console.log('Handler für Link:', href);
+  const index = mySlideshow.value?.findIndex(slide => slide.name === href)
+  if ((index) && (mySlideshow.value)) {
+    currentSlideIndex = index
+    myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
+  }
   event.preventDefault() 
 }
 

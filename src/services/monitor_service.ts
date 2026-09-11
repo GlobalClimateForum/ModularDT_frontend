@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { ref } from 'vue';
 import type { Scene } from "@/services/scene_service";
 import type { Slide } from "@/services/slide_service";
 import { settings } from '@/globals/settings'
