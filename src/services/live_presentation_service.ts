@@ -3,24 +3,17 @@ import { useLivePresentationState } from '@/globals/live_presentation';
 
 const livePresentationState = useLivePresentationState()
 
-export interface LivePresentation {
-    id?: number; // Optional, kommt vom Backend mit
-    presentation: number; // Die ID der Presentation
-    active: boolean;
-    current_scene: number;
-}
-
 export const getLivePresentation = () => api.get("/livepresentation/");
-export const updateLivePresentation = (livepresentation: Partial<LivePresentation>) => api.patch("/livepresentation/", livepresentation);
+export const updateLivePresentation = (livepresentation) => api.patch("/livepresentation/", livepresentation);
 
 export const stopPresentation = async () => {
     livePresentationState.value.active = false;
     livePresentationState.value.presentation = -1;
-    livePresentationState.value.current_scene = 1;
+    livePresentationState.value.current_scene = -1;
 
     try {
         const response = await updateLivePresentation({
-            active: false
+            'event_type': 'presentation_stop'
         });
         console.log("Live Presentation stoped.");
     } catch (error) {
@@ -35,9 +28,7 @@ export const startPresentation = async (presentationid) => {
 
     try {
         const response = await updateLivePresentation({
-            active: true,
-            presentation: presentationid,
-            current_scene: 1
+            'event_type': 'presentation_start'
         });
         console.log("Live Presentation started.");
     } catch (error) {

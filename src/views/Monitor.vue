@@ -6,13 +6,11 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { settings } from '@/globals/settings'
-import { useLivePresentationState } from '@/globals/live_presentation';
 import { parameterStore, type ParameterChange } from '@/services/parameter_service'
 import wsService from '@/services/websocket_service'
 // components
 import SlideView from '@/components/SlideView.vue';
 
-const livePresentationState = useLivePresentationState()
 const { t } = useI18n();
 const route = useRoute()
 const currentId = computed(() => route.params.id)
@@ -22,6 +20,7 @@ const channelId = `monitor/${currentId.value}/`
 const wsUrlMonitor = new URL('/ws/monitor/', import.meta.env.VITE_API_BASE_URL)
 const socketUrl = wsUrlMonitor + `${currentId.value}/`
 
+var livePresentationActive = ref<Boolean>(false)
 var liveSlidesActive = ref<Boolean>(false)
 
 // is the monitor ID between 1 and the number of screens?
@@ -87,20 +86,13 @@ const handleMessage = (data) => {
   try {
     if (data.event_type === 'presentation_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        livePresentationState.value.active = true
-        livePresentationState.value.presentation = data.presentation_id || 1
-        livePresentationState.value.current_scene = data.current_scene || 1
+        livePresentationActive.value = true
       }
     }
 
     if (data.event_type === 'presentation_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        livePresentationState.value.active = false
-        livePresentationState.value.presentation = -1
-        livePresentationState.value.current_scene = 1
-        if (!liveSlidesActive.value) {
-          currentSlide.value = null
-        }
+        livePresentationActive.value = false
       }
     }
 
@@ -125,7 +117,7 @@ const handleMessage = (data) => {
     if (data.event_type === 'live_slides_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         liveSlidesActive.value = false
-        if (!livePresentationState.value.active) {
+        if (!livePresentationActive.value) {
           currentSlide.value = null
         }
       }
@@ -149,10 +141,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="(livePresentationState.active || liveSlidesActive)" class="slideshow">
-    <div v-if="currentSlide === null && livePresentationState.active">
+  <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
+    <div v-if="currentSlide === null && livePresentationActive">
     </div>
-    <div v-else-if="currentSlide === null && !livePresentationState.active" class="welcome"
+    <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome"
       style="width: 100vw; height: 100vh;  overflow: hidden;">
       <img src="/background_monitor.jpg" alt="Welcome"
         style="width: 100%; height: 100%; object-fit: cover; object-position: center;">

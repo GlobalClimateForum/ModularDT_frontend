@@ -122,7 +122,7 @@ async function updatePresentationState() {
 const previousScene = () => {
   if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
     livePresentationState.value.current_scene--;
-    updatePresentationState();
+    //updatePresentationState();
     sceneToMonitorGrid();
     updateMonitors();
   }
@@ -132,7 +132,7 @@ const nextScene = () => {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
   if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
     livePresentationState.value.current_scene++;
-    updatePresentationState();
+    //updatePresentationState();
     sceneToMonitorGrid();
     updateMonitors();
   }
