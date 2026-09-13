@@ -48,41 +48,9 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 }, { immediate: true }); // immediate to execute also at start
 
 onMounted(() => {
-  loading.value = true;
-
-  getLivePresentation()
-    .then(response => {
-      const live_presentation_read = response.data.live_presentation;
-
-      if (live_presentation_read && Object.keys(live_presentation_read).length > 0) {
-        livePresentationState.value.active = live_presentation_read.active;
-        if (livePresentationState.value.active) {
-          livePresentationState.value.current_scene = live_presentation_read.current_scene || 1;
-        } else {
-          livePresentationState.value.current_scene = 1;
-        }
-
-        const presentationId = live_presentation_read.presentation;
-        if (presentationId) {
-          return getPresentation(presentationId);
-        }
-      }
-      return null;
-    })
-    .then(presentationResponse => {
-      if (presentationResponse) {
-        currentPresentation.value = presentationResponse.data;
-      }
-    })
-    .catch(error => {
-      console.error("Error reading presentation or live settings:", error);
-    })
-    .finally(() => {
-      loading.value = false;
-      currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
-      updateMonitors();
-    });
-    sceneToMonitorGrid();
+  currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
+  updateMonitors();
+  sceneToMonitorGrid();
 });
 
 function sceneToMonitorGrid() {
@@ -122,7 +90,7 @@ async function updatePresentationState() {
 const previousScene = () => {
   if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
     livePresentationState.value.current_scene--;
-    //updatePresentationState();
+    updatePresentationState();
     sceneToMonitorGrid();
     updateMonitors();
   }
@@ -132,7 +100,7 @@ const nextScene = () => {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
   if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
     livePresentationState.value.current_scene++;
-    //updatePresentationState();
+    updatePresentationState();
     sceneToMonitorGrid();
     updateMonitors();
   }

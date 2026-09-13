@@ -12,7 +12,7 @@ export const stopPresentation = async () => {
     livePresentationState.value.current_scene = -1;
 
     try {
-        const response = await updateLivePresentation({
+        await updateLivePresentation({
             'event_type': 'presentation_stop'
         });
         console.log("Live Presentation stoped.");
@@ -27,7 +27,7 @@ export const startPresentation = async (presentationid) => {
     livePresentationState.value.current_scene = 1;
 
     try {
-        const response = await updateLivePresentation({
+        await updateLivePresentation({
             'event_type': 'presentation_start'
         });
         console.log("Live Presentation started.");

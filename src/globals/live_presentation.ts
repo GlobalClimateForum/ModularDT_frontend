@@ -10,7 +10,7 @@ import { settings } from '@/globals/settings'
 const livePresentationState = ref({
   active: false,
   presentation: -1,
-  current_scene: 1
+  current_scene: -1
 })
 
 // This function returns always the SAME instance
