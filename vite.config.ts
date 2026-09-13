@@ -13,5 +13,5 @@ export default defineConfig({
   optimizeDeps: {
     include: ['vega', 'vega-lite', 'vega-embed']
   },
-  server: {    host: true  }
+  server: { host: true }
 })

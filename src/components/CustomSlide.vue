@@ -22,8 +22,8 @@ const sharedModuleCache = buildModuleCache()
 const dynamicComponent = shallowRef<any>(null)
 
 // Define  the updateParticipantParameter function to be injected from the parent component
-/*
-const updateParticipantParameter = inject('updateParticipantParameter', () => { })
+
+/* const updateParticipantParameter = inject('updateParticipantParameter', () => { })
 provide('updateParticipantParameter', (name: string, checked: boolean) => {
       parameterStore.set({
         section: props.section.id as number,
