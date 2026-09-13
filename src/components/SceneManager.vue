@@ -144,9 +144,9 @@ function onConfirmDeleteScene(scene: Scene) {
     });
 }
 
-function onDuplicateScene(scene: Scene) {
+function onDuplicateEditScene(scene: Scene) {
     if (scene.id) {
-
+        /*
         const new_scene = {
             name: `${scene.name} (${t('moderator.copy')})`,
             description: scene.description,
@@ -164,7 +164,9 @@ function onDuplicateScene(scene: Scene) {
         });
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Scene ID is missing', life: 3000 });
-        console.error("Error deleting scene: no valid scene.id");
+        console.error("Error deleting scene: no valid scene.id");*/
+        scene.name = `${scene.name} (${t('moderator.copy')})`
+        emit('edit-scene', { ...scene });
     }
 }
 
@@ -182,21 +184,6 @@ function onTagAdded(addedTag: string) {
 
 const colLeftSize = ref(35);
 const colRightSize = ref(65);
-/*
-const syncTopResize = (event) => {
-    // event.sizes gibt dir die neuen Größen  
-    if (event.sizes) {
-        colLeftSize.value = event.sizes[0];
-        colRightSize.value = event.sizes[1];
-    }
-};
-const syncBottomResize = (event) => {
-    if (event.sizes) {
-        colLeftSize.value = event.sizes[0];
-        colRightSize.value = event.sizes[1];
-    }
-};
-*/
 
 function onDeletePresentation(presentation: Presentation) {
     if (presentation.id) {
@@ -220,7 +207,7 @@ function onDeletePresentation(presentation: Presentation) {
 
 function onDuplicatePresentation(presentation: Presentation) {
     if (presentation.id) {
-
+        /*
         const new_presentation = {
             name: `${presentation.name} (${t('moderator.copy')})`,
             description: presentation.description,
@@ -237,7 +224,8 @@ function onDuplicatePresentation(presentation: Presentation) {
         });
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Presentation ID is missing', life: 3000 });
-        console.error("Error duplicating presentation: no valid presentation.id");
+        console.error("Error duplicating presentation: no valid presentation.id");*/
+
     }
 }
 
@@ -366,7 +354,7 @@ const removeItem = (index: number) => {
                                 <Button size="small" rounded text icon="pi pi-code"
                                     @click="onEditScene(slotProps.data)" />
                                 <Button size="small" rounded text icon="pi pi-clone"
-                                    @click="onDuplicateScene(slotProps.data)" />
+                                    @click="onDuplicateEditScene(slotProps.data)" />
                                 <Button size="small" rounded text icon="pi pi-pencil"
                                     @click="(e) => slotProps.editorInitCallback(e)" />
                                 <Button size="small" rounded text icon="pi pi-trash"
@@ -452,7 +440,7 @@ const removeItem = (index: number) => {
                 </SplitterPanel>
                 <SplitterPanel :size="colRightSize" class="sub-panel">
                     <div v-if="selectedPresentation" style="overflow: auto; height: 100%;">
-                        
+
                         <div class="target-panel" @dragover.prevent @drop="handleNativeDrop">
                             <div class="header-container">
                                 <h1 class="dashboard_label">{{ t('moderator.order') }}</h1>

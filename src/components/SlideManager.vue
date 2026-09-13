@@ -88,9 +88,9 @@ function onConfirmDeleteSlide(slide: Slide) {
     });
 }
 
-function onDuplicateSlide(slide: Slide) {
+function onDuplicateEditSlide(slide: Slide) {
     if (slide.id) {
-
+        /*
         const new_sections = slide.sections?.map((section, index) => ({
             view_type: section.view_type,
             content: section.content,
@@ -114,8 +114,10 @@ function onDuplicateSlide(slide: Slide) {
         });
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-        console.error("Error deleting slide: no valid slide.id");
-    }
+        console.error("Error deleting slide: no valid slide.id"); */
+        slide.name = `${slide.name} (${t('moderator.copy')})`
+        emit('edit-slide', { ...slide, sections: slide.sections || [] });
+        }
 }
 
 function onTagRemoved(removedTag: string) {
@@ -162,7 +164,7 @@ function onTagAdded(addedTag: string) {
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-clone"
-                            @click="onDuplicateSlide(slotProps.data)" />
+                            @click="onDuplicateEditSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
                         <Button size="small" rounded text icon="pi pi-trash" @click="onConfirmDeleteSlide(slotProps.data)" />
