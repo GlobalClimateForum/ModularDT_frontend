@@ -7,6 +7,7 @@ import { ref, onMounted, computed } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
+import { type Event, getEventById } from '@/services/event_service'
 
 import { type Participant, getParticipants } from '@/services/participant_service'
 import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
@@ -14,6 +15,7 @@ import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, pre
 
 const { t } = useI18n();
 const selected = ref('')
+const event = ref<Event | null>(null)
 
 const selectedRole = ref<string | null>(null)
 const selectedParticipant = ref<Participant | null>(null)
@@ -23,11 +25,23 @@ const seatedParticipants = computed(() => participants.value.filter(p => p.seat 
 import '@/assets/main.css'
 
 onMounted(() => {
+
+  console.log("Mounted Home.vue")
+
   getParticipants().then(response => {
     participants.value = response.data.participants;
   }).catch(error => {
     console.error("Error fetching participants:", error);
   });
+
+  if (settings.value.event_id) {
+    getEventById(settings.value.event_id).then(response => {
+      event.value = response.data;
+      console.log("Fetched event details:", response.data);
+    }).catch(error => {
+      console.error("Error fetching event:", error);
+    });
+  }
 })
 
 function avatarUri(seed: string) {
@@ -39,7 +53,13 @@ function avatarUri(seed: string) {
 <template>
   <div class="welcome">
 
-    <h1>Decision Theater</h1>
+    <h1 v-if="!event" class="welcome-title">Decision Theater</h1>
+    <div v-if="event" class="event-info">
+      <p class="event-date">{{ event.date && new Date(event.date).toLocaleDateString() }}</p>
+      <h2>{{ event.name }}</h2>
+
+      <p class="event-description">{{ event.description }}</p>
+    </div>
 
     <div class="role_options" v-if="selectedRole === null">
 
@@ -113,7 +133,7 @@ function avatarUri(seed: string) {
       <p style="text-align: center;">Who are you?</p>
       <div class="participant-select-container">
         <div v-for="participant in seatedParticipants" :key="participant.id" class="participant-option"
-        @click="router.push('/participant/' + participant.seat)">
+          @click="router.push('/participant/' + participant.seat)">
           <img :src="avatarUri(participant.name)" width="88" height="88" />
           <span>{{ participant.name }}</span>
         </div>
@@ -125,7 +145,15 @@ function avatarUri(seed: string) {
 
 
 <style scoped>
+.welcome-title {
+  font-size: 3rem;
+  color: var(--p-primary-50);
+  text-shadow: var(--shadow-medium);
+  margin-bottom: var(--space-large);
+  text-align: center;
 
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
 
 .participant-select-container {
   display: flex;
@@ -175,7 +203,50 @@ function avatarUri(seed: string) {
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
-  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+  /* background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%); */
+
+
+
+  background: linear-gradient(-45deg, var(--p-primary-300), var(--p-primary-600), var(--p-primary-700), var(--p-primary-600));
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  height: 100vh;
+
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.event-info {
+  text-align: center;
+  color: var(--p-primary-50);
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  .event-description {
+    font-size: var(--fs-medium);
+    color: var(--p-primary-200);
+    max-width: 600px;
+  }
+
+  .event-date {
+    font-size: var(--fs-large);
+    color: var(--p-primary-200);
+  }
 }
 
 .role_options {

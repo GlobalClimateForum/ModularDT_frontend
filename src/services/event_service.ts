@@ -21,7 +21,6 @@ export const saveEvent = (event: Event) => api.post("/events/", event);
 
 export const getEventOptions = () => api.get("/events/").then(response => {
     const events: Event[] = response.data;
-    console.log("Fetched events:", events);
     return events.map((event: Event) => ({
         label: event.name,
         value: event.id

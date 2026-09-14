@@ -1,8 +1,7 @@
 import { ref } from 'vue'
-import { getSettings } from '@/services/settings_service';
+import { getSettings, type Settings } from '@/services/settings_service';
 
-// globale reactive variable
-export const settings = ref({
+export const settings = ref<Settings>({
   cs_url: 'http://127.0.0.1:8002',
   number_of_screens: 4,
   background_image: '',

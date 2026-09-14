@@ -79,8 +79,6 @@ const saveSettings = async () => {
   });
   await fetchSettings()
 
-
-
 }
 
 const onPaletteChange = ({ value }: { value: string }) => {
@@ -94,29 +92,39 @@ function changePassword() {
       header: 'Change Moderator Pin',
       style: { width: '400px' },
       modal: true,
-    }, 
+    },
   });
 }
 
-function onEventChange(event: any) {
-  const id = event.value; // Assuming the event ID is passed as the value
-  console.log("Selected event ID:", id);
-
-  // Fetch the details of the selected event
-  if (id) {
-    getEventById(id).then(response => {
-      console.log("Fetched event details:", response.data);
-      selectedEvent.value = response.data;
-      // You can add additional logic here to handle the fetched event details
+function onEventChange(eventID: number) {
+  if (eventID) {
+    // Fetch the event details
+    getEventById(eventID).then(response => {
+      selectedEvent.value = response.data; // Write the Event details to the selectedEvent ref
+      // update the settings with the selected event ID
+      settings.value.event_id = eventID;
     }).catch(error => {
-      console.error("Error fetching event details:", error);
-    });
+      console.error("Error fetching selected event:", error);
+    })
   }
+}
+
+function onAddEvent() {
+  dialog.open(defineAsyncComponent(() => import('@/components/AddEventDialog.vue')), {
+    props: {
+      header: 'Add New Event',
+      style: { width: '400px' },
+      modal: true,
+    },
+    onClose: async () => {
+      eventOptions.value = await getEventOptions();  // refresh dropdown
+    }
+  });
 }
 
 onMounted(async () => {
   eventOptions.value = await getEventOptions();
-  console.log("Fetched event options:", eventOptions.value);
+  onEventChange(settings.value.event_id);
 });
 
 </script>
@@ -237,12 +245,18 @@ onMounted(async () => {
       </div>
 
       <div class="sub-panel">
-        <h1 class="dashboard_label">Event Settings</h1>
+          <h1 class="dashboard_label">Event Settings</h1>
+
+          <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
+            <template #icon>
+              <i class="material-symbols-outlined">event</i>
+            </template>
+          </Button>
 
         <div class="label-container">
           <label>Active Event</label>
-          <Select fluid :options="eventOptions" optionLabel="label" optionValue="value"
-            @change="onEventChange($event)"></Select>
+          <Select fluid v-model="settings.event_id" :options="eventOptions" optionLabel="label" optionValue="value"
+            @change="onEventChange($event.value)"></Select>
         </div>
 
         <span style="height: 100%; display: flex; flex-direction: column; gap: var(--space-medium);"
