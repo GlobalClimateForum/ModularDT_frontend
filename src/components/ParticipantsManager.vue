@@ -62,12 +62,12 @@ function seatOptions(current: number | null) {
 function persist(row: DraftParticipant) {
   const { isNew, ...data } = row;
   if (isNew) {
-    createParticipant(data as Participant).then(p => {
+    return createParticipant(data as Participant).then(p => {
       Object.assign(row, p);
       delete row.isNew;
     });
   } else {
-    updateParticipant(data as Participant);
+    return updateParticipant(data as Participant);
   }
 }
 
@@ -89,6 +89,7 @@ function onRowEditDelete(event: { data: DraftParticipant; index: number }) {
   if (row.id) {
     deleteParticipant(row.id).then(() => {
       rows.value = rows.value.filter(r => r.id !== row.id);
+      fetchParticipants();
       toast.add({
         severity: 'success',
         summary: 'Participant deleted',
@@ -113,16 +114,13 @@ function onAddParticipant() {
 
 function onClearSeats() {
   rows.value.forEach(p => p.seat = null);
-  rows.value.forEach(p => persist(p));
-  fetchParticipants(); // Refresh the participants list after any change
+  Promise.all(rows.value.map(persist)).then(fetchParticipants);
 }
 
 function onHandsOff() {
   rows.value.forEach(p => p.interactions = false);
-  rows.value.forEach(p => persist(p));
-  fetchParticipants(); // Refresh the participants list after any change
+  Promise.all(rows.value.map(persist)).then(fetchParticipants);
 }
-
 </script>
 
 <template>
@@ -182,7 +180,7 @@ function onHandsOff() {
         <Column field="seat" header="Seat" style="width: 150px" sortable>
           <template #body="{ data }">
             <Select v-model="data.seat" :options="seatOptions(data.seat)" :show-clear="true" class="seat-select"
-              @change="persist(data); fetchParticipants();">
+              @change="persist(data).then(fetchParticipants)">
               <template #value="{ value }">
                 <span v-if="value" class="seat">{{ value }}</span>
                 <span v-else>
@@ -216,7 +214,7 @@ function onHandsOff() {
         <Column header="Interactions" style="width: 120px" bodyStyle="text-align: center"
           headerStyle="text-align: center">
           <template #body="{ data }">
-            <ToggleSwitch v-model="data.interactions" @change="persist(data); fetchParticipants();" />
+            <ToggleSwitch v-model="data.interactions" @change="persist(data)" />
           </template>
         </Column>
 
