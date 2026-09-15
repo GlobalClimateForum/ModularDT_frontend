@@ -14,6 +14,7 @@ import i18n from './i18n/index.ts';
 import ConfirmationService from "primevue/confirmationservice";
 import DialogService from 'primevue/dialogservice';
 import palettes from '@/assets/palettes.json'
+import Tooltip from 'primevue/tooltip';
 
 const primecolors = definePreset(Aura, {
   semantic: {
@@ -31,6 +32,7 @@ app.use(router)
 app.use(i18n)
 app.use(ToastService)
 app.use(DialogService);
+app.directive('tooltip', Tooltip);
 
 app.use(PrimeVue, {
   theme: {

@@ -12,29 +12,98 @@ export interface Layer {
     path: string; // Path to the uploaded file
     section: SlideSection; // Reference to the SlideSection this layer belongs to
     uploaded: boolean; // Flag to indicate if the layer has been uploaded
+    vectorType?: 'point' | 'line' | 'polygon' | 'unknown'; // Optional vector type property
 }
 
 export interface MapProperties {
     basemap: keyof typeof basemaps;
     startPosition: [number, number]; // [longitude, latitude]
+    startZoom: number; // Zoom level
     layers: Layer[];
 }
 
+export interface MapHandle {
+    getCurrentMapPosition: () => { center: [number, number]; zoom: number } | null;
+    updateMapPosition: (center: [number, number], zoom: number) => void;
+    flyToPosition: (center: [number, number], zoom: number) => void;
+}
+
+const mapRegistry = new Map<number, MapHandle>()
+
+export function registerMap(sectionId: number, mapHandle: MapHandle) {
+    mapRegistry.set(sectionId, mapHandle);
+}
+
+export function unregisterMap(sectionId: number) {
+    mapRegistry.delete(sectionId);
+}
+
+export function getMap(sectionId: number): MapHandle | undefined {
+    return mapRegistry.get(sectionId);
+}
+
 export function saveMapLayer(layer: Omit<Layer, "id">, sectionId: number): Promise<any> {
-    
-    // Create a FormData object to hold the file and other properties
     const form = new FormData();
-    
-    if (layer.file) form.append('file', layer.file);
-    form.append('name', layer.name);
-    if (layer.filetype) form.append('filetype', layer.filetype);
-    console.log(layer.marker); 
-    if (layer.marker) form.append('marker', JSON.stringify(layer.marker));
-    form.append('section_id', sectionId.toString());
+
+    const fields: Record<string, string | Blob | undefined> = {
+        file: layer.file,
+        name: layer.name,
+        filetype: layer.filetype,
+        marker: layer.marker ? JSON.stringify(layer.marker) : undefined,
+        section_id: String(sectionId),
+        vectorType: layer.vectorType
+    };
+
+    for (const [key, value] of Object.entries(fields)) {
+        if (value !== undefined && value !== null) form.append(key, value);
+    }
+
     return uploadApi.post('maps/layers/', form);
 }
 
+export function identifyVectorType(file: File): Promise<'point' | 'line' | 'polygon' | 'unknown'> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const text = event.target?.result as string;
+                const geojson = JSON.parse(text);
+                if (geojson.type === 'FeatureCollection' && geojson.features.length > 0) {
+                    const geometryType = geojson.features[0].geometry.type;
 
+                    switch (geometryType) {
+                        case 'Point':
+                            resolve('point');
+                            break;
+                        case 'MultiPoint':
+                            resolve('point');
+                            break;
+                        case 'LineString':
+                            resolve('line');
+                            break;
+                        case 'MultiLineString':
+                            resolve('line');
+                            break;
+                        case 'Polygon':
+                            resolve('polygon');
+                            break;
+                        case 'MultiPolygon':
+                            resolve('polygon');
+                            break;
+                        default:
+                            resolve('unknown');
+                    }
+                } else {
+                    resolve('unknown');
+                }
+            } catch (error) {
+                reject(error);
+            }
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+    });
+}
 
 export async function localMapLayer() {
     const response = await api.get('maps/layers/');
