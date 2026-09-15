@@ -18,7 +18,6 @@ const props = defineProps<{
 
 const localTargetSlide = ref<Slide | null>(props.targetSlide ?? null)
 
-
 const emit = defineEmits<{
     (e: 'parameterChanged', changePayload: ParameterChange): void
 }>()
@@ -51,15 +50,19 @@ watch(() => props.targetSlide, (newSlide) => {
 
 <template>
 
-
     <div class="section-wrapper" :style="{
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
         border: props.showframe ? '3px solid var(--accent)' : 'none',
     }">
 
+        <h1 class="dashboard_label header_label">
+            {{ localTargetSlide?.name ?? 'Loading...' }} | {{ localTargetSlide?.id ?? 'N/A' }}
+        </h1>
+
         <div v-for="(section, index) in localTargetSlide?.sections ?? []" :key="index" class="controls-container">
-            <div v-for="(field, key) in section?.parameters ?? {}" :key="key" class="controls">
+            <div v-for="(field, key) in section?.parameters ?? {}" :key="key" class="glass controls">
+                
                 <div class="label-container" v-if="field && (field.type === 'number' || field.type === 'string')"
                     style="width: 100%;">
                     <label>{{ key }}</label>
@@ -69,7 +72,7 @@ watch(() => props.targetSlide, (newSlide) => {
 
                 <div v-else-if="field && field.type === 'select'" class="label-container">
                     <label>{{ key }}</label>
-                    <Select :options="field?.options" @change="onParameterChange(section, key, $event)" />
+                    <Select fluid :options="field?.options" @change="onParameterChange(section, key, $event)" />
                 </div>
             </div>
         </div>
@@ -80,45 +83,97 @@ watch(() => props.targetSlide, (newSlide) => {
 
 
 <style scoped>
+
+.header_label{
+    font-size: var(--fs-large);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: var(--p-primary-50) !important;
+    z-index: 100; 
+}
+
 .section-wrapper {
     position: relative;
     box-sizing: border-box;
     overflow: hidden;
     padding: var(--space-large);
     background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
-
     display: flex;
     flex-direction: column;
+    gap: var(--space-medium);
     width: 100%;
 }
 
+.section-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 0%, var(--p-primary-500), transparent 50%),
+        radial-gradient(circle at 100% 100%, var(--p-primary-500), transparent 50%);
+    pointer-events: none;
+}
+
 .controls-container {
+    position: relative;
     padding: var(--space-medium);
     border-radius: var(--br-large);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-medium);
 }
 
 .controls {
     display: flex;
     flex-direction: column;
-    gap: var(--space-medium);
+    gap: var(--space-small);
     width: 100%;
     padding: var(--space-medium);
+    border-radius: var(--br-medium);
+}
+
+.controls :deep(label),
+.label-container :deep(label) {
+    font-size: var(--fs-medium) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: var(--p-primary-50) !important;
 }
 
 .controls :deep(.p-inputtext) {
     width: 100%;
     height: 50px;
     font-size: var(--fs-large);
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--br-medium);
+    color: var(--p-primary-50);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.controls :deep(.p-inputtext:focus) {
+    border-color: var(--accent);
+    background-color: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .controls :deep(.p-select) {
     height: 50px;
     font-size: var(--fs-large);
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--br-medium);
+    color: var(--p-primary-50);
+    transition: border-color 0.15s ease;
 }
 
 .controls :deep(.p-select-label) {
     display: flex;
     align-items: center;
     font-size: var(--fs-large);
+    background-color: transparent;
+    color: var(--p-primary-50);
 }
 </style>
