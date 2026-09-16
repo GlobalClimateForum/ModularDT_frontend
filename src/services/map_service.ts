@@ -2,6 +2,7 @@ import { uploadApi, api } from "./api";
 import { type SlideSection } from "@/services/slide_service";
 import { basemaps } from '@/utils/map_utils';
 import type { Marker } from '@/components/MapMarkerEditor.vue';
+import type { LocationParameter } from '@/services/slide_service';
 
 export interface Layer {
     id: number | null;
@@ -20,6 +21,7 @@ export interface MapProperties {
     startPosition: [number, number]; // [longitude, latitude]
     startZoom: number; // Zoom level
     layers: Layer[];
+    positions: { position: [number, number]; zoom: number; name: string }[];
 }
 
 export interface MapHandle {
