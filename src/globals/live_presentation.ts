@@ -62,8 +62,6 @@ export function useLiveSlidesOnMonitors() {
 export function useLiveSlidesActive() {
   return computed(() => {
     const result = liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide != null), false)
-    console.log('liveSlidesOnMonitors:', liveSlidesOnMonitors.value)
-    console.log('computed result:', result)
     return result
   })
 }

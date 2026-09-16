@@ -17,7 +17,9 @@
       "globalsettings": "DT Einstellungen",
       "participants": "Teilnehmer",
       "participants_slideshow": "Teilnehmer-Folien",
-      "parameterchanges": "Parameteränderungen"
+      "parameterchanges": "Parameteränderungen",
+      "parameters": "Parameter",
+      "control": "Steuerung"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
@@ -68,15 +70,15 @@
   },
   "participant": {
     "name": "Teilnehmer",
-    "greeting": "Decition Theatre Teilnehmner",
+    "greeting": "Decision Theatre Teilnehmner",
     "waiting" :"Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
     "seat": "Platz",
     "live_presentation_state": "Live Teilnehmer status"
   },
   "monitor": {
-    "greeting": "Decition Theatre Monitor",
+    "greeting": "Decision Theatre Monitor",
     "instance_id": "Meine Instanz-ID",
-    "waiting": "Ich warte auf den Start der Präsentation und lausche dafür auf einem Django-Channel.",
+    "waiting": "Bitte Warten bis die Präsentation vom Moderator gestartet werden.",
     "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv.",
     "name": "Monitor"
   },

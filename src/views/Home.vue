@@ -195,25 +195,6 @@ function avatarUri(seed: string) {
   left: 1rem;
 }
 
-.welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 100vh;
-  text-align: center;
-  /* background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%); */
-
-
-
-  background: linear-gradient(-45deg, var(--p-primary-300), var(--p-primary-600), var(--p-primary-700), var(--p-primary-600));
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
-  height: 100vh;
-
-}
-
 @keyframes gradient {
   0% {
     background-position: 0% 50%;

@@ -49,6 +49,7 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 
 onMounted(() => {
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
+  console.log(currentPresentation.value)
   updateMonitors();
   sceneToMonitorGrid();
 });

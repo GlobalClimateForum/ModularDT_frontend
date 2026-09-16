@@ -30,6 +30,7 @@ import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
 import LivePariticipants from '@/components/LiveParticipants.vue';
+import LiveParameters from '@/components/LiveParticipants.vue';
 import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 import SlideLink from '@/components/SlideLink.vue'
 
@@ -42,7 +43,9 @@ const channelId = `moderator/`
 const wsUrlMonitor = new URL('/ws/moderator/', import.meta.env.VITE_API_BASE_URL)
 const socketUrl = wsUrlMonitor + ``
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges'>('slides');
+live_parameters: LiveParameters
+live_parameters: LiveParameters
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');
 //const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
@@ -58,7 +61,8 @@ const dashboardViews = {
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
   participants_slides: ParticipantSlideshow,
-  live_participants: LivePariticipants
+  live_participants: LivePariticipants,
+  live_parameters: LiveParameters
   //parameterchanges: ParameterChanges
 }
 
@@ -93,6 +97,12 @@ const items = computed(() => [
         label: "Live " + t('moderator.nav.participants'),
         materialIcon: 'tune',
         command: () => { currentDashboard.value = 'live_participants'; }
+      },
+      {
+        key: 'liveparameters',
+        label: "Live " + t('moderator.nav.parameters'),
+        materialIcon: 'tune',
+        command: () => { currentDashboard.value = 'live_parameters'; }
       }
     ],
   },
@@ -181,9 +191,9 @@ const handleMessage = (data) => {
 }
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-    // This is a Dummy for the Moderator view. In the slide preview the interactive slides
-    // for the participant are also rendered. If this function is missing the preview would crash.
-    // However, in the moderator view this function does not have to do anything
+  // This is a Dummy for the Moderator view. In the slide preview the interactive slides
+  // for the participant are also rendered. If this function is missing the preview would crash.
+  // However, in the moderator view this function does not have to do anything
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
@@ -283,10 +293,11 @@ function handleLiveparticipants() {
       </div>
 
     </SplitterPanel>
-    <SplitterPanel :size="85" class="fixed" >
+    <SplitterPanel :size="85" class="fixed">
       <Transition name="fade">
         <component :is="currentView" v-bind="viewProps" :key="currentDashboard" @edit-slide="handleSlideEdit"
-          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes" @liveparticipants="handleLiveparticipants"/>
+          @edit-scene="handleSceneEdit" @live="handleLiveSwitch" @scenes="handleScenes"
+          @liveparticipants="handleLiveparticipants" />
       </Transition>
     </SplitterPanel>
   </Splitter>
@@ -372,14 +383,16 @@ function handleLiveparticipants() {
   padding: var(--space-small) var(--space-small) 0;
 }
 
-:deep(.p-menu-list > li:first-child) .group-label { margin-top: 0; }
+:deep(.p-menu-list > li:first-child) .group-label {
+  margin-top: 0;
+}
 
 .group-label {
-  margin: 0; 
+  margin: 0;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--p-primary-500); 
+  color: var(--p-primary-500);
 }
 
 .group-label {
@@ -421,8 +434,8 @@ function handleLiveparticipants() {
   flex-direction: column;
   gap: var(--space-small);
   background-color: var(--surface);
-  padding:  var(--space-medium) 0;
-  border-radius: var(--br-medium); 
+  padding: var(--space-medium) 0;
+  border-radius: var(--br-medium);
 }
 
 .status-panel ul {

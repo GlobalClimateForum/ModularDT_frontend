@@ -326,6 +326,7 @@ onMounted(async () => {
   padding-top: 0;
 }
 
+
 .settings-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

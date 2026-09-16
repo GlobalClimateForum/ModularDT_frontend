@@ -167,9 +167,7 @@ onUnmounted(() => {
         :disabled="currentSlideIndex === (mySlideshow && mySlideshow.length - 1)">▶</button>
     </div>
   </div>
-  <div v-else class="welcome">
-    <img src="/background_monitor.jpg" alt="Welcome"
-      style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+  <div v-else class="welcome show-bg-text">
     <div style="position: absolute;">
       <h2>{{ t('participant.greeting') }}</h2>
       <p> {{ t('participant.waiting') }} </p>
@@ -178,17 +176,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 100vh;
-  text-align: center;
-  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
-}
-
 .slideshow-container {
   position: relative;
   width: 100vw;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Toolbar from 'primevue/toolbar'
@@ -10,17 +10,17 @@ import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
+import { dialogService } from '@/services/dialog_service';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import type { Scene } from '@/services/scene_service';
 import { scenes } from '@/globals/scenes';
-import { slides } from '@/globals/slides';
 import { settings } from '@/globals/settings'
 import { saveScene, updateScene } from '@/services/scene_service';
-import { formatDate } from '@/utils/date_utils';
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
+import SlideGallery from '@/components/SlideGallery.vue';
 
 const { t } = useI18n();
 const confirm = useConfirm();
@@ -36,9 +36,11 @@ const props = defineProps({
 
 var scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
+const selectedSlide = ref<Slide | null>(null);
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
+
 
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
@@ -61,36 +63,9 @@ onMounted(() => {
     }
 });
 
-watch(
-    () => settings.value.number_of_screens,
-    (newCount) => {
-        const currentCount = scene.value.length
-
-        if (newCount > currentCount) {
-            const extraSlots = Array(newCount - currentCount).fill(null)
-            scene.value.push(...extraSlots)
-        } else if (newCount < currentCount) {
-            scene.value.splice(newCount)
-        }
-    },
-    { immediate: true }
-)
-'*'
-
-// Handle drag-and-drop events for slides and monitors
-function onDragStart(e: DragEvent, slide: Slide) {
-    e.dataTransfer?.setData('slide', JSON.stringify(slide));
-
-    const original = e.currentTarget as HTMLElement;
-    e.dataTransfer?.setDragImage(original, original.offsetWidth / 2, original.offsetHeight / 2);
-
-    // Set AFTER setDragImage so the ghost captures full opacity
-    requestAnimationFrame(() => original.classList.add('is-dragging'));
-}
-
-function onDragEnd(e: DragEvent) {
-    (e.currentTarget as HTMLElement).classList.remove('is-dragging');
-}
+const handleDragStart = (item) => {
+    // Track if needed, but actual drag setup happens in child
+};
 
 function onDrop(event: DragEvent, index: number) {
     const slideData = event.dataTransfer?.getData('slide');
@@ -163,7 +138,7 @@ function onSaveScene() {
 
     const exisitng_scene = scenes.value.find((s) => s.name === scenename.value);
     if (exisitng_scene) {
-        confirmUpdateScene(exisitng_scene?.id  ?? -1)
+        confirmUpdateScene(exisitng_scene?.id ?? -1)
     } else {
         storeScene()
     }
@@ -182,27 +157,24 @@ function emptyScreens() {
     return scene.value.filter(s => s === null).length;
 }
 
+const onSendSlideToMultipleMonitors = async (slide: Slide) => {
+    const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m + 1}` }))
+    const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
+
+    if (selected) {
+        for (const monitor of selected) {
+            scene.value[monitor.id] = slide;
+        }
+    }
+}
 </script>
 
 <template>
     <Splitter :gutter-size="2" class="dashboard">
-
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
             <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
-            <div class="slide_gallery_container">
-                <div v-for="slide in slides" :key="slide.id" class="slide-card">
-                    <div class="slide-info">
-                        <p class="slide-label">{{ slide.name }}</p>
-                        <p class="slide-date">{{ formatDate(slide.created_at  ?? '') }}</p>
-                    </div>
-                    <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slide)"
-                        @dragend="onDragEnd($event)">
-                        <SlideView :preview="false" :slide="slide" :sections="slide.sections ?? []" :showFrame="false"
-                            style="pointer-events: none;" :shadow="true" />
-                    </div>
-                </div>
-            </div>
+            <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
         </SplitterPanel>
         <!-- Scene Builder -->
         <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -229,6 +201,9 @@ function emptyScreens() {
                         <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" />
                         <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene"
                             :disabled="scenename === ''" />
+                        <Button icon="pi pi-play" :disabled="selectedSlide == null"
+                            :label="$t('moderator.send_to_multiple_monitors')"
+                            @click="onSendSlideToMultipleMonitors(selectedSlide)" />
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
                     </div>
                 </template>
@@ -249,8 +224,7 @@ function emptyScreens() {
                             </h3>
                             <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                         </div>
-                        <Button size="small" text round
-                            @click="scene[index] = null">
+                        <Button size="small" text round @click="scene[index] = null">
                             <template #icon>
                                 <i class="material-symbols-outlined">close</i>
                             </template>
@@ -274,83 +248,18 @@ function emptyScreens() {
 </template>
 
 <style scoped>
-.dashboard {
-    height: 100%;
-}
-
+/*
 .sub-panel {
     display: flex !important;
     flex-direction: column;
     height: 100%;
 }
+*/
 
 .scene-toolbar {
     margin-bottom: 0.5rem;
     padding: 0.5rem;
     flex-shrink: 0;
-}
-
-.slide_gallery_container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    overflow-y: auto !important;
-    padding: 1rem;
-    flex: 1;
-    min-height: 0;
-}
-
-.slide-card {
-    width: 100%;
-    height: 200px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.slide-item {
-
-    flex: 1;
-    /* fill remaining height after slide-info */
-    min-height: 0;
-    /* allow shrinking */
-    width: 100%;
-
-    cursor: grab;
-    transition: opacity 0.2s, outline 0.2s;
-    width: 100%;
-
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.slide-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.slide-label {
-    font-weight: bold;
-    font-size: var(--fs-medium);
-    color: var(--p-primary-500);
-}
-
-.slide-date {
-    font-size: var(--fs-small);
-    color: var(--p-primary-500);
-}
-
-.slide-item.is-dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-    outline: 2px dashed var(--p-primary-400);
-    border-radius: var(--br-medium);
 }
 
 .monitor_container {
@@ -406,9 +315,5 @@ function emptyScreens() {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-}
-
-.slide_gallery_container :deep(> div) {
-    width: 100%;
 }
 </style>

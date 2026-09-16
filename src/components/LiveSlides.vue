@@ -1,75 +1,36 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext';
 import { useI18n } from 'vue-i18n';
-import { FilterMatchMode } from '@primevue/core/api'
 import Message from 'primevue/message';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
-import { slides } from '@/globals/slides';
 import { dialogService } from '@/services/dialog_service';
-import { useLivePresentationState, useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
-import { formatDate } from '@/utils/date_utils';
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
+import SlideGallery from '@/components/SlideGallery.vue';
 
-const livePresentationState = useLivePresentationState()
 const liveSlidesActive = useLiveSlidesActive()
 const { t } = useI18n();
 const selectedSlide = ref<Slide | null>(null);
 
-const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-})
-
 let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
-/*
-watch(
-    () => settings.value.number_of_screens,
-    (newCount) => {
-        const currentCount = sceneOnMonitors.value.length
-
-        if (newCount > currentCount) {
-            const extraSlots = Array(newCount - currentCount).fill(null)
-            sceneOnMonitors.value.push(...extraSlots)
-        } else if (newCount < currentCount) {
-            sceneOnMonitors.value.splice(newCount)
-        }
-    },
-    { immediate: true }
-)
-'*' */
-
-// Handle drag-and-drop events for slides and monitors
-function onDragStart(e: DragEvent, slide: Slide) {
-    e.dataTransfer?.setData('slide', JSON.stringify(slide));
-
-    const original = e.currentTarget as HTMLElement;
-    e.dataTransfer?.setDragImage(original, original.offsetWidth / 2, original.offsetHeight / 2);
-
-    // Set AFTER setDragImage so the ghost captures full opacity
-    requestAnimationFrame(() => original.classList.add('is-dragging'));
-}
-
-function onDragEnd(e: DragEvent) {
-    (e.currentTarget as HTMLElement).classList.remove('is-dragging');
-}
+const handleDragStart = (item) => {    
+    // Track if needed, but actual drag setup happens in child
+};
 
 function onDrop(event: DragEvent, index: number) {
-
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
@@ -79,11 +40,8 @@ function onDrop(event: DragEvent, index: number) {
     updateOneMonitor(slide, index + 1)
 }
 
-// remove later
-const editingRows = ref<Slide[]>([]);
-
 const onSendSlideToMultipleMonitors = async (slide: Slide) => {
-    const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m+1}` }))
+    const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m + 1}` }))
     const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
 
     if (selected) {
@@ -91,7 +49,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
             liveSlidesOnMonitors.value[monitor.id] = slide;
         }
     }
-
 }
 </script>
 
@@ -99,41 +56,8 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     <Splitter :gutter-size="2" class="dashboard">
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                responsiveLayout="scroll" class="slide-table" v-model:editingRows="editingRows"
-                v-model:selection="selectedSlide" selectionMode="single"
-                :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
-
-                <Column field="name" header="">
-                    <template #editor="slotProps">
-                        <InputText v-model="slotProps.data.name" />
-                    </template>
-                    <template #body="slotProps">
-                        <div class="slide-info">
-                            <p class="slide-label">{{ slotProps.data.name }}</p>
-                            <p class="slide-date">{{ formatDate(slotProps.data.updated_at) }}</p>
-                        </div>
-                        <div class="slide-item" draggable="true" @dragstart="onDragStart($event, slotProps.data)"
-                            @dragend="onDragEnd($event)">
-                            <SlideView :preview="false" :slide="slotProps.data"
-                                :sections="slotProps.data.sections ?? []" :showFrame="false"
-                                style="pointer-events: none; width: 100%; height: 150px; overflow: hidden;"
-                                :shadow="true" />
-                        </div>
-                    </template>
-                </Column>
-
-                <template #header>
-                    <div style="display: flex; gap: 8px; width: 100%;">
-                        <InputText class="search-input" v-model="filters.global.value"
-                            :placeholder="$t('moderator.search')" type="text" />
-                        <Button @click="filters.global.value = null" rounded :disabled="!filters.global.value">
-                            <i class="pi pi-times"></i>
-                        </Button>
-                    </div>
-                </template>
-            </DataTable>
-
+            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
+            <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
         </SplitterPanel>
         <!-- Current view -->
         <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -151,7 +75,8 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
-                        <Button icon="pi pi-play" :disabled="selectedSlide==null" :label="$t('moderator.send_to_multiple_monitors')"
+                        <Button icon="pi pi-play" :disabled="selectedSlide == null"
+                            :label="$t('moderator.send_to_multiple_monitors')"
                             @click="onSendSlideToMultipleMonitors(selectedSlide)" />
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
                             @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
@@ -199,88 +124,18 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </template>
 
 <style scoped>
-.slide-table :deep(.p-datatable tbody tr) {
-    flex: 1;
-    min-height: 0;
-}
-
-.dashboard {
-    height: 100%;
-}
-
+/*
 .sub-panel {
     display: flex !important;
     flex-direction: column;
     height: 100%;
 }
+*/
 
 .scene-toolbar {
     margin-bottom: 0.5rem;
     padding: 0.5rem;
     flex-shrink: 0;
-}
-
-.slide_gallery_container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    overflow-y: auto !important;
-    padding: 1rem;
-    flex: 1;
-    min-height: 0;
-}
-
-.slide-card {
-    width: 100%;
-    height: 200px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.slide-item {
-
-    flex: 1;
-    /* fill remaining height after slide-info */
-    min-height: 0;
-    /* allow shrinking */
-    width: 100%;
-
-    cursor: grab;
-    transition: opacity 0.2s, outline 0.2s;
-    width: 100%;
-
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.slide-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.slide-label {
-    font-weight: bold;
-    font-size: var(--fs-medium);
-    color: var(--p-primary-500);
-}
-
-.slide-date {
-    font-size: var(--fs-small);
-    color: var(--p-primary-500);
-}
-
-.slide-item.is-dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-    outline: 2px dashed var(--p-primary-400);
-    border-radius: var(--br-medium);
 }
 
 .monitor_container {
@@ -338,10 +193,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     justify-content: center;
 }
 
-.slide_gallery_container :deep(> div) {
-    width: 100%;
-}
-
 .search-input {
     flex: 1;
     width: 100%;
@@ -349,22 +200,5 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     border-radius: var(--br-medium);
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--p-primary-50, #f8fafc);
-}
-
-:deep(.p-datatable-header) {
-    padding: 0.5em 0em;
-    display: flex;
-    gap: 0.5rem;
-}
-
-:deep(.p-datatable-thead) {
-    display: none;
-}
-
-:deep(.p-datatable-row-selected) {
-    background: var(--p-primary-50);
-    color: var(--p-primary-900);
-    box-shadow: inset 3px 0 0 var(--p-primary-400);
-    font-weight: 500;
 }
 </style>

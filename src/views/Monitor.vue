@@ -9,6 +9,7 @@ import { settings } from '@/globals/settings'
 import { type ParameterChange } from '@/services/parameter_service'
 import parameterStore from '@/services/parameter_service'
 import wsService from '@/services/websocket_service'
+import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
 
@@ -145,27 +146,20 @@ onUnmounted(() => {
   <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
     <div v-if="currentSlide === null && livePresentationActive">
     </div>
-    <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome"
+    <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
       style="width: 100vw; height: 100vh;  overflow: hidden;">
-      <img src="/background_monitor.jpg" alt="Welcome"
-        style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
     </div>
     <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
       <SlideView :preview="false" :slide="displaySlide" :showframe="false"
         :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
     </div>
   </div>
-  <div v-else class="welcome">
-    <img src="/background_monitor.jpg" alt="Welcome"
-      style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+  <div v-else class="welcome show-bg-text">
     <div style="position: absolute;">
       <h2>{{ t('monitor.greeting') }}</h2>
-      <p>{{ t('monitor.instance_id') }}: {{ currentId }}</p>
-
       <!-- Monitor ID is between 1 and the number of screens -->
       <div v-if="activeMonitor">
-        <p>{{ t('monitor.waiting') }}: /ws/monitor/{{ currentId }}/ </p>
-        <p>Status: <strong>{{ connectionStatus }}</strong></p>
+        <p>{{ t('monitor.waiting') }}</p>
       </div>
       <!-- Monitor ID is 0 or exceeds the number of screens -->
       <div v-else>
@@ -177,17 +171,6 @@ onUnmounted(() => {
 
 
 <style scoped>
-.welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 100vh;
-  text-align: center;
-  background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
-}
-
 .slideshow {
   display: flex;
   flex-direction: column;

@@ -17,7 +17,9 @@
       "globalsettings": "DT Settings",
       "participants": "Participants",
       "participants_slideshow": "Participant slideshow", 
-      "parameterchanges": "Parameter Changes"
+      "parameterchanges": "Parameter Changes",
+      "parameters": "Parameters",
+      "control": "Control"
     },
     "settings": {
       "numberscreens": "Number of Screens",
@@ -76,7 +78,7 @@
   "monitor": {
     "greeting": "Decition Theatre Monitor",
     "instance_id": "My Instance ID",
-    "waiting": "I'm waiting for the presentation to start and listening for it on a Django channel.",
+    "waiting": "Please wait until the presentation is started by the moderator.",
     "invalid": "My instance ID is invalid. I'm staying inactive.",
     "name": "Monitor"
   },
