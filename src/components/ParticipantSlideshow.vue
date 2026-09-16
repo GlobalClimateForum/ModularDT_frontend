@@ -14,6 +14,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from "@/services/slide_service"
+import type { Presentation } from '@/services/presentation_service';
 import { formatDate } from '@/utils/date_utils';
 import { saveSlideshow, type Slideshow } from '@/services/slideshow_service'
 import { slideshows, fetchSlideshows } from '@/globals/slideshows';
@@ -25,7 +26,6 @@ import { participants } from '@/globals/participants';
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 // components
 import SlideView from '@/components/SlideView.vue';
-import type { Presentation } from '@/services/presentation_service';
 
 
 interface SelectedSlide {

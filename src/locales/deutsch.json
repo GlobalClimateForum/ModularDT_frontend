@@ -63,7 +63,8 @@
     "update-scene-confirmation-message-head": "Eine Szene mit Namen",
     "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?",
     "choose_presentation": "Präsentation wählen",
-    "live_monitors": "Live Monitore"
+    "live_monitors": "Live Monitore",
+    "send_to_multiple_monitors": "Mehrere Monitore"
   },
   "participant": {
     "name": "Teilnehmer",
@@ -81,6 +82,7 @@
   },
   "submit": "absenden",
   "select_monitor": "Monitor wählen:",
+  "select_monitors": "Monitore auswählen:",
   "select_participants": "Teilnehmer auswählen:",
   "select_all": "Alle auswählen",
   "select_options": "Optionen auswählen",

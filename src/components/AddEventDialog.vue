@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+// Vue-stuff
+import { ref, inject } from 'vue';
 import InputText from "primevue/inputtext"
 import DatePicker from "primevue/datepicker"
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-import '@/assets/main.css';
-import { type Event, saveEvent } from '@/services/event_service';
 import { useToast } from 'primevue/usetoast';
-import { inject } from 'vue';
+// globals and services
+import { type Event, saveEvent } from '@/services/event_service';
+import '@/assets/main.css';
 
 const dialogRef = inject('dialogRef') as any;
 const toast = useToast();
@@ -27,8 +28,6 @@ function onAddEvent() {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add event.', life: 3000 });
     });
 }
-
-
 </script>
 
 

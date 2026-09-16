@@ -1,31 +1,33 @@
 F
 <script setup lang="ts">
-import { ref, watch, onMounted, defineAsyncComponent } from 'vue'
+// Vue-stuff
+import { ref, watch, defineAsyncComponent } from 'vue'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import type { Slide } from '@/services/slide_service'
-import { saveSlide, updateSlide, getSlideSectionType, SlideSectionTypes } from '@/services/slide_service'
-import SlideView from '@/components/SlideView.vue'
 import { useToast } from 'primevue/usetoast'
-import LayoutEditor from '@/components/LayoutEditor.vue'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import type { SlideSection } from '@/services/slide_service'
-import CodeEditor from '@/components/CodeEditor.vue'
-import '@/assets/main.css'
+import { useConfirm } from "primevue/useconfirm";
+import { useI18n } from 'vue-i18n';
 import Select from 'primevue/select';
+// globals and services
+import type { Slide, SlideSectionTypes } from '@/services/slide_service'
+import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_service'
+import type { SlideSection } from '@/services/slide_service'
+import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
-import { slides, fetchSlides } from '@/globals/slides';
-import { scenes } from '@/globals/scenes'
-import { useI18n } from 'vue-i18n';
-import { useConfirm } from "primevue/useconfirm";
+import '@/assets/main.css'
+// components
+import LayoutEditor from '@/components/LayoutEditor.vue'
+import CodeEditor from '@/components/CodeEditor.vue'
+import SlideView from '@/components/SlideView.vue'
 
 const { t } = useI18n();
 const confirm = useConfirm();
@@ -67,10 +69,6 @@ const editorMapping: Record<string, any> = {
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
 
-onMounted(() => {
-    //fetchSlides();
-});
-
 // 
 function confirmedUpdateSlide() {
     const sections = slideSections.value.map((section, index) => ({
@@ -101,13 +99,13 @@ function confirmedUpdateSlide() {
 
 function confirmUpdateSlide() {
     confirm.require({
-        header: t('moderator.confirmation'), 
-        message: t('moderator.update-slide-confirmation-message-head') + " " + currentSlide.value.name + " " + t('moderator.update-slide-confirmation-message-tail'), 
+        header: t('moderator.confirmation'),
+        message: t('moderator.update-slide-confirmation-message-head') + " " + currentSlide.value.name + " " + t('moderator.update-slide-confirmation-message-tail'),
         acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'), 
-        accept: async () => {    
+        rejectLabel: t('moderator.confirmation-cancel'),
+        accept: async () => {
             await confirmedUpdateSlide();
-        }, reject: () => {      
+        }, reject: () => {
             // nothing to do    
         },
     });
@@ -146,7 +144,7 @@ function storeSlide() {
         sectionWidths.value = saved.sections.map(s => s.width_fraction ?? 1.0)
         selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
 
-        fetchSlides() 
+        fetchSlides()
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
     })
 }
@@ -162,6 +160,12 @@ function updateOrStoreSlide() {
     } else {
         storeSlide()
     }
+}
+
+function clearCurrentSlide() {
+    // Problem: default slide is a singleton
+    currentSlide.value = DEFAULT_SLIDE
+    slideSections.value = []
 }
 
 // Small Helper to identify the layout type based on the section widths (fullscreen, golden, reversegolden, custom)
@@ -402,8 +406,14 @@ watch(currentSectionIndex, (i) => {
                         <div class="editor-toolbar-start">
                             <Button icon="pi pi-save" size="small" rounded @click="updateOrStoreSlide"
                                 :disabled="currentSlide.name === ''" />
-                            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')" size="small"
-                                rounded />
+                            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
+                                size="small" rounded />
+                        </div>
+                    </template>
+                    <template #end>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
+                                @click=clearCurrentSlide() />
                         </div>
                     </template>
                 </Toolbar>

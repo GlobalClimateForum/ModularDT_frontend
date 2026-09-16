@@ -63,7 +63,8 @@
     "update-scene-confirmation-message-head": "A scene with name",
     "update-slide-confirmation-message-tail": "already exits. Overwrite?",
     "choose_presentation": "Choose presentation",
-    "live_monitors": "Live monitors"
+    "live_monitors": "Live monitors",
+    "send_to_multiple_monitors": "Multiple monitors"
   },
   "participant": {
     "name": "Participant",
@@ -81,6 +82,7 @@
   },
   "submit": "submit",
   "select_monitor": "Select monitor:",
+  "select_monitors": "Select monitors:",
   "select_participants" : "Select participants",
   "select_all": "Select all",
   "select_options": "Select options",

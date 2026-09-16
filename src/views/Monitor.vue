@@ -6,7 +6,8 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { settings } from '@/globals/settings'
-import { parameterStore, type ParameterChange } from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameter_service'
+import parameterStore from '@/services/parameter_service'
 import wsService from '@/services/websocket_service'
 // components
 import SlideView from '@/components/SlideView.vue';

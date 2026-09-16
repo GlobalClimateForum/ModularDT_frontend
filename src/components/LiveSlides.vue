@@ -15,6 +15,7 @@ import Message from 'primevue/message';
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
 import { slides } from '@/globals/slides';
+import { dialogService } from '@/services/dialog_service';
 import { useLivePresentationState, useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
@@ -23,21 +24,17 @@ import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
 
-
 const livePresentationState = useLivePresentationState()
 const liveSlidesActive = useLiveSlidesActive()
 const { t } = useI18n();
+const selectedSlide = ref<Slide | null>(null);
 
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
 
-var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
-//var sceneOnMonitors = useSceneOnMonitors()
-var whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
-
-onMounted(() => {
-});
+let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
+let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 /*
 watch(
@@ -84,7 +81,18 @@ function onDrop(event: DragEvent, index: number) {
 
 // remove later
 const editingRows = ref<Slide[]>([]);
-const selectedSlide = ref<Slide | null>(null);
+
+const onSendSlideToMultipleMonitors = async (slide: Slide) => {
+    const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m+1}` }))
+    const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
+
+    if (selected) {
+        for (const monitor of selected) {
+            liveSlidesOnMonitors.value[monitor.id] = slide;
+        }
+    }
+
+}
 </script>
 
 <template>
@@ -143,6 +151,8 @@ const selectedSlide = ref<Slide | null>(null);
                 </template>
                 <template #end>
                     <div style="display: flex; gap: 0.5rem;">
+                        <Button icon="pi pi-play" :disabled="selectedSlide==null" :label="$t('moderator.send_to_multiple_monitors')"
+                            @click="onSendSlideToMultipleMonitors(selectedSlide)" />
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
                             @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
                     </div>
@@ -357,5 +367,4 @@ const selectedSlide = ref<Slide | null>(null);
     box-shadow: inset 3px 0 0 var(--p-primary-400);
     font-weight: 500;
 }
-
 </style>

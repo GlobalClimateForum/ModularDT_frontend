@@ -1,10 +1,13 @@
 <script lang="ts" setup>
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { defineAsyncComponent, shallowRef, watchEffect, computed } from 'vue';
+// The package's declaration file is not exposed through its `exports` map.
+// @ts-expect-error vue3-sfc-loader ships declarations that TypeScript cannot resolve via its package exports.
 import { loadModule, type Options } from 'vue3-sfc-loader';
 import { buildModuleCache } from '@/globals/slide_runtime'
 import { inject, provide } from 'vue';
-import { parameterStore, type ParameterChange } from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameter_service'
+import parameterStore from '@/services/parameter_service'
 
 const props = defineProps<{
     slide: Slide,

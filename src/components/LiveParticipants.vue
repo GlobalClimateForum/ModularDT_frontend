@@ -4,7 +4,8 @@ import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Message from 'primevue/message'
 import Button from 'primevue/button';
-import { parameterStore, type ParameterChange } from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameter_service'
+import parameterStore from '@/services/parameter_service'
 import { liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { type liveParticipantSlideshow } from '@/globals/live_participant_slideshows';
 import { slideshows } from '@/globals/slideshows';

@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-
-import { backendServerStatusClass, getBackendServerStatus, backendServerUrl } from '@/services/bs_service.ts';
+// Vue-stuff
+import { ref, onMounted } from 'vue';
 import Message from 'primevue/message';
 import Button from 'primevue/button';
 import Badge from 'primevue/badge';
-import { ref, onMounted } from 'vue';
+// globals and services
+import { backendServerStatusClass, getBackendServerStatus, backendServerUrl } from '@/services/bs_service.ts';
 
 const props = defineProps<{
     size?: 'small' | null

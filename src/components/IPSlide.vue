@@ -5,7 +5,7 @@ import { getSlide } from '@/services/slide_service'
 import { type ParameterChange } from '@/services/parameter_service'
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
-import { parameterStore } from '@/services/parameter_service'
+import parameterStore from '@/services/parameter_service'
 import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -49,7 +49,6 @@ watch(() => props.targetSlide, (newSlide) => {
 
 
 <template>
-
     <div class="section-wrapper" :style="{
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
