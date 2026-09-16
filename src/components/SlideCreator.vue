@@ -16,9 +16,9 @@ import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 import Select from 'primevue/select';
 // globals and services
-import type { Slide, SlideSectionTypes } from '@/services/slide_service'
+import type { Slide, SlideSection } from '@/services/slide_service'
+import { SlideSectionTypes } from '@/services/slide_service'
 import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_service'
-import type { SlideSection } from '@/services/slide_service'
 import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
