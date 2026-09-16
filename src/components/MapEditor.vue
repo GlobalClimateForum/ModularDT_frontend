@@ -29,6 +29,21 @@ const props = defineProps<{
 
 const existingLayers = ref<Layer[] | null>(null);
 
+const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
+
+const dialog = useDialog();
+const layers = ref<Layer[]>([]);
+const sPosition = ref<string>('');
+const sZoom = ref<number>(10);
+const savedPositions = ref<{ name: string; position: [number, number]; zoom: number; inEdit: boolean }[]>([]);
+
+const emit = defineEmits<{
+    (e: 'basemapUpdated', key: keyof typeof basemaps): void
+    (e: 'contentUpdated', content: string): void
+}>()
+
+const selectedBasemap = ref<keyof typeof basemaps>('openfreemap_bright');
+
 onMounted(async () => {
     if (props.slideSection.content) {
         const mapProperties: MapProperties = JSON.parse(props.slideSection.content);
@@ -58,21 +73,6 @@ onMounted(async () => {
 });
 
 
-const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
-
-const dialog = useDialog();
-const layers = ref<Layer[]>([]);
-const sPosition = ref<string>('');
-const sZoom = ref<number>(10);
-const savedPositions = ref<{ name: string; position: [number, number]; zoom: number; inEdit: boolean }[]>([]);
-
-const emit = defineEmits<{
-    (e: 'basemapUpdated', key: keyof typeof basemaps): void
-    (e: 'contentUpdated', content: string): void
-}>()
-
-const selectedBasemap = ref<keyof typeof basemaps>('openfreemap_bright');
-
 const asHexValue = computed(() => (value: string) => {
     if (value.startsWith('#')) {
         return value;
@@ -96,7 +96,12 @@ function saveMapProperties() {
         basemap: selectedBasemap.value,
         startZoom: sZoom.value,
         startPosition: [0, 0],
-        layers: layers.value
+        layers: layers.value, 
+        positions: savedPositions.value.map(pos => ({
+            name: pos.name,
+            position: pos.position,
+            zoom: pos.zoom
+        }))
     };
     props.slideSection.content = JSON.stringify(mapProperties);
     emit('contentUpdated', props.slideSection.content);
@@ -174,17 +179,6 @@ function flyToMapPosition(position: [number, number], zoom: number) {
             map.flyToPosition(position, zoom);
         }
     }
-}
-
-function getMapCurrentMapPosition() {
-    if (props.slideSection?.id) {
-        const map = getMap(props.slideSection.id);
-        if (map) {
-            sPosition.value = map.getCurrentMapPosition()?.center.join(', ') || DEFAULT_START_POSITION.join(', ');
-            sZoom.value = map.getCurrentMapPosition()?.zoom || 10;
-        }
-    }
-    return null;
 }
 
 function savePosition() {
@@ -288,45 +282,7 @@ function savePosition() {
                 @change="onChangeBasemap" fluid />
         </div>
 
-        <div class="position-row">
-            <div class="label-container position-field">
-                <label>Start Position</label>
-                <InputText class="coordinate-input" :disabled="!props.slideSection?.id" v-model="sPosition"
-                    placeholder="Paste WGS84 Coordinate" fluid @keyup.enter="onChangeMapPosition" />
-            </div>
 
-            <div class="label-container zoom-field">
-                <label>Start Zoom</label>
-                <div class="zoom-control">
-
-                    <Button class="zoom-btn" small iconOnly @click="sZoom--; onChangeMapPosition()"
-                        :disabled="sZoom <= 1 || !props.slideSection?.id">
-                        <template #icon>
-                            <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">remove</i>
-                        </template>
-                    </Button>
-
-                    <InputText class="coordinate-input zoom-value" :disabled="true" v-model="sZoom"
-                        placeholder="Zoom" />
-
-                    <Button class="zoom-btn" small iconOnly @click="sZoom++; onChangeMapPosition()"
-                        :disabled="sZoom >= 23 || !props.slideSection?.id">
-                        <template #icon>
-                            <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">add</i>
-                        </template>
-                    </Button>
-                </div>
-            </div>
-
-            <div class="label-container current-field">
-                <label>Current</label>
-                <Button class="current-btn" @click="getMapCurrentMapPosition()" :disabled="!props.slideSection?.id">
-                    <template #icon>
-                        <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">my_location</i>
-                    </template>
-                </Button>
-            </div>
-        </div>
 
         <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
             <h1 class="dashboard_label">Saved Positions</h1>
@@ -340,44 +296,67 @@ function savePosition() {
 
             <div v-for="(pos, index) in savedPositions" :key="index" class="position-item">
 
-                <h2 v-if="!pos.inEdit">{{ pos.name }}</h2>
-                <InputText fluid v-else v-model="pos.name" />
-
-                <div style="display: flex; flex-direction: row; gap: var(--space-small);">
+                <div class="position-header">
+                    <h2 style="width: 100%;" v-if="!pos.inEdit">{{ pos.name }}</h2>
+                    <InputText fluid v-else v-model="pos.name" />
 
                     <Button text @click="pos.inEdit = !pos.inEdit">
                         <template #icon>
-                            <i class="material-symbols-outlined">edit</i>
+                            <i class="material-symbols-outlined">{{ pos.inEdit ? 'save' : 'edit' }}</i>
                         </template>
                     </Button>
 
-                    <Button @click="sPosition = pos.position.join(', '); sZoom = pos.zoom; onChangeMapPosition()" text>
-                        <template #icon>
-                            <i class="material-symbols-outlined">home</i>
-                        </template>
-                    </Button>
-
-                    <Button text>
-                        <template #icon>
-                            <i class="material-symbols-outlined">check</i>
-                        </template>
-                    </Button>
-
-                    <Button text @click="pos.inEdit = false">
-                        <template #icon>
-                            <i class="material-symbols-outlined">cancel</i>
-                        </template>
-                    </Button>
-
-                    <Button @click="savedPositions.splice(index, 1)" text>
+                    <Button text @click="savedPositions.splice(index, 1)">
                         <template #icon>
                             <i class="material-symbols-outlined">delete</i>
                         </template>
                     </Button>
 
-                    <Button text @click="flyToMapPosition(pos.position, pos.zoom)">
+                    <div class="position-actions">
+                        <Button text @click="flyToMapPosition(pos.position, pos.zoom)">
+                            <template #icon>
+                                <i class="material-symbols-outlined">travel</i>
+                            </template>
+                        </Button>
+
+                        <Button text
+                            @click="sPosition = pos.position.join(', '); sZoom = pos.zoom; onChangeMapPosition()">
+                            <template #icon>
+                                <i class="material-symbols-outlined">arrow_forward</i>
+                            </template>
+                        </Button>
+                    </div>
+                </div>
+
+                <div class="position-controls">
+                    <InputText class="coordinate-input pos-coord" :model-value="pos.position.join(', ')"
+                        @update:model-value="pos.position = ($event.split(',').map(c => parseFloat(c.trim())) as [number, number]); 
+                        flyToMapPosition(pos.position, pos.zoom)"
+                        :disabled="!props.slideSection?.id" placeholder="Paste WGS84 Coordinate" fluid />
+
+                    <div class="zoom-control">
+                        <Button class="zoom-btn" small iconOnly :disabled="pos.zoom <= 1 || !props.slideSection?.id"
+                            @click="pos.zoom--; flyToMapPosition(pos.position, pos.zoom)">
+                            <template #icon>
+                                <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">remove</i>
+                            </template>
+                        </Button>
+
+                        <InputText class="coordinate-input zoom-value" :disabled="true" v-model="pos.zoom"
+                            placeholder="Zoom" />
+
+                        <Button class="zoom-btn" small iconOnly :disabled="pos.zoom >= 23 || !props.slideSection?.id"
+                            @click="pos.zoom++; flyToMapPosition(pos.position, pos.zoom)">
+                            <template #icon>
+                                <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">add</i>
+                            </template>
+                        </Button>
+                    </div>
+
+                    <Button class="current-btn" :disabled="!props.slideSection?.id"
+                        @click="const p = getMap(props.slideSection.id)?.getCurrentMapPosition(); if (p) { pos.position = p.center; pos.zoom = p.zoom; }">
                         <template #icon>
-                            <i class="material-symbols-outlined">travel</i>
+                            <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">my_location</i>
                         </template>
                     </Button>
                 </div>
@@ -397,13 +376,6 @@ function savePosition() {
     gap: 1rem;
 }
 
-.zoom-control {
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-small);
-    align-items: center;
-}
-
 .saved_positions {
     display: flex;
     flex-direction: column;
@@ -414,19 +386,14 @@ function savePosition() {
 }
 
 .position-item {
-
     padding: var(--space-small);
     background-color: var(--p-primary-50);
-
     border-radius: var(--br-medium);
     border: 1px solid var(--p-primary-200);
-
     box-shadow: var(--shadow-light);
-
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: var(--space-small);
 
     h2 {
         font-size: var(--fs-medium);
@@ -435,6 +402,70 @@ function savePosition() {
         margin: 0;
         color: var(--p-primary-500);
     }
+}
+
+.position-header {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+}
+
+.position-actions {
+    border: 1px solid var(--p-primary-200);
+    border-radius: var(--br-medium);
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    margin-left: auto;
+}
+
+.position-controls {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    width: 100%;
+}
+
+.pos-coord {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.zoom-control {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.zoom-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    padding: 0;
+}
+
+.zoom-value {
+    width: 4rem;
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.current-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.coordinate-input {
+    font-family: "Fira Code", monospace;
+    font-size: var(--fs-medium);
+    text-align: center;
 }
 
 .layerinfo {
@@ -465,7 +496,6 @@ function savePosition() {
     display: flex;
     align-items: center;
     flex-direction: row;
-
     gap: var(--space-medium);
     padding: var(--space-small);
     background-color: var(--p-primary-50);
@@ -485,7 +515,6 @@ function savePosition() {
     border-radius: 50%;
     max-width: 100%;
     max-height: 100%;
-
     transform: scale(0.7);
 }
 
@@ -494,14 +523,11 @@ function savePosition() {
     height: 60px;
     border-radius: var(--br-medium);
     box-shadow: var(--shadow-light);
-
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-
     overflow: hidden;
-
     background-color: var(--surface);
 }
 
@@ -534,60 +560,7 @@ function savePosition() {
     margin-left: auto;
 }
 
-.coordinate-input {
-    font-family: "Fira Code", monospace;
-    font-size: var(--fs-medium);
-    text-align: center;
-}
-
 :deep(.p-fileupload-basic .p-fileupload-filename) {
     display: none;
-}
-
-
-.position-row {
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-small);
-    align-items: flex-end;
-    width: 100%;
-}
-
-.position-field {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.zoom-field {
-    flex: 0 0 auto;
-}
-
-.current-field {
-    flex: 0 0 auto;
-}
-
-.zoom-control {
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-small);
-    align-items: center;
-}
-
-.zoom-btn {
-    width: 2.5rem;
-    height: 2.5rem;
-    flex: 0 0 auto;
-    padding: 0;
-}
-
-.zoom-value {
-    width: 3.5rem;
-    flex: 0 0 auto;
-}
-
-.current-btn {
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0;
 }
 </style>

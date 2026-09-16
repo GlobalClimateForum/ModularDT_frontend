@@ -57,12 +57,18 @@ export interface SelectParameter {
     default?: string | null
 }
 
+export interface LocationParameter {
+    type: 'location'
+    description?: string
+    default?: { lat: number; lng: number, zoom: number } | null 
+}
+
 export type Parameter =
     | StringParameter
     | BooleanParameter
     | NumberParameter
     | SelectParameter
-
+    | LocationParameter
 export interface Parameters {
     [key: string]: Parameter
 }
