@@ -10,7 +10,7 @@ import { useNow, useDateFormat } from '@vueuse/core'
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Scene } from "@/services/scene_service";
-import { getLivePresentation, stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
+import { stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
 import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStatesFromGriddedSlides } from '@/services/monitor_service'
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
@@ -32,7 +32,6 @@ const posTop = ref(0)
 
 const livePresentationState = useLivePresentationState()
 const currentPresentation = useCurrentPresentation()
-const loading = ref(false);
 const currentScene = useCurrentScene()
 const scenesMap = useScenesMap()
 const activeSceneIdFromPresentation = useActiveSceneIdFromPresentation()
@@ -48,6 +47,7 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 }, { immediate: true }); // immediate to execute also at start
 
 onMounted(() => {
+  
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
   console.log(currentPresentation.value)
   updateMonitors();

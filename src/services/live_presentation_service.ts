@@ -1,9 +1,11 @@
 import { api } from "./api";
-import { useLivePresentationState } from '@/globals/live_presentation';
+import { useCurrentPresentation, useLivePresentationState } from '@/globals/live_presentation';
+import { presentations } from '@/globals/presentations';
 
 const livePresentationState = useLivePresentationState()
+const currentPresentation = useCurrentPresentation()
 
-export const getLivePresentation = () => api.get("/livepresentation/");
+//export const getLivePresentation = () => api.get("/livepresentation/");
 export const updateLivePresentation = (livepresentation) => api.patch("/livepresentation/", livepresentation);
 
 export const stopPresentation = async () => {
@@ -25,6 +27,7 @@ export const startPresentation = async (presentationid) => {
     livePresentationState.value.active = true;
     livePresentationState.value.presentation = presentationid;
     livePresentationState.value.current_scene = 1;
+    currentPresentation.value = presentations.value.find((pres) => pres.id == presentationid) ?? null;
 
     try {
         await updateLivePresentation({
