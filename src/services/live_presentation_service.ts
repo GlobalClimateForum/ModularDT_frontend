@@ -12,6 +12,7 @@ export const stopPresentation = async () => {
     livePresentationState.value.active = false;
     livePresentationState.value.presentation = -1;
     livePresentationState.value.current_scene = -1;
+    currentPresentation.value = null
 
     try {
         await updateLivePresentation({

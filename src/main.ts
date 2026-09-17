@@ -10,11 +10,13 @@ import "primeicons/primeicons.css";
 import 'animate.css';
 import ToastService from 'primevue/toastservice';
 import { definePreset } from '@primeuix/themes';
-import i18n from './i18n/index.ts';
 import ConfirmationService from "primevue/confirmationservice";
 import DialogService from 'primevue/dialogservice';
 import palettes from '@/assets/palettes.json'
 import Tooltip from 'primevue/tooltip';
+import i18n from './i18n/index.ts'
+
+const APP_NAME = "Decision Theatre"; 
 
 const primecolors = definePreset(Aura, {
   semantic: {
@@ -29,7 +31,6 @@ export function toggleDark() {
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
-app.use(i18n)
 app.use(ToastService)
 app.use(DialogService);
 app.directive('tooltip', Tooltip);
@@ -48,6 +49,18 @@ app.use(PrimeVue, {
   }
 })
 
+i18n.global.setLocaleMessage('en', { 
+  ...i18n.global.getLocaleMessage('en'), 
+  appName: APP_NAME
+})
+i18n.global.setLocaleMessage('de', { 
+  ...i18n.global.getLocaleMessage('de'), 
+  appName: APP_NAME 
+})
+app.use(i18n)
+
 app.use(ConfirmationService)
+app.config.globalProperties.$APP_NAME = APP_NAME
+
 app.mount('#app')
 

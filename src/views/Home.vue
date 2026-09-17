@@ -53,7 +53,7 @@ function avatarUri(seed: string) {
 <template>
   <div class="welcome">
 
-    <h1 v-if="!event" class="welcome-title">Decision Theater</h1>
+    <h1 v-if="!event" class="welcome-title">{{ this.$APP_NAME }}</h1>
     <div v-if="event" class="event-info">
       <p class="event-date">{{ event.date && new Date(event.date).toLocaleDateString() }}</p>
       <h2>{{ event.name }}</h2>

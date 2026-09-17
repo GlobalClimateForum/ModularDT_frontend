@@ -1,5 +1,6 @@
 {
   "greeting": "Hallo!",
+  "appName": "",
   "moderator": {
     "name": "Moderator",
     "nav": {
@@ -70,13 +71,13 @@
   },
   "participant": {
     "name": "Teilnehmer",
-    "greeting": "Decision Theatre Teilnehmner",
+    "greeting": "@:appName Teilnehmner",
     "waiting" :"Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
     "seat": "Platz",
     "live_presentation_state": "Live Teilnehmer status"
   },
   "monitor": {
-    "greeting": "Decision Theatre Monitor",
+    "greeting": "@:appName Monitor",
     "instance_id": "Meine Instanz-ID",
     "waiting": "Bitte Warten bis die Präsentation vom Moderator gestartet werden.",
     "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv.",

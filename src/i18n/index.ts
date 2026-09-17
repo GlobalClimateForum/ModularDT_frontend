@@ -6,8 +6,8 @@ import en from '@/locales/english.json';
 const i18n = createI18n({
   legacy: false,
   globalInjection: true, // Ermöglicht die Nutzung von $i18n und $t im Template ohne Imports!
-  locale: 'en',          // Standard-Sprache beim Start
-  fallbackLocale: 'en',  // Rückfall-Sprache, falls ein Schlüssel fehlt
+  locale: 'en',          // Standard-language
+  fallbackLocale: 'en',  // Fallback-language
   messages: { en, de }
 })
 

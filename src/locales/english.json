@@ -1,5 +1,6 @@
 {
   "greeting": "Hello!",
+  "appName": "Cool App!",
   "moderator": {
     "name": "Moderator",
     "nav": {
@@ -70,13 +71,13 @@
   },
   "participant": {
     "name": "Participant",
-    "greeting": "Decition Theatre Participant",
+    "greeting": "@:appName Participant",
     "waiting" :"Please wait until the participant slideshow is started by the moderator.",
     "seat": "Seat",
     "live_presentation_state": "Participant live presentation state"
   },
   "monitor": {
-    "greeting": "Decition Theatre Monitor",
+    "greeting": "@:appName Monitor",
     "instance_id": "My Instance ID",
     "waiting": "Please wait until the presentation is started by the moderator.",
     "invalid": "My instance ID is invalid. I'm staying inactive.",
