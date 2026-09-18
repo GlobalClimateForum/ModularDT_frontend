@@ -11,7 +11,6 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Scene } from "@/services/scene_service";
 import { stopPresentation, updateLivePresentation } from "@/services/live_presentation_service";
-import { getPresentation } from "@/services/presentation_service";
 import { updateMonitorStatesFromGriddedSlides } from '@/services/monitor_service'
 import { useCurrentScene, useLivePresentationState, useScenesMap } from '@/globals/live_presentation';
 import { useCurrentPresentation, useActiveSceneIdFromPresentation, useSceneOnMonitors, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';

@@ -124,14 +124,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </template>
 
 <style scoped>
-/*
-.sub-panel {
-    display: flex !important;
-    flex-direction: column;
-    height: 100%;
-}
-*/
-
 .scene-toolbar {
     margin-bottom: 0.5rem;
     padding: 0.5rem;

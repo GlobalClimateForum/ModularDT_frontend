@@ -49,6 +49,7 @@ app.use(PrimeVue, {
   }
 })
 
+// 'inject' APP_NAME
 i18n.global.setLocaleMessage('en', { 
   ...i18n.global.getLocaleMessage('en'), 
   appName: APP_NAME
