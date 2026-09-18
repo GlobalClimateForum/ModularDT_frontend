@@ -1,133 +1,162 @@
 <script lang="ts" setup>
-import { ref, computed, defineAsyncComponent, onMounted } from 'vue';
-import type { Slide, SlideSection } from '@/services/slide_service';
+import { ref, computed, watch, defineAsyncComponent, onMounted } from 'vue';
+import type { Slide, SlideSection, Parameters, LocationValue } from '@/services/slide_service';
 import { basemaps } from '@/utils/map_utils';
 import Select from 'primevue/select';
 import InputText from 'primevue/inputtext';
-import '@/assets/main.css'
+import '@/assets/main.css';
 import FileUpload from 'primevue/fileupload';
 import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
 import Button from 'primevue/button';
-import { type MapProperties, type Layer, saveMapLayer } from '@/services/map_service';
-import { localMapLayer } from '@/services/map_service';
-import { settings } from '@/globals/settings.ts'
-import Knob from 'primevue/knob';
-import { identifyVectorType } from "@/services/map_service";
-import Tooltip from 'primevue/tooltip';
-import { getMap } from '@/services/map_service';
-
+import {
+    type MapProperties,
+    type Layer,
+    saveMapLayer,
+    localMapLayer,
+    identifyVectorType,
+    getMap,
+} from '@/services/map_service';
+import { settings } from '@/globals/settings.ts';
 
 const DEFAULT_START_POSITION: [number, number] = [13.350103005033793, 52.51451583081903];
+const DEFAULT_START_ZOOM = 2;
 
 const props = defineProps<{
-    slide: Slide | null,
-    slideSection: SlideSection,
-    startPosition: [number, number]
-}>()
-
-const existingLayers = ref<Layer[] | null>(null);
-
-const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
-
-const dialog = useDialog();
-const layers = ref<Layer[]>([]);
-const sPosition = ref<string>('');
-const sZoom = ref<number>(10);
-const savedPositions = ref<{ name: string; position: [number, number]; zoom: number; inEdit: boolean }[]>([]);
+    slide: Slide | null;
+    slideSection: SlideSection;
+    startPosition?: [number, number];
+}>();
 
 const emit = defineEmits<{
-    (e: 'basemapUpdated', key: keyof typeof basemaps): void
-    (e: 'contentUpdated', content: string): void
-}>()
+    (e: 'basemapUpdated', key: keyof typeof basemaps): void;
+    (e: 'contentUpdated', content: string): void;
+    (e: 'sectionUpdated', section: SlideSection): void;
+}>();
 
+const MapMarkerEditor = defineAsyncComponent(() => import('@/components/MapMarkerEditor.vue'));
+const dialog = useDialog();
+
+// --- Local  state ----------------------------------------------------
+
+const existingLayers = ref<Layer[] | null>(null);
+const layers = ref<Layer[]>([]);
+const savedPositions = ref<{ name: string; position: [number, number]; zoom: number; inEdit: boolean }[]>([]);
 const selectedBasemap = ref<keyof typeof basemaps>('openfreemap_bright');
+
+// The maps initial position is either the first saved position, or the startPosition prop, or a default value.
+const startState = computed<{ position: [number, number]; zoom: number }>(() => {
+    const first = savedPositions.value[0];
+    return first
+        ? { position: first.position, zoom: first.zoom }
+        : { position: props.startPosition ?? DEFAULT_START_POSITION, zoom: DEFAULT_START_ZOOM };
+});
+
+// --- Init Map Editor Settings onMounted  -----------------------------------------
 
 onMounted(async () => {
     if (props.slideSection.content) {
         const mapProperties: MapProperties = JSON.parse(props.slideSection.content);
         selectedBasemap.value = mapProperties.basemap;
-        layers.value = mapProperties.layers || [];
-        sZoom.value = mapProperties.startZoom || 18;
-        sPosition.value = mapProperties.startPosition?.join(', ') || DEFAULT_START_POSITION.join(', ');
+        layers.value = mapProperties.layers ?? [];
+        savedPositions.value = mapProperties.positions ?? [];
         existingLayers.value = await localMapLayer();
     } else {
         selectedBasemap.value = 'openfreemap_bright';
         layers.value = [];
-        sZoom.value = 18;
-        sPosition.value = DEFAULT_START_POSITION.join(', ');
+        savedPositions.value = [];
         props.slideSection.mode = 'interactive';
     }
-
-    if (props.slideSection?.id) {
-        const map = getMap(props.slideSection.id);
-        if (map) {
-            const currentPosition = map.getCurrentMapPosition();
-            if (currentPosition) {
-                sPosition.value = currentPosition.center.join(', ');
-                sZoom.value = currentPosition.zoom;
-            }
-        }
-    }
 });
 
+// --- build location parameters from saved positions -----------
 
-const asHexValue = computed(() => (value: string) => {
-    if (value.startsWith('#')) {
-        return value;
+function buildLocationParameter(): Parameters {
+    const options: Record<string, LocationValue> = {};
+    for (const p of savedPositions.value) {
+        const key = p.name.trim();
+        if (!key || key in options) continue; // skip empty / duplicate names
+        options[key] = { coord: p.position, zoom: p.zoom };
     }
-    return '#' + value;
-});
+    const keys = Object.keys(options);
+    return {
+        location: { type: 'location', options, default: keys[0] ?? null },
+    };
+}
 
-const basemapOptions = computed(() =>
-    (Object.keys(basemaps) as (keyof typeof basemaps)[]).map(key => ({
-        label: basemaps[key].name,
-        value: key
-    }))
-);
+// --- save section + emit content update + emit section update ----------------
+
+function saveSection(patch: Partial<SlideSection> = {}) {
+    const mapProperties: MapProperties = {
+        basemap: selectedBasemap.value,
+        startZoom: startState.value.zoom,
+        startPosition: startState.value.position,
+        layers: layers.value,
+        positions: savedPositions.value.map((pos) => ({
+            name: pos.name,
+            position: pos.position,
+            zoom: pos.zoom,
+        })),
+    };
+    const content = JSON.stringify(mapProperties);
+
+    const params = buildLocationParameter();
+
+    props.slideSection.content = content; // keep if the parent still reads contentUpdated
+    emit('contentUpdated', content);
+    emit('sectionUpdated', {
+        ...props.slideSection,
+        content,
+        parameters: params,
+        ...patch,
+    });
+}
+
+// --- Basemap ----------------------------------------------------------------
+
+const basemapOptions = computed(() => {
+    const hasCartoKey = !!settings.value?.carto_api_key && settings.value.carto_api_key.trim() !== '';
+    return (Object.keys(basemaps) as (keyof typeof basemaps)[])
+        .map((key) => ({ label: basemaps[key].name, value: key }))
+        .filter((option) => hasCartoKey || !option.value.startsWith('carto_'));
+});
 
 function onChangeBasemap() {
     emit('basemapUpdated', selectedBasemap.value);
+    saveSection();
 }
 
-function saveMapProperties() {
-    const mapProperties: MapProperties = {
-        basemap: selectedBasemap.value,
-        startZoom: sZoom.value,
-        startPosition: [0, 0],
-        layers: layers.value, 
-        positions: savedPositions.value.map(pos => ({
-            name: pos.name,
-            position: pos.position,
-            zoom: pos.zoom
-        }))
-    };
-    props.slideSection.content = JSON.stringify(mapProperties);
-    emit('contentUpdated', props.slideSection.content);
-}
+// --- Layers -----------------------------------------------------------------
+
+const asHexValue = computed(() => (value: string) => (value.startsWith('#') ? value : '#' + value));
 
 async function onFileSelect(event: { files: File[] }) {
-    const newLayers: Layer[] = await Promise.all(event.files.map(async (file) => ({
-        name: file.name,
-        file,
-        filetype: file.name.endsWith('.geojson') ? 'geojson' : file.name.endsWith('.gpkg') ? 'gpkg' : undefined,
-        path: URL.createObjectURL(file),
-        id: null,
-        section: props.slideSection?.id || null,
-        uploaded: false,
-        vectorType: await identifyVectorType(file)
-    })));
+    const newLayers: Layer[] = await Promise.all(
+        event.files.map(async (file) => ({
+            name: file.name,
+            file,
+            filetype: file.name.endsWith('.geojson')
+                ? 'geojson'
+                : file.name.endsWith('.gpkg')
+                    ? 'gpkg'
+                    : undefined,
+            path: URL.createObjectURL(file),
+            id: null,
+            section: props.slideSection?.id ?? null,
+            uploaded: false,
+            vectorType: await identifyVectorType(file),
+        })),
+    );
     layers.value.push(...newLayers);
 }
 
 function updateLayer(layer: Layer, idx: number) {
     layers.value[idx] = layer;
-    saveMapProperties();
+    saveSection();
 }
 
 function uploadLayer(layer: Layer, idx: number) {
-
     if (!props.slideSection?.id) {
         console.error('SlideSection ID is not available. Cannot upload layer.');
         return;
@@ -138,7 +167,7 @@ function uploadLayer(layer: Layer, idx: number) {
             layer.path = response.data.path.replace(/^\//, '');
             layer.id = response.data.id;
             layers.value[idx] = layer;
-            saveMapProperties();
+            saveSection();
         })
         .catch((error) => {
             console.error('Error uploading layer:', error);
@@ -148,7 +177,7 @@ function uploadLayer(layer: Layer, idx: number) {
 function openMarkerEditor(item: Layer) {
     dialog.open(MapMarkerEditor, {
         props: {
-            header: "Edit Marker",
+            header: 'Edit Marker',
             modal: true,
             style: { width: '600px', height: '600px' },
         },
@@ -162,43 +191,29 @@ function openMarkerEditor(item: Layer) {
     });
 }
 
-function onChangeMapPosition() {
-    if (props.slideSection?.id) {
-        const map = getMap(props.slideSection.id);
-        if (map) {
-            const position = sPosition.value.split(',').map(coord => parseFloat(coord.trim())) as [number, number];
-            map.updateMapPosition(position, sZoom.value);
-        }
-    }
-}
+// --- Map navigation ---------------------------------------------------------
 
 function flyToMapPosition(position: [number, number], zoom: number) {
-    if (props.slideSection?.id) {
-        const map = getMap(props.slideSection.id);
-        if (map) {
-            map.flyToPosition(position, zoom);
-        }
-    }
+    if (!props.slideSection?.id) return;
+    getMap(props.slideSection.id)?.flyToPosition(position, zoom);
+}
+
+function jumpToMapPosition(position: [number, number], zoom: number) {
+    if (!props.slideSection?.id) return;
+    getMap(props.slideSection.id)?.jumpToPosition(position, zoom);
 }
 
 function savePosition() {
-    if (props.slideSection?.id) {
-        const map = getMap(props.slideSection.id);
-        if (map) {
-            const currentPosition = map.getCurrentMapPosition();
-            if (currentPosition) {
-                const positionName = `Position ${savedPositions.value.length + 1}`;
-                savedPositions.value.push({
-                    name: positionName,
-                    position: currentPosition.center,
-                    zoom: currentPosition.zoom,
-                    inEdit: false
-                });
-            }
-        }
-    }
+    if (!props.slideSection?.id) return;
+    const current = getMap(props.slideSection.id)?.getCurrentMapPosition();
+    if (!current) return;
+    savedPositions.value.push({
+        name: `Position ${savedPositions.value.length + 1}`,
+        position: current.center,
+        zoom: current.zoom,
+        inEdit: false,
+    });
 }
-
 </script>
 
 <template>
@@ -319,8 +334,7 @@ function savePosition() {
                             </template>
                         </Button>
 
-                        <Button text
-                            @click="sPosition = pos.position.join(', '); sZoom = pos.zoom; onChangeMapPosition()">
+                        <Button text @click="jumpToMapPosition(pos.position, pos.zoom)">
                             <template #icon>
                                 <i class="material-symbols-outlined">arrow_forward</i>
                             </template>
@@ -330,9 +344,9 @@ function savePosition() {
 
                 <div class="position-controls">
                     <InputText class="coordinate-input pos-coord" :model-value="pos.position.join(', ')"
-                        @update:model-value="pos.position = ($event.split(',').map(c => parseFloat(c.trim())) as [number, number]); 
-                        flyToMapPosition(pos.position, pos.zoom)"
-                        :disabled="!props.slideSection?.id" placeholder="Paste WGS84 Coordinate" fluid />
+                        @update:model-value="pos.position = ($event.split(',').map(c => parseFloat(c.trim())) as [number, number]);
+                        flyToMapPosition(pos.position, pos.zoom)" :disabled="!props.slideSection?.id"
+                        placeholder="Paste WGS84 Coordinate" fluid />
 
                     <div class="zoom-control">
                         <Button class="zoom-btn" small iconOnly :disabled="pos.zoom <= 1 || !props.slideSection?.id"

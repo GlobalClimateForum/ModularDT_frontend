@@ -112,9 +112,14 @@ async function addLayer(layer: Layer) {
 }
 
 function flyToPosition(center: [number, number], zoom: number) {
-    console.log("Flying to position:", center, "Zoom:", zoom);
     if (!map) return;
     map.flyTo({ center, zoom });
+}
+
+function jumpToPosition(center: [number, number], zoom: number) {
+    if (!map) return;
+    map.setCenter(center);
+    map.setZoom(zoom);
 }
 
 function getCurrentMapPosition(): { center: [number, number], zoom: number } | null {
@@ -153,7 +158,7 @@ onMounted(() => {
     });
 
     if (props.section.id) {
-        registerMap(props.section.id, { getCurrentMapPosition, updateMapPosition, flyToPosition });
+        registerMap(props.section.id, { getCurrentMapPosition, updateMapPosition, flyToPosition, jumpToPosition });
     }
 });
 
@@ -187,7 +192,7 @@ watch(() => props.section.id, (newId, oldId) => {
         unregisterMap(oldId);
     }
     if (newId) {
-        registerMap(newId, { getCurrentMapPosition, updateMapPosition, flyToPosition });
+        registerMap(newId, { getCurrentMapPosition, updateMapPosition, flyToPosition, jumpToPosition });
     }
 });
 

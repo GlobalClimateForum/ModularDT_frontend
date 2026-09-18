@@ -28,6 +28,7 @@ export interface MapHandle {
     getCurrentMapPosition: () => { center: [number, number]; zoom: number } | null;
     updateMapPosition: (center: [number, number], zoom: number) => void;
     flyToPosition: (center: [number, number], zoom: number) => void;
+    jumpToPosition: (center: [number, number], zoom: number) => void;
 }
 
 const mapRegistry = new Map<number, MapHandle>()

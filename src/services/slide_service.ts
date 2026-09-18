@@ -57,10 +57,16 @@ export interface SelectParameter {
     default?: string | null
 }
 
+export interface LocationValue {
+    coord : [number, number]
+    zoom : number
+}
+
 export interface LocationParameter {
     type: 'location'
     description?: string
-    default?: { lat: number; lng: number, zoom: number } | null 
+    options?: Record<string, LocationValue>
+    default?: string | null
 }
 
 export type Parameter =
