@@ -16,23 +16,23 @@ class ParameterStore {
 
     private channelId = `parameters/`
     private wsUrlParameter = new URL('/ws/parameters/', import.meta.env.VITE_API_BASE_URL)
-    private socketUrl = this.wsUrlParameter.toString()
+    // private socketUrl = this.wsUrlParameter.toString()
+    // Fix: socketURL is now set in the constructor to ensure the protocal is correct before
+    // the WebSocket connection is established, in the old version it was set to http or https,
+    // which caused issues with the WebSocket connection. Now it is set to ws or wss based on the protocol of the page.
+    private socketUrl = ''
 
-    handleMessage = (data) => {
-        try {
-            if (data.event_type === 'parameter_change' || data.message) {
-                const change = JSON.parse(data)
-                this.applyingRemote = true
-                this.set(change)
-                this.applyingRemote = false
-            }
-        } catch (e) {
-            console.error('Error processing WebSocket message:', e)
-        }
+
+    handleMessage = (data: ParameterChange) => {
+        if (data?.section == null || data?.parameter == null) return
+        this.applyingRemote = true
+        this.set(data)          // applies + notifies; won't re-broadcast because of the guard in set()
+        this.applyingRemote = false
     }
 
     constructor() {
         this.wsUrlParameter.protocol = this.wsUrlParameter.protocol === 'https:' ? 'wss:' : 'ws:'
+        this.socketUrl = this.wsUrlParameter.toString() // ensure the protocol is correct before connecting
         wsService.connect(this.channelId, this.socketUrl)
         wsService.on(this.channelId, 'message', this.handleMessage)
     }
@@ -44,8 +44,16 @@ class ParameterStore {
 
 
     public set(change: ParameterChange) {
+        // Update own parameter state
         this.state[this.getKey(change.section, change.parameter)] = change.value
+        // Notify all listeners of the change
         this.listeners.forEach(fn => fn(change))
+        // Broadcast the change to the server if it was not applied from a remote source
+        // (i.e., if it was a local change). Before  achange updated the local client but never
+        // went out to the server, so other clients (Tabs) never saw it. We send the plain change
+        // object here as the JSONG.stringify is handled by websocket_service.ts
+        //  Skip sending if we are applying a remote change to avoid recursive update loops
+        if (!this.applyingRemote) wsService.send(this.channelId, change)
     }
 
     public get(section: number, parameter: string) {
@@ -69,7 +77,7 @@ class ParameterStore {
 
 export default new ParameterStore()
 
-  
+
 /*
 const state = reactive<Record<string, any>>({})
 const listeners = new Set<(change: ParameterChange) => void>()
