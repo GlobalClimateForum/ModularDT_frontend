@@ -14,7 +14,7 @@ import { dialogService } from '@/services/dialog_service';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import type { Scene } from '@/services/scene_service';
-import { scenes } from '@/globals/scenes';
+import { scenes, fetchScenes } from '@/globals/scenes';
 import { settings } from '@/globals/settings'
 import { saveScene, updateScene } from '@/services/scene_service';
 import '@/assets/main.css'
@@ -123,6 +123,7 @@ function storeScene() {
 
     saveScene(scene_).then(_response => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
+        fetchScenes()
     }).catch(error => {
         console.error("Error saving scene:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
@@ -248,13 +249,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </template>
 
 <style scoped>
-/*
-.sub-panel {
-    display: flex !important;
-    flex-direction: column;
-    height: 100%;
-}
-*/
 
 .scene-toolbar {
     margin-bottom: 0.5rem;
