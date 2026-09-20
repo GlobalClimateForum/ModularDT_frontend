@@ -22,6 +22,8 @@ import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_se
 import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
+import { updateSlideOnMonitors } from '@/services/monitor_service'
+import { updateSlideViews } from '@/services/live_presentation_service';
 import '@/assets/main.css'
 // components
 import LayoutEditor from '@/components/LayoutEditor.vue'
@@ -69,7 +71,7 @@ const editorMapping: Record<string, any> = {
 const toast = useToast()
 
 // 
-function confirmedUpdateSlide() {
+async function confirmedUpdateSlide() {
     const sections = slideSections.value.map((section, index) => ({
         ...section,
         width_fraction: sectionWidths.value[index],
@@ -87,13 +89,21 @@ function confirmedUpdateSlide() {
         tags: currentSlide.value.tags,
     };
 
-    return updateSlide(currentSlide.value.id, slide, sections).then(response => {
-        fetchSlides();
+    try {
+        const response = await updateSlide(currentSlide.value.id, slide, sections)
+        await fetchSlides();
+        // here: refresh the updated slide on monitors
+        const newslide = slides.value.find(slide => slide.id === currentSlide.value.id);
+        if (newslide) {
+            updateSlideOnMonitors(newslide)
+            updateSlideViews(newslide)
+        }
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-    }).catch(error => {
+        return response
+    } catch (error) {
         console.error('Error saving slide:', error)
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-    })
+    }
 }
 
 function confirmUpdateSlide() {

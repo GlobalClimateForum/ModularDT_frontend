@@ -1,9 +1,13 @@
 import { api } from "./api";
-import { useCurrentPresentation, useLivePresentationState } from '@/globals/live_presentation';
+import { useCurrentPresentation, useLivePresentationState, useSceneOnMonitors, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
+import type { Slide } from '@/services/slide_service'
 
 const livePresentationState = useLivePresentationState()
 const currentPresentation = useCurrentPresentation()
+
+let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
+let sceneOnMonitors = useSceneOnMonitors()
 
 //export const getLivePresentation = () => api.get("/livepresentation/");
 export const updateLivePresentation = (livepresentation) => api.patch("/livepresentation/", livepresentation);
@@ -40,3 +44,15 @@ export const startPresentation = async (presentationid) => {
     }
 }
 
+export function updateSlideViews(slide: Slide) {
+    for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
+        if (liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {
+            liveSlidesOnMonitors.value[sl_index] = slide
+        }
+    }
+    for (let sl_index = 0; sl_index < sceneOnMonitors.value.length; sl_index++) {
+        if (sceneOnMonitors.value[sl_index]?.id == slide.id) {
+            sceneOnMonitors.value[sl_index] = slide
+        }
+    }
+}

@@ -68,7 +68,7 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-  fetchSlides();
+  await fetchSlides();
   fetchScenes();
   fetchPresentations();
   stopPresentation();

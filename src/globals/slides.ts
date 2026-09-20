@@ -5,8 +5,8 @@ import { getSlides } from "@/services/slide_service";
 // globale reactive variable
 export const slides = ref<Slide[]>([]);
 
-export function fetchSlides() {
-    getSlides().then(response => {
+export async function fetchSlides() {
+    await getSlides().then(response => {
         slides.value = response.data;
         response.data.forEach((slide: Slide) => {
             if (slide.sections && slide.sections.length > 0) {

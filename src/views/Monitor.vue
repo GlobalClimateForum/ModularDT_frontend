@@ -84,7 +84,7 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 const handleMessage = (data) => {
-  console.log("got message: ", data)
+  console.debug("got message: ", data)
   try {
     if (data.event_type === 'presentation_start' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
@@ -98,7 +98,7 @@ const handleMessage = (data) => {
       }
     }
 
-    if (data.event_type === 'slide_update' || data.message) {
+    if (data.event_type === 'slide_change' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         if (data.slide != "null") {
           if ((currentSlide.value != null && currentSlide.value.id != data.slide.id) || currentSlide.value == null) {
@@ -108,6 +108,14 @@ const handleMessage = (data) => {
           currentSlide.value = null
         }
       }
+    }
+
+    if (data.event_type === 'slide_update' || data.message) {
+      if (data.slide != "null") {
+        if (currentSlide.value != null && currentSlide.value.id == data.slide.id) {                  
+          currentSlide.value = data.slide
+        }
+      } 
     }
 
     if (data.event_type === 'live_slides_start' || data.message) {
@@ -147,7 +155,7 @@ onUnmounted(() => {
     <div v-if="currentSlide === null && livePresentationActive">
     </div>
     <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
-      style="width: 100vw; height: 100vh;  overflow: hidden;">
+      style="width: 100vw; height: 100vh; overflow: hidden;">
     </div>
     <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
       <SlideView :preview="false" :slide="displaySlide" :showframe="false"

@@ -97,7 +97,7 @@ export const getSlideSectionType = (value: string) => {
 
 export type SlidePayload = Omit<Slide, "id" | "created_at" | "updated_at">;
 
-export const getSlides = () => api.get("/slides/");
+export const getSlides = async () => await api.get("/slides/");
 export const getSlide = (id: number) => api.get(`/slides/${id}/`);
 
 export const getISlides = () => api.get("/slides/interactive/");
@@ -106,8 +106,8 @@ export const getIPanels = () => api.get("/slides/ipanels/")
 export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
     api.post("/slides/", { ...slide, sections });
 
-export const updateSlide = (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) =>
-    api.patch(`/slides/${id}/`, { ...slide, sections });
+export const updateSlide = async (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) => 
+    await api.patch(`/slides/${id}/`, { ...slide, sections });
 
 export const deleteSlide = (id: number) => api.delete(`/slides/${id}/`);
 

@@ -45,8 +45,10 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
 
     if (selected) {
+        startLiveSlides()
         for (const monitor of selected) {
             liveSlidesOnMonitors.value[monitor.id] = slide;
+            updateOneMonitor(slide, monitor.id + 1)
         }
     }
 }
