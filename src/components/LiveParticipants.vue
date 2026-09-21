@@ -146,7 +146,7 @@ async function stopAllParticipantSlideshows() {
                                     </div>
                                     <ul class="parameter-change-list">
                                         <li><strong>Parameter:</strong> {{ change.parameter }}</li>
-                                        <li><strong>Old Value:</strong> {{ change.value }}</li>
+                                        <li><strong>New Value:</strong> {{ change.value }}</li>
                                     </ul>
                                 </div>
                             </template>

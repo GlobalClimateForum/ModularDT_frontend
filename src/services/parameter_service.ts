@@ -2,9 +2,9 @@ import { reactive, readonly } from 'vue'
 import wsService from '@/services/websocket_service'
 
 export interface ParameterChange {
-    section: number
-    parameter: string
-    value: any
+    section: number // Section ID of the targeted section
+    parameter: string // Name of the parameter that should be changed
+    value: any // New value for the parameter
 }
 
 
