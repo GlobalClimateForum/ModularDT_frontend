@@ -6,7 +6,9 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { basemaps, type Basemap } from '@/utils/map_utils';
 import type { Layer } from '@/services/map_service';
 import { identifyVectorType } from "@/services/map_service";
-import { type MapHandle, registerMap, unregisterMap } from "@/services/map_service";
+import { registerMap, unregisterMap } from "@/services/map_service";
+import parameterStore from "@/services/parameter_service"
+import { type ParameterChange } from '@/services/parameter_service'
 
 const props = defineProps<{
     slide: Slide,
@@ -17,6 +19,7 @@ const props = defineProps<{
     shadow?: boolean
 }>()
 
+const parameterChanges = ref<ParameterChange[]>([])
 const currentBasemap = ref<keyof typeof basemaps>(props.basemap ?? 'esri');
 const mapContainer = ref<HTMLDivElement | null>(null);
 let map: MaplibreMap | null = null;
@@ -136,6 +139,12 @@ function updateMapPosition(center: [number, number], zoom: number) {
     map.setZoom(zoom);
 }
 
+function onParameterChange(change: ParameterChange) {
+    if (!map) return;
+    flyToPosition(change.value.coord, change.value.zoom);
+};
+
+
 
 onMounted(() => {
     if (!mapContainer.value) return;
@@ -162,12 +171,22 @@ onMounted(() => {
     }
 });
 
+onMounted(() => {
+    stop = parameterStore.subscribe((c) => {
+        parameterChanges.value.push(c);
+        onParameterChange(c);
+    });
+})
+
+let stop: (() => void) | undefined
+
 onUnmounted(() => {
     map?.remove();
     map = null;
     if (props.section.id) {
         unregisterMap(props.section.id);
     }
+    onUnmounted(() => stop?.())
 });
 
 watch(() => props.basemap, (newBasemap) => {
@@ -200,9 +219,6 @@ watch(() => props.section.id, (newId, oldId) => {
 
 <template>
     <div :style="{ width: slide.width * sectionWidth + 'px', height: slide.height + 'px' }">
-        <!-- <div class="debuginfo">
-            DEBUG: <br> {{ section.content }}
-        </div> -->
         <div ref="mapContainer" style="height: 100%; width: 100%;"></div>
     </div>
 </template>
@@ -217,8 +233,8 @@ watch(() => props.section.id, (newId, oldId) => {
     font-size: 25pt;
     font-style: italic;
     max-width: 500px;
-    width: 500px; 
-    font-size: var(--fs-xlarge); 
+    width: 500px;
+    font-size: var(--fs-xlarge);
     background-color: rgba(255, 0, 0, 0.5);
 }
 

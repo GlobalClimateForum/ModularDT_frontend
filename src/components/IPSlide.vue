@@ -82,7 +82,7 @@ watch(() => props.targetSlide, (newSlide) => {
                     <label>{{ key }}</label>
                     <div class=" location-select">
                         <div v-for="(option, optionKey) in field?.options" :key="optionKey">
-                            <Button @click="onParameterChange(section, key, optionKey)">{{ optionKey }}</Button>
+                        <Button @click="onParameterChange(section, key, field.options?.[optionKey])">{{ optionKey }}</Button>
                         </div>
                     </div>
                 </div>
