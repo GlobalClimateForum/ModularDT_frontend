@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, watch, defineAsyncComponent } from 'vue'
+import { ref, watch, defineAsyncComponent, nextTick, onMounted } from 'vue'
 import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
+import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
@@ -32,6 +33,8 @@ import SlideView from '@/components/SlideView.vue'
 
 const { t } = useI18n();
 const confirm = useConfirm();
+const edited = ref<boolean>(false)
+let ready = false
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
 const DEFAULT_CONTENT = ''
@@ -56,6 +59,7 @@ const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega 
 const bgColor = ref<string>('#ffffff') // Track the selected background color for the slide preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
+const slideSaved = ref<boolean>(false) // Track whether the slide has been saved to the server
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -99,6 +103,9 @@ async function confirmedUpdateSlide() {
             updateSlideViews(newslide)
         }
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
+        ready = false
+        edited.value = false
+        nextTick(() => { ready = true })
         return response
     } catch (error) {
         console.error('Error saving slide:', error)
@@ -153,7 +160,11 @@ function storeSlide() {
         sectionWidths.value = saved.sections.map(s => s.width_fraction ?? 1.0)
         selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
 
+        edited.value = false
+        nextTick(() => { ready = true })
+
         fetchSlides()
+        slideSaved.value = true;
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
     })
 }
@@ -294,6 +305,10 @@ watch(() => props.slide, (newSlide) => {
     }
 
     selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+    edited.value = false // Reset the edited flag since we just loaded a new slide
+    nextTick(() => {
+        ready = true // Set the ready flag to true after the next DOM update cycle
+    })
 
 }, { immediate: true })
 
@@ -336,6 +351,19 @@ watch(currentSectionIndex, (i) => {
     autosizeVega.value = !!slideSections.value[i]?.properties?.autosize
 })
 
+watch(
+    [currentSlide, slideSections, sectionWidths, bgColor, layout, selectedTypes, autosizeVega, basemap, targetSlide],
+    () => { if (ready) edited.value = true },
+    { deep: true }
+)
+
+onMounted(() =>  {
+    // if the slide is injected we want to set saved to true
+    if (props.slide) {
+        slideSaved.value = true
+    }
+})
+
 </script>
 
 <template>
@@ -343,6 +371,8 @@ watch(currentSectionIndex, (i) => {
     <!-- Editor -->
     <Splitter :gutter-size="2" class="dashboard">
         <SplitterPanel :size="50" class="sub-panel">
+
+            <h1 class="dashboard_label">Slide Editor</h1>
 
             <Tabs value="0" style="height: 100%;" scrollable>
 
@@ -406,42 +436,76 @@ watch(currentSectionIndex, (i) => {
         </SplitterPanel>
 
         <!-- Preview & Layout, Save, ... -->
-        <SplitterPanel class="sub-panel  preview-panel">
-            <div class="preview-panel">
+        <SplitterPanel id="slide-settings" class="sub-panel">
 
+            <div>
                 <!-- Save Toolbar -->
+                <h1 class="dashboard_label">Save</h1>
                 <Toolbar class="editor-toolbar">
                     <template #start>
-                        <div class="editor-toolbar-start">
-                            <Button icon="pi pi-save" size="small" rounded @click="updateOrStoreSlide"
-                                :disabled="currentSlide.name === ''" />
-                            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
-                                size="small" rounded />
+                        <div class="toolbar-start">
+
+                            <div class="save-controls">
+
+                                <div v-if="slideSaved" class="slide-name">
+                                    {{ currentSlide.name }}
+                                </div>
+
+                                <InputText v-if="!slideSaved" v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
+                                    :disabled="slideSaved" fluid style="width: 500px;"/>
+
+                                <Button :disabled="currentSlide.name === ''" label="Save" fluid
+                                    @click="updateOrStoreSlide">
+                                    <template #icon>
+                                        <i class="material-symbols-outlined">save</i>
+                                    </template>
+                                </Button>
+
+                                <Button fluid outlined :label="$t('moderator.clear')" @click="clearCurrentSlide()">
+                                    <template #icon>
+                                        <i class="material-symbols-outlined">delete</i>
+                                    </template>
+                                </Button>
+                            </div>
+
+
                         </div>
                     </template>
+
                     <template #end>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
-                                @click=clearCurrentSlide() />
-                        </div>
+                        <Message v-if="edited" :closable="false" severity="warn">
+                            <template #icon>
+                                <i class="material-symbols-outlined">info</i>
+                            </template>
+                            Unsaved Changes
+                        </Message>
                     </template>
                 </Toolbar>
+            </div>
+
+            <div class="preview-panel">
+
+                <h1 class="dashboard_label">Preview</h1>
 
                 <!-- Slide Preview -->
                 <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                     :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
                     :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
 
+            </div>
+
+            <div>
+                <h1 class="dashboard_label">Slide Settings</h1>
                 <!-- Layout Editor -->
                 <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                     @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                     :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
                     @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" />
-
             </div>
         </SplitterPanel>
     </Splitter>
 </template>
+
 <style scoped>
 .p-toolbar {
     margin: 0;
@@ -462,12 +526,36 @@ watch(currentSectionIndex, (i) => {
     width: 100%;
 }
 
+#slide-settings {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    gap: var(--space-small);
+}
+
 .section-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: var(--fs-medium);
     font-weight: 700;
+}
+
+.slide-name {
+    font-size: var(--fs-medium);
+    font-weight: 700;
+    color: var(--p-primary-500);
+    width: 500px; 
+    display: flex;
+    align-items: center;
+    font-family: "Fira Code", monospace;
+
+    background-color: var(--p-primary-50);
+    border: 1px solid var(--p-primary-200);
+    border-radius: var(--br-medium);
+    padding: 0.25rem 0.5rem;
 }
 
 :deep(.p-tab) {
@@ -581,6 +669,18 @@ watch(currentSectionIndex, (i) => {
     margin: 0;
 }
 
+.toolbar-start {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-small);
+    width: 100%;
+}
+
+.save-controls {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+}
 .editor-toolbar {
     margin-bottom: 1rem;
 }
