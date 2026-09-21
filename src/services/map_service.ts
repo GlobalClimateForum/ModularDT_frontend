@@ -116,6 +116,6 @@ export async function localMapLayer() {
         name: layer.name,
         filetype: layer.filetype,
         path: layer.path,
-        marker: layer.marker ? JSON.parse(layer.marker) : undefined,
+        marker: layer.marker,
     }));
 }

@@ -40,7 +40,8 @@ const dialog = useDialog();
 
 // --- Local  state ----------------------------------------------------
 
-const existingLayers = ref<Layer[] | null>(null);
+const existingLayers = ref<Layer[]>([]);
+const selectedExistingLayer = ref<Layer | null>(null);
 const layers = ref<Layer[]>([]);
 const savedPositions = ref<{ name: string; position: [number, number]; zoom: number; inEdit: boolean }[]>([]);
 const selectedBasemap = ref<keyof typeof basemaps>('openfreemap_bright');
@@ -56,12 +57,18 @@ const startState = computed<{ position: [number, number]; zoom: number }>(() => 
 // --- Init Map Editor Settings onMounted  -----------------------------------------
 
 onMounted(async () => {
+    try {
+        existingLayers.value = await localMapLayer();
+        console.log('Existing layers fetched:', existingLayers.value);
+    } catch (e) {
+        console.error('localMapLayer failed:', e);
+        existingLayers.value = [];
+    }
     if (props.slideSection.content) {
         const mapProperties: MapProperties = JSON.parse(props.slideSection.content);
         selectedBasemap.value = mapProperties.basemap;
         layers.value = mapProperties.layers ?? [];
         savedPositions.value = mapProperties.positions ?? [];
-        existingLayers.value = await localMapLayer();
     } else {
         selectedBasemap.value = 'openfreemap_bright';
         layers.value = [];
@@ -86,6 +93,13 @@ function buildLocationParameter(): Parameters {
 }
 
 // --- save section + emit content update + emit section update ----------------
+
+function addExistingLayer() {
+    if (!selectedExistingLayer.value) return;
+    layers.value.push({ ...selectedExistingLayer.value, uploaded: true });
+    selectedExistingLayer.value = null;
+    saveSection();
+}
 
 function saveSection(patch: Partial<SlideSection> = {}) {
     const mapProperties: MapProperties = {
@@ -228,8 +242,8 @@ function savePosition() {
             <h1 style="margin-bottom: 0;" class="dashboard_label">Layer</h1>
             <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
 
-                <Select v-model="existingLayers" :options="layers" optionLabel="name" optionValue="id"
-                    placeholder="Add Existing Layer" />
+                <Select v-model="selectedExistingLayer" :options="existingLayers ?? []" optionLabel="name"
+                    placeholder="Add Existing Layer" @change="addExistingLayer" />
 
                 <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Upload Layer"
                     :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
