@@ -26,15 +26,15 @@ const dynamicComponent = shallowRef<any>(null)
 
 // Define  the updateParticipantParameter function to be injected from the parent component
 
-/* const updateParticipantParameter = inject('updateParticipantParameter', () => { })
-provide('updateParticipantParameter', (name: string, checked: boolean) => {
-      parameterStore.set({
+const updateParticipantParameter = inject('updateParticipantParameter', () => { })
+provide('updateParticipantParameter', (name: string, value: any) => {
+    parameterStore.set({
         section: props.section.id as number,
-        parameter: "TestParameter",
-        value: "Test successfully set"
+        parameter: name,
+        value: value
     })
 })
-*/
+
 
 // Stable id per section, used for both the wrapper and the CSS prefix
 const sectionScopeId = computed(() => `sfc-${props.section.id ?? Math.random().toString(36).slice(2)}`)
@@ -95,10 +95,10 @@ watchEffect((onCleanup) => {
         const options: Options = {
             moduleCache: sharedModuleCache,
             getFile: async () => ({ getContentData: () => code, type: '.vue' }),
-            
+
             // SFC load will call this function for each <style> block in the SFC, 
             // allowing us to scope the styles to this section
-            addStyle(styleStr:any) {
+            addStyle(styleStr: any) {
                 const style = document.createElement('style')
                 style.textContent = scopeCss(styleStr, prefix)
                 document.head.appendChild(style)
@@ -123,14 +123,12 @@ watchEffect((onCleanup) => {
 <template>
     <div
         :style="{ backgroundColor: 'transparent', width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', overflow: 'hidden', position: 'relative' }">
-        
-        <div v-if="props.section.mode === 'html'"
-            :style="{ width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', overflow: 'hidden' }">
-            <div v-html="props.section.content" :style="{ width: '100%', height: '100%' }"></div>
-        </div>
 
-        <div v-else-if="props.section.mode === 'vue'" 
-            :id="sectionScopeId"
+        <iframe v-if="props.section.mode === 'html'" :srcdoc="props.section.content" sandbox="allow-same-origin"
+            :style="{ width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', border: 'none', display: 'block' }">
+        </iframe>
+
+        <div v-else-if="props.section.mode === 'vue'" :id="sectionScopeId"
             :style="{ width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', overflow: 'hidden' }">
             <Suspense>
                 <component :is="dynamicComponent" />
