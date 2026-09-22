@@ -2,8 +2,10 @@
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
+import SelectButton from 'primevue/selectbutton';
+import OverlayBadge from 'primevue/overlaybadge';
 import { useToast } from 'primevue/usetoast';
-import type { Slide, SlideSection } from "@/services/slide_service"
+import type { Slide } from "@/services/slide_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
@@ -11,12 +13,12 @@ import SlideView from '@/components/SlideView.vue';
 import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
-import { saveSlide } from '@/services/slide_service'
-import Tag from 'primevue/tag';
+import MultiSelect from 'primevue/multiselect';
+import Chip from 'primevue/chip';
 import { slides, fetchSlides } from '@/globals/slides';
 import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
-
-import { onMounted, ref } from 'vue';
+import { getAvailableTags } from '@/services/slide_service';
+import { ref, onMounted, computed, watch } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
@@ -25,20 +27,26 @@ const confirm = useConfirm();
 const { t } = useI18n();
 
 const selectedSlide = ref<Slide | null>(null);
-const previewSlide = ref('');
+const selectedTags = ref<string[]>([]);
+const existingTags = ref<string[]>([]);
 const editingRows = ref<Slide[]>([]);
+const filterLogic = ref<'and' | 'or'>('and');
+const doFilter = ref(false);
 const toast = useToast();
-const filters = ref({
+
+const filters = ref<{ global: { value: string | null; matchMode: any } }>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 })
-
+const activeFilterCount = computed(() =>
+    (filters.value.global.value ? 1 : 0) + selectedTags.value.length
+);
 
 function onRowEditSave(event: any) {
     const { id, name } = event.newData
     if (name === event.data.name) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
     } else {
-        updateSlide(id, { name: name }).then(response => {
+        updateSlide(id, { name: name }, []).then(response => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Slide updated successfully', life: 3000 });
             slides.value[event.index] = response.data;
         }).catch(error => {
@@ -76,13 +84,13 @@ function onDeleteSlide(slide: Slide) {
 
 function onConfirmDeleteSlide(slide: Slide) {
     confirm.require({
-        header: t('moderator.confirmation'), 
-        message: t('moderator.confirmation-message-head') + t('moderator.slide') + " (" + slide.name + ")" + t('moderator.confirmation-message-tail'), 
+        header: t('moderator.confirmation'),
+        message: t('moderator.confirmation-message-head') + t('moderator.slide') + " (" + slide.name + ")" + t('moderator.confirmation-message-tail'),
         acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'), 
-        accept: async () => {    
+        rejectLabel: t('moderator.confirmation-cancel'),
+        accept: async () => {
             await onDeleteSlide(slide);
-        }, reject: () => {      
+        }, reject: () => {
             // nothing to do    
         },
     });
@@ -117,8 +125,22 @@ function onDuplicateEditSlide(slide: Slide) {
         console.error("Error deleting slide: no valid slide.id"); */
         slide.name = `${slide.name} (${t('moderator.copy')})`
         emit('edit-slide', { ...slide, sections: slide.sections || [] });
-        }
+    }
 }
+
+const filteredSlides = computed(() =>
+    slides.value.filter(s => {
+        const q = filters.value.global.value?.toLowerCase() ?? '';
+        const textOk = !q || s.name.toLowerCase().includes(q);
+        const tagsOk = selectedTags.value.length === 0
+            || selectedTags.value.some(t => s.tags.includes(t));
+        if (filterLogic.value === 'or') {
+            return textOk || tagsOk;
+        } else if (filterLogic.value === 'and') {
+            return textOk && tagsOk;
+        }
+    })
+);
 
 function onTagRemoved(removedTag: string) {
     if (selectedSlide.value) {
@@ -130,7 +152,21 @@ function onTagAdded(addedTag: string) {
     if (selectedSlide.value) {
         selectedSlide.value.tags = [...selectedSlide.value.tags, addedTag];
     }
+    existingTags.value = Array.from(new Set([...existingTags.value, addedTag]));
 }
+
+onMounted(() => {
+    getAvailableTags().then(tags => {
+        existingTags.value = tags.data.tags;
+    });
+});
+
+watch(doFilter, (newVal) => {
+    if (!newVal) {
+        filters.value.global.value = null;
+        selectedTags.value = [];
+    }
+});
 </script>
 
 
@@ -139,10 +175,9 @@ function onTagAdded(addedTag: string) {
 
         <SplitterPanel class="sub-panel" :size="30">
 
-            <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+            <DataTable dataKey="id" editMode="row" scrollable scrollHeight="flex" :value="filteredSlides"
                 @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
-                v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single"
-                :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
+                v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single">
 
                 <Column field="name" header="">
                     <template #editor="slotProps">
@@ -150,24 +185,29 @@ function onTagAdded(addedTag: string) {
                     </template>
                     <template #body="slotProps">
                         <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
-                        <span style="font-size: 0.875rem; color: #64748b;">Updated
-                            {{ formatDate(slotProps.data.updated_at) }}</span>
-                        <div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
+                        <span style="font-size: 0.875rem; color: #64748b;">Updated {{
+                            formatDate(slotProps.data.updated_at) }}</span>
+                        <!-- <div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
                             <Tag :severity="slotProps.data.mode === 'interactive' ? 'success' : 'info'">
                                 {{ slotProps.data.mode }}
                             </Tag>
+                        </div> -->
+                        <div class="slide-tags">
+                            <Chip v-for="tag in slotProps.data.tags" :key="tag" :label="tag" class="slide-tag" />
                         </div>
                     </template>
                 </Column>
 
-                <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap" editorClass="flex justify-content-end white-space-nowrap">
+                <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap"
+                    editorClass="flex justify-content-end white-space-nowrap">
                     <template #body="slotProps">
                         <Button size="small" rounded text icon="pi pi-code" @click="onEditSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-clone"
                             @click="onDuplicateEditSlide(slotProps.data)" />
                         <Button size="small" rounded text icon="pi pi-pencil"
                             @click="(e) => slotProps.editorInitCallback(e)" />
-                        <Button size="small" rounded text icon="pi pi-trash" @click="onConfirmDeleteSlide(slotProps.data)" />
+                        <Button size="small" rounded text icon="pi pi-trash"
+                            @click="onConfirmDeleteSlide(slotProps.data)" />
                     </template>
                     <template #editor="slotProps">
                         <Button size="small" rounded text icon="pi pi-check"
@@ -178,12 +218,35 @@ function onTagAdded(addedTag: string) {
                 </Column>
 
                 <template #header>
-                    <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
-                        type="text" />
-                    <Button class="button-reset-search" @click="filters.global.value = null" rounded
-                        :disabled="!filters.global.value">
-                        <i class="pi pi-times"></i>
-                    </Button>
+                    <div style="display: flex; flex-direction: column; width: 100%; gap: var(--space-small);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <h1 class="dashboard_label">Slides</h1>
+                            <OverlayBadge :value="activeFilterCount ? String(activeFilterCount) : undefined"
+                                severity="warn">
+                                <Button @click="doFilter = !doFilter" label="Filter"
+                                    :badge="activeFilterCount ? String(activeFilterCount) : undefined">
+                                    <template #icon>
+                                        <i class="pi" :class="doFilter ? 'pi-filter-slash' : 'pi-filter'"></i>
+                                    </template>
+                                </Button>
+                            </OverlayBadge>
+                        </div>
+
+                        <transition name="rolldown">
+                            <div v-if=" doFilter" class="filter-container">
+                            <InputText v-model="filters.global.value" :placeholder="$t('moderator.search')"
+                                :showClear="true" class="filter-field" />
+                            <SelectButton :options="['and', 'or']" v-model="filterLogic">
+                                <template #option="{ option }">
+                                    <span v-if="option == 'and'">AND</span>
+                                    <span v-else>OR</span>
+                                </template>
+                            </SelectButton>
+                            <MultiSelect v-model="selectedTags" :options="existingTags" placeholder="Tags"
+                                display="chip" :showClear="true" class="filter-field" />
+                    </div>
+                    </transition>
+                    </div>
                 </template>
 
             </DataTable>
@@ -193,8 +256,15 @@ function onTagAdded(addedTag: string) {
             <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
                 :sections="selectedSlide.sections ? selectedSlide.sections : []" class="slide-preview" />
 
-            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide"
+            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" v-if="selectedSlide"
                 :onRemoveTagApi="removeTagFromSlide" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
+
+            <div v-else class="slide-preview" style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: var(--space-small); color: var(--p-primary-300);">
+                <i class="material-symbols-outlined">photo_frame</i>
+                <span>Select a slide in the table to view it here</span>
+            </div>
+
+     
         </SplitterPanel>
     </Splitter>
 </template>
@@ -206,7 +276,6 @@ function onTagAdded(addedTag: string) {
     width: 100%;
     max-height: 500px
 }
-
 
 .slide-table {
     flex: 1;
@@ -236,18 +305,69 @@ function onTagAdded(addedTag: string) {
     flex-shrink: 0;
 }
 
-.search-input {
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
     width: 100%;
-    padding: 0.5rem;
-    border-radius: var(--br-medium);
-    border: 1px solid var(--surface-border, #e2e8f0);
-    background-color: var(--p-primary-50, #f8fafc);
+    overflow: hidden;
+}
+
+:deep(.p-selectbutton) {
+    flex-shrink: 0;
+}
+
+.search-reset-btn {
+    flex-shrink: 0;
+    width: 2.5rem;
+    color: var(--p-primary-400);
+}
+
+.slide-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-small);
+    margin-top: var(--space-small);
+    padding-top: var(--space-small);
+}
+
+.filter-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.slide-tag {
+    font-size: var(--fs-small);
+    color: var(--p-primary-800);
+    background-color: var(--p-primary-200);
+    border-radius: var(--br-large);
+    padding: var(--space-small) var(--space-medium);
+}
+
+:deep(.p-multiselect-label) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+:deep(.p-multiselect-label)::-webkit-scrollbar {
+    display: none;
+}
+
+:deep(.p-multiselect-label) {
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }
 
 :deep(.p-datatable-header) {
     padding: 0.5em 0em;
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-small);
+    border-bottom: 2px solid var(--p-primary-200);
+    margin-bottom: var(--space-small);
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 
@@ -260,5 +380,23 @@ function onTagAdded(addedTag: string) {
     color: var(--p-primary-900);
     box-shadow: inset 3px 0 0 var(--p-primary-400);
     font-weight: 500;
+}
+
+.rolldown-enter-active,
+.rolldown-leave-active {
+    transition: all 0.5s ease;
+    overflow: hidden;
+}
+
+.rolldown-enter-from,
+.rolldown-leave-to {
+    max-height: 0;
+    opacity: 0.0;
+}
+
+.rolldown-enter-to,
+.rolldown-leave-from {
+    max-height: 200px;
+    opacity: 1;
 }
 </style>

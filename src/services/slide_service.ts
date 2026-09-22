@@ -85,7 +85,8 @@ export const SlideSectionTypes = [
     { value: "map", icon: "map", label: "Map", description: "Create an interactive map section." },
     { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "Create an interactive panel section for a defined slide." },
     { value: "vega", icon: "bar_chart", label: "Vega", description: "Create a Vega data visualization section." },
-    { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." }
+    { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." }, 
+    // { value: "stylesheet", icon: "style", label: "Stylesheet", description: "Create a stylesheet for HTML or Markdown slides." },
 ];
 
 export const getSlideSectionType = (value: string) => {
@@ -123,3 +124,4 @@ export const renderSlide = (content: string, width: number, height: number) => m
 
 export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
 export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
+export const getAvailableTags = () => api.get("/tags/available/");

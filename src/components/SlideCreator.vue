@@ -424,6 +424,7 @@ onMounted(() =>  {
                         <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
                         <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
                             :slideSection="sectionWithWidth(index)"
+                            :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
                             @contentUpdated="updateSectionContent(index, $event)"
                             @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
                             @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
@@ -451,8 +452,8 @@ onMounted(() =>  {
                                     {{ currentSlide.name }}
                                 </div>
 
-                                <InputText v-if="!slideSaved" v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
-                                    :disabled="slideSaved" fluid style="width: 500px;"/>
+                                <InputText v-if="!slideSaved" v-model="currentSlide.name"
+                                    :placeholder="$t('moderator.enter_slide_name')" :disabled="slideSaved" fluid />
 
                                 <Button :disabled="currentSlide.name === ''" label="Save" fluid
                                     @click="updateOrStoreSlide">
@@ -547,7 +548,7 @@ onMounted(() =>  {
     font-size: var(--fs-medium);
     font-weight: 700;
     color: var(--p-primary-500);
-    width: 500px; 
+    width: 500px;
     display: flex;
     align-items: center;
     font-family: "Fira Code", monospace;
@@ -681,6 +682,7 @@ onMounted(() =>  {
     flex-direction: row;
     gap: var(--space-small);
 }
+
 .editor-toolbar {
     margin-bottom: 1rem;
 }

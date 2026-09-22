@@ -1,10 +1,11 @@
 <script setup lang="ts" generic="T extends { id?: number; tags: string[] }">
-import Tag from 'primevue/tag';
-import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
+import Chip from 'primevue/chip';
 import Inplace from 'primevue/inplace';
-import InputText from 'primevue/inputtext';
-import { ref } from 'vue';
+import AutoComplete from 'primevue/autocomplete';
+import { ref, onMounted } from 'vue';
+import { getAvailableTags } from '@/services/slide_service';
+import Button from 'primevue/button';
 
 // Definiere die Props unter Verwendung des generischen Typs T
 const props = defineProps<{
@@ -20,6 +21,8 @@ const emit = defineEmits<{
 
 const toast = useToast();
 const newTag = ref('');
+const existingTags = ref<string[]>(props.item?.tags || []);
+const suggestions = ref<string[]>([]);
 
 function onRemoveTag(tag: string) {
     if (props.item && props.item.id) {
@@ -35,7 +38,14 @@ function onRemoveTag(tag: string) {
 }
 
 function onAddTag() {
+
     const tagVal = newTag.value.trim();
+
+    if (props.item?.tags?.includes(tagVal)){
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Tag already added', life: 2000 });
+        return;
+    }
+
     if (props.item && props.item.id && tagVal !== '') {
         props.onAddTagApi(props.item.id, tagVal)
             .then(() => {
@@ -48,121 +58,98 @@ function onAddTag() {
             });
     }
 }
+
+function search(event: { query: string }) {
+    const q = event.query.trim().toLowerCase();
+    const already = new Set(props.item?.tags ?? []);
+    suggestions.value = existingTags.value
+        .filter(t => !already.has(t))
+        .filter(t => t.toLowerCase().includes(q));
+    console.log(suggestions.value.length, event.query)
+    console.log(JSON.stringify(suggestions.value))
+}
+
+onMounted(() => {
+    // Fetch available tags from the backend
+    getAvailableTags()
+        .then(response => {
+            existingTags.value = response.data.tags;
+        })
+        .catch(error => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch available tags' });
+            console.error("Error fetching available tags:", error);
+        });
+});
 </script>
 
 <template>
-    <div class="tag-view-container">
+    <div class="tag-container">
+        <!--  Add new tag button and input field using Inplace component -->
         <Inplace>
             <template #display>
-                <Button class="tag-add-button" text>
+                <div class="add-tag-trigger">
                     <i class="material-symbols-outlined">add</i>
-                </Button>
+                </div>
             </template>
+
             <template #content="{ closeCallback }">
-                <InputText v-model="newTag" placeholder="Enter new tag" @keyup.enter="onAddTag(); closeCallback()"
-                    @keydown.escape="closeCallback(); newTag = ''" class="tag-input" />
+
+                <AutoComplete v-model="newTag" placeholder="add a tag..." inputClass="w-full md:w-56"
+                    emptySearchMessage="All matching tags already added" scrollHeight="14rem" :suggestions="suggestions"
+                    @complete="search" :min-length="0" @keyup.enter="onAddTag(); closeCallback()"
+                    @keydown.escape="closeCallback(); newTag = ''" />
+
+              
+
             </template>
         </Inplace>
 
-        <div v-for="tag in props.item?.tags" :key="tag">
-            <Tag :value="tag" class="tag-item">
-                <div class="tag-content">
-                    <Button rounded text class="tag-close-button" @click="onRemoveTag(tag)" :disabled="!props.item?.id">
-                        <i class="material-symbols-outlined">close_small</i>
-                    </Button>
-                    <p>{{ tag }}</p>
-                </div>
-            </Tag>
-        </div>
+        <!-- Current Tags as Chips -->
+        <Chip class="tag-chip" removable v-for="tag in props.item?.tags" :key="tag" @remove="onRemoveTag(tag)">
+            <template #default>
+                {{ tag }}
+            </template>
+        </Chip>
     </div>
 </template>
 
 <style scoped>
-.tag-view-container {
+.add-tag-trigger {
     display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    overflow-y: auto;
-    margin-bottom: 1rem;
-    gap: 0.5rem;
-
-    gap: 1rem;
-    margin-top: 1rem;
-    padding: 0.5rem;
-    min-height: 2rem;
-    border-radius: var(--br-medium);
-    padding: 1rem;
-    box-sizing: border-box;
-    border: 1px solid var(--p-primary-200);
-}
-
-.tag-item {
-    background-color: var(--p-primary-100);
-    color: var(--p-primary-900);
-    box-shadow: var(--shadow-light);
-    height: 2rem;
-    border-radius: 1rem;
-    display: inline-flex;
-    align-items: center;
-    height: 2rem;
-    padding: 0.1rem 0.75rem 0.1rem 0.5rem;
-}
-
-.tag-content {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    line-height: 1;
-}
-
-.tag-content p {
-    margin: 0;
-    padding: 0;
-    line-height: 1;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
-    font-weight: 700;
-}
-
-.tag-close-button {
-    width: 1.25rem;
-    height: 1.25rem;
-    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
 
-    background-color: var(--p-primary-400);
-    color: var(--p-primary-50);
+    color: var(--p-primary-500);
+    font-size: var(--fs-small);
 }
 
-.tag-add-button {
-    background: none;
-    color: var(--p-primary-400);
-    padding: 0;
-    width: 1rem;
-    height: 1rem;
-    display: inline-flex;
-    border-radius: 0.75rem;
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-small);
+    align-items: center;
+    justify-content: flex-start;
+    padding: var(--space-small);
+
+    margin-top: var(--space-small);
+    border: 1px solid var(--p-primary-500);
+    border-radius: var(--br-small);
 }
 
-.tag-content .material-symbols-outlined {
-    font-size: 1.25rem;
-    line-height: 1;
-}
-
-.tag-input {
-    width: 200px;
-    height: 2rem;
-    border-radius: 1rem;
-    border: none;
-    background-color: var(--p-primary-100);
+.tag-chip {
     margin: 0;
-    font-size: 0.875rem;
-    color: var(--p-primary-900);
-    font-weight: 500;
-    box-shadow: var(--shadow-light);
+    font-size: var(--fs-small);
+    color: var(--p-primary-800);
+    background-color: var(--p-primary-200);
+    border-radius: var(--br-large);
+    padding: var(--space-small) var(--space-medium);
+}
+
+.tag-chip:hover {
+    background-color: var(--p-primary-500);
+    color: var(--p-primary-50);
+    border-color: var(--p-primary-500);
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    cursor: pointer;
 }
 </style>
