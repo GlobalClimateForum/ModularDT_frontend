@@ -75,6 +75,7 @@ export type Parameter =
     | NumberParameter
     | SelectParameter
     | LocationParameter
+    
 export interface Parameters {
     [key: string]: Parameter
 }
