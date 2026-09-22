@@ -16,7 +16,7 @@ import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { updateParticipantParameters, participantParameters } from '@/globals/participant_parameters';
-import wsService from '@/services/websocket_service'
+import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -30,12 +30,14 @@ import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
 import LivePariticipants from '@/components/LiveParticipants.vue';
-import LiveParameters from '@/components/LiveParticipants.vue';
+import LiveParameters from '@/components/LiveParameters.vue';
 import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 import SlideLink from '@/components/SlideLink.vue'
 
 
 const { t } = useI18n();
+const wsService = useWebsocketService()
+
 const livePresentationState = useLivePresentationState()
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 
@@ -43,8 +45,6 @@ const channelId = `moderator/`
 const wsUrlMonitor = new URL('/ws/moderator/', import.meta.env.VITE_API_BASE_URL)
 const socketUrl = wsUrlMonitor + ``
 
-live_parameters: LiveParameters
-live_parameters: LiveParameters
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');
 //const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
@@ -57,7 +57,6 @@ const dashboardViews = {
   scenes: SceneManager,
   scenecreate: SceneBuilder,
   live: PresentationControl,
-  //presentations: PresentationManager,
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
   participants_slides: ParticipantSlideshow,

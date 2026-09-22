@@ -1,119 +1,119 @@
 // services/websocketService.ts
+import { reactive } from 'vue'
 
-class WebSocketService {
-  private sockets: Record<string, WebSocket> = {}
-  private listeners: Record<string, Record<string, Function[]>> = {}
+export function useWebsocketService() {
+  const sockets = reactive<Record<string, WebSocket>>({})
+  const listeners = reactive<Record<string, Record<string, Function[]>>>({})
 
-  connect(channelId: string, url: string): void {
+  const emit = (channelId: string, event: string, data: any): void => {
+    if (listeners[channelId]?.[event]) {
+      listeners[channelId][event].forEach((callback) => callback(data))
+    }
+  }
+
+  const connect = (channelId: string, url: string): void => {
     console.log(`Connect to channel `, url)
-    if (this.sockets[channelId]) {
+    if (sockets[channelId]) {
       console.log(`Already connected to channel ${channelId}`)
       return
     }
 
-    this.sockets[channelId] = new WebSocket(url)
-    this.listeners[channelId] = {}
+    sockets[channelId] = new WebSocket(url)
+    listeners[channelId] = {}
 
-    this.sockets[channelId].onopen = (event: Event) => {
+    sockets[channelId].onopen = (event: Event) => {
       console.log(`Connected to channel ${channelId}:`, event)
-      this.emit(channelId, 'open', event)
+      emit(channelId, 'open', event)
     }
 
-    this.sockets[channelId].onmessage = (event: MessageEvent) => {
+    sockets[channelId].onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data)
-        this.emit(channelId, 'message', data)
+        emit(channelId, 'message', data)
       } catch (e) {
         console.error('Error parsing WebSocket message:', e)
       }
     }
 
-    this.sockets[channelId].onerror = (error: Event) => {
+    sockets[channelId].onerror = (error: Event) => {
       console.error(`WebSocket Error on channel ${channelId}:`, error)
-      this.emit(channelId, 'error', error)
+      emit(channelId, 'error', error)
     }
 
-    this.sockets[channelId].onclose = (event: CloseEvent) => {
+    sockets[channelId].onclose = (event: CloseEvent) => {
       console.log(`WebSocket closed on channel ${channelId}:`, event)
-      delete this.sockets[channelId]
-      delete this.listeners[channelId]
-      this.emit(channelId, 'close', event)
+      delete sockets[channelId]
+      delete listeners[channelId]
+      emit(channelId, 'close', event)
     }
   }
 
-  send(channelId: string, data: any): void {
-    if (this.sockets[channelId]?.readyState === WebSocket.OPEN) {
-      this.sockets[channelId].send(JSON.stringify(data))
+  const send = (channelId: string, data: any): void => {
+    if (sockets[channelId]?.readyState === WebSocket.OPEN) {
+      sockets[channelId].send(JSON.stringify(data))
     } else {
       console.warn(`WebSocket channel ${channelId} is not connected`)
     }
   }
 
-  on(channelId: string, event: string, callback: Function): void {
-    if (!this.listeners[channelId]) {
-      this.listeners[channelId] = {}
+  const on = (channelId: string, event: string, callback: Function): void => {
+    if (!listeners[channelId]) {
+      listeners[channelId] = {}
     }
-    if (!this.listeners[channelId][event]) {
-      this.listeners[channelId][event] = []
+    if (!listeners[channelId][event]) {
+      listeners[channelId][event] = []
     }
-    this.listeners[channelId][event].push(callback)
+    listeners[channelId][event].push(callback)
   }
 
-  off(channelId: string, event: string, callback: Function): void {
-    if (this.listeners[channelId]?.[event]) {
-      this.listeners[channelId][event] = this.listeners[channelId][event].filter(
+  const off = (channelId: string, event: string, callback: Function): void => {
+    if (listeners[channelId]?.[event]) {
+      listeners[channelId][event] = listeners[channelId][event].filter(
         (cb) => cb !== callback
       )
     }
   }
 
-  emit(channelId: string, event: string, data: any): void {
-    if (this.listeners[channelId]?.[event]) {
-      this.listeners[channelId][event].forEach((callback) => callback(data))
+  const disconnect = (channelId: string): void => {
+    if (sockets[channelId]) {
+      sockets[channelId].close()
     }
   }
 
-  disconnect(channelId: string): void {
-    if (this.sockets[channelId]) {
-      this.sockets[channelId].close()
-    }
-  }
-
-  /**
-   * Send a message to all channels matching the pattern
-   * e.g. broadcast('monitor/* /', data) sends to all monitor_X channels
-   */
-  broadcastPattern(pattern: string, data: any): void {
+  const broadcastPattern = (pattern: string, data: any): void => {
     const regex = new RegExp(`^${pattern.replace('*', '[0-9]+')}$`)
-
-    Object.keys(this.sockets).forEach(channelId => {
+    Object.keys(sockets).forEach(channelId => {
       if (regex.test(channelId)) {
-        this.send(channelId, data)
+        send(channelId, data)
       }
     })
   }
 
-  /**
-   * Sends to spezific Channel-IDs
-   */
-  broadcastToChannels(channelIds: string[], data: any): void {
+  const broadcastToChannels = (channelIds: string[], data: any): void => {
     channelIds.forEach(channelId => {
-      this.send(channelId, data)
+      send(channelId, data)
     })
   }
 
-  /**
-   * returns all active channels
-   */
-
-  getActiveChannels(filter?: string): string[] {
-    const channels = Object.keys(this.sockets)
+  const getActiveChannels = (filter?: string): string[] => {
+    const channels = Object.keys(sockets)
     if (!filter) return channels
 
     const regex = new RegExp(`^${filter.replace('*', '[0-9]+')}$`)
     return channels.filter(ch => regex.test(ch))
   }
+
+  return {
+    sockets,
+    listeners,
+    connect,
+    send,
+    on,
+    off,
+    emit,
+    disconnect,
+    broadcastPattern,
+    broadcastToChannels,
+    getActiveChannels
+  }
 }
-
-export default new WebSocketService()
-

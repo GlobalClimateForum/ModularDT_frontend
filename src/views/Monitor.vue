@@ -8,7 +8,7 @@ import type { Slide, SlideSection } from '@/services/slide_service';
 import { settings } from '@/globals/settings'
 import { type ParameterChange } from '@/services/parameter_service'
 import parameterStore from '@/services/parameter_service'
-import wsService from '@/services/websocket_service'
+import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -21,6 +21,8 @@ const currentSlide = ref<Slide | null>(null)
 const channelId = `monitor/${currentId.value}/`
 const wsUrlMonitor = new URL('/ws/monitor/', import.meta.env.VITE_API_BASE_URL)
 const socketUrl = wsUrlMonitor + `${currentId.value}/`
+
+const wsService = useWebsocketService()
 
 var livePresentationActive = ref<Boolean>(false)
 var liveSlidesActive = ref<Boolean>(false)

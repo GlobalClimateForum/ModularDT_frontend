@@ -20,7 +20,9 @@
       "participants_slideshow": "Participant slideshow", 
       "parameterchanges": "Parameter Changes",
       "parameters": "Parameters",
-      "control": "Control"
+      "control": "Control",
+      "live_parameters": "Live parameter",
+      "live_parameter_configuration": "Live parameter configuration"
     },
     "settings": {
       "numberscreens": "Number of Screens",

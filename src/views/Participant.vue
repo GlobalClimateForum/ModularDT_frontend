@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 //import { parameterStore, type ParameterChange } from '@/services/parameter_service'
 //import { getIPanels } from '@/services/slide_service'
-import wsService from '@/services/websocket_service'
+import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue'
@@ -20,6 +20,7 @@ import SlideLink from '@/components/SlideLink.vue'
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 const { t } = useI18n();
+const wsService = useWebsocketService()
 
 const connectionStatus = ref('Connecting...')
 

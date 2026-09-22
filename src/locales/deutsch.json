@@ -20,7 +20,9 @@
       "participants_slideshow": "Teilnehmer-Folien",
       "parameterchanges": "Parameteränderungen",
       "parameters": "Parameter",
-      "control": "Steuerung"
+      "control": "Steuerung",
+      "live_parameters": "Live Parameter",
+      "live_parameter_configuration": "Live Parameter Konfiguration"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
