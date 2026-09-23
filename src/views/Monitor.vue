@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted, ref, provide } from 'vue'
+import { computed, onMounted, onUnmounted, ref, provide, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n';
+import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { settings } from '@/globals/settings'
@@ -10,6 +11,7 @@ import { type ParameterChange } from '@/services/parameter_service'
 import parameterStore from '@/services/parameter_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
+import palettes from '@/assets/palettes.json'
 // components
 import SlideView from '@/components/SlideView.vue';
 
@@ -114,10 +116,10 @@ const handleMessage = (data) => {
 
     if (data.event_type === 'slide_update' || data.message) {
       if (data.slide != "null") {
-        if (currentSlide.value != null && currentSlide.value.id == data.slide.id) {                  
+        if (currentSlide.value != null && currentSlide.value.id == data.slide.id) {
           currentSlide.value = data.slide
         }
-      } 
+      }
     }
 
     if (data.event_type === 'live_slides_start' || data.message) {
@@ -134,6 +136,41 @@ const handleMessage = (data) => {
         }
       }
     }
+
+    if (data.event_type === 'settings_update' || data.message) {
+      let need_to_rerender = false
+
+      settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
+
+      if (settings.value.number_of_screens != data.settings.number_of_screens) {
+        settings.value.number_of_screens = data.settings.number_of_screens
+        need_to_rerender = true
+      }
+
+      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
+        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
+        need_to_rerender = true
+      }
+
+      if (settings.value.show_screen_id != data.settings.show_screen_id) {
+        settings.value.show_screen_id = data.settings.show_screen_id
+        need_to_rerender = true
+      }
+
+      if (settings.value.palette != data.settings.palette) {
+        settings.value.palette = data.settings.palette
+        updatePrimaryPalette(palettes[settings.value.palette]);
+        //need_to_rerender = true
+      }
+
+      if (need_to_rerender) {
+        const instance = getCurrentInstance();
+        if (instance?.proxy) {
+          instance.proxy.$forceUpdate();
+        }
+      }
+    }
+
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
   }
@@ -189,5 +226,22 @@ onUnmounted(() => {
   gap: 1rem;
   min-height: 100vh;
   text-align: center;
+}
+
+.monitor_ID {
+  content: var(--app-title);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotateX(10deg);
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--p-primary-550);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--p-primary-50) 40%, transparent), 0 0 12px color-mix(in srgb, var(--p-primary-100) 20%, transparent), 0 8px 20px rgba(0, 0, 0, 0.16);
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
 }
 </style>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
+// Vue-stuff
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
 import { useDialog } from 'primevue/usedialog';
-
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
@@ -16,18 +16,18 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import Textarea from 'primevue/textarea';
 import DatePicker from 'primevue/datepicker';
 import Checkbox from 'primevue/checkbox';
-
+// globals and services
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
-import ContentServerStatus from '@/components/ContentServerStatus.vue';
-import BackendServerStatus from '@/components/BackendServerStatus.vue';
+import { sendMonitorsUpdate } from "@/services/monitor_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
-
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
-
 import palettes from '@/assets/palettes.json'
 import '@/assets/main.css'
+// components
+import ContentServerStatus from '@/components/ContentServerStatus.vue';
+import BackendServerStatus from '@/components/BackendServerStatus.vue';
 
 const { availableLocales } = useI18n()
 const toast = useToast();
@@ -89,6 +89,7 @@ const saveSettings = async () => {
 const onPaletteChange = ({ value }: { value: string }) => {
   updatePrimaryPalette(palettes[value]);
   settings.value.palette = value;
+  updateSettingsForMonitors()
 };
 
 function changePassword() {
@@ -132,6 +133,20 @@ onMounted(async () => {
   onEventChange(settings.value.event_id);
 });
 
+function updateSettingsForMonitors() {
+  sendMonitorsUpdate({
+    'payload': {
+      'event_type': 'settings_update',
+      'settings': {
+        'number_of_screens': settings.value.number_of_screens,
+        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
+        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+        'show_screen_id': settings.value.show_screen_id,
+        'palette': settings.value.palette,
+      }
+    }
+  })
+}
 </script>
 
 <template>
@@ -162,18 +177,24 @@ onMounted(async () => {
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <Checkbox v-model="settings.background_image_on_empty_screens" binary inputId="background_image_on_empty_screens-checkbox" />
-          <Label for="background_image_on_empty_screens-checkbox"> {{ $t('moderator.settings.background_image_on_empty_screens') }} </Label>
+          <Checkbox v-model="settings.background_image_on_empty_screens" binary
+            inputId="background_image_on_empty_screens-checkbox" />
+          <Label for="background_image_on_empty_screens-checkbox"> {{
+            $t('moderator.settings.background_image_on_empty_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <Checkbox v-model="settings.background_image_on_welcome_screens" binary inputId="background_image_on_welcome_screens-checkbox" />
-          <Label for="background_image_on_welcome_screens-checkbox"> {{ $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
+          <Checkbox v-model="settings.background_image_on_welcome_screens" binary
+            inputId="background_image_on_welcome_screens-checkbox" />
+          <Label for="background_image_on_welcome_screens-checkbox"> {{
+            $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-          <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary inputId="background_image_on_all_slides_per_default-checkbox" />
-          <Label for="background_image_on_all_slides_per_default-checkbox"> {{ $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
+          <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
+            inputId="background_image_on_all_slides_per_default-checkbox" />
+          <Label for="background_image_on_all_slides_per_default-checkbox"> {{
+            $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
         </div>
 
         <div class="label-container">
@@ -260,7 +281,7 @@ onMounted(async () => {
         <div class="label-container">
           <label for="number_of_screens" class="form-label">{{ $t('moderator.settings.numberscreens') }}</label>
           <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
-            fluid />
+            fluid @update:modelValue="updateSettingsForMonitors()" />
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" />

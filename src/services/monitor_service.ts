@@ -5,6 +5,7 @@ import { settings } from '@/globals/settings'
 
 
 export const sendMonitorUpdate = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);
+export const sendMonitorsUpdate = (message: any) => api.patch("/monitor/", message);
 
 export const updateMonitorStatesFromScene = async (scene: Scene) => {
     const grid = Array(settings.value.number_of_screens).fill(null)
