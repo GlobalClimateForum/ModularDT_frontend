@@ -120,7 +120,7 @@ export const nearestAspectRatio = (width: number, height: number): AspectRatio =
     return Math.abs(ratio - 4 / 3) <= Math.abs(ratio - 16 / 9) ? "4:3" : "16:9";
 };
 
-export const renderSlide = (content: string, width: number, height: number) => marpApi.post("/render/", { content, width, height });
+export const renderSlide = (content: string, width: number, height: number, bgColor: string) => marpApi.post("/render/", { content, width, height, bgColor });
 
 export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
 export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
