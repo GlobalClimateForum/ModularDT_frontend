@@ -15,6 +15,7 @@ import Password from 'primevue/password';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Textarea from 'primevue/textarea';
 import DatePicker from 'primevue/datepicker';
+import Checkbox from 'primevue/checkbox';
 
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
@@ -62,6 +63,10 @@ const saveSettings = async () => {
   const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
+    show_screen_id: settings.value.show_screen_id,
+    background_image_on_empty_screens: settings.value.background_image_on_empty_screens,
+    background_image_on_welcome_screens: settings.value.background_image_on_welcome_screens,
+    background_image_on_all_slides_per_default: settings.value.background_image_on_all_slides_per_default,
     background_image: settings.value.background_image,
     language: settings.value.language,
     palette: settings.value.palette,
@@ -156,6 +161,21 @@ onMounted(async () => {
           <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
         </div>
 
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_empty_screens" binary inputId="background_image_on_empty_screens-checkbox" />
+          <Label for="background_image_on_empty_screens-checkbox"> {{ $t('moderator.settings.background_image_on_empty_screens') }} </Label>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_welcome_screens" binary inputId="background_image_on_welcome_screens-checkbox" />
+          <Label for="background_image_on_welcome_screens-checkbox"> {{ $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary inputId="background_image_on_all_slides_per_default-checkbox" />
+          <Label for="background_image_on_all_slides_per_default-checkbox"> {{ $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
+        </div>
+
         <div class="label-container">
           <label>Main Color</label>
 
@@ -242,16 +262,20 @@ onMounted(async () => {
           <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
             fluid />
         </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" />
+          <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
+        </div>
       </div>
 
       <div class="sub-panel">
-          <h1 class="dashboard_label">Event Settings</h1>
+        <h1 class="dashboard_label">Event Settings</h1>
 
-          <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
-            <template #icon>
-              <i class="material-symbols-outlined">event</i>
-            </template>
-          </Button>
+        <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
+          <template #icon>
+            <i class="material-symbols-outlined">event</i>
+          </template>
+        </Button>
 
         <div class="label-container">
           <label>Active Event</label>

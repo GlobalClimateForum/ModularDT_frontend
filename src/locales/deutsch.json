@@ -26,9 +26,13 @@
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
+      "show_screen_id": "Bildschirme ID anzeigen",
       "language": "Sprache",
       "cs_url": "URL des default Content-Servers",
-      "background_image": "Hintergrundbild"
+      "background_image": "Hintergrundbild",
+      "background_image_on_empty_screens": "Hintergrundbild auf leeren Bildschirmen anzeigen",
+      "background_image_on_welcome_screens": "Hintergrundbild auf Begrüßuns-Bildschirmen anzeigen",
+      "background_image_on_all_slides_per_default": "Hintergrundbild als standard Folienhintergrund verwenden"
     },
     "presentation": {
       "presentation": "Präsentation",
@@ -74,7 +78,7 @@
   "participant": {
     "name": "Teilnehmer",
     "greeting": "@:appName Teilnehmner",
-    "waiting" :"Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
+    "waiting": "Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
     "seat": "Platz",
     "live_presentation_state": "Live Teilnehmer status"
   },
