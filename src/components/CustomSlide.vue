@@ -124,8 +124,10 @@ watchEffect((onCleanup) => {
     <div
         :style="{ backgroundColor: 'transparent', width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', overflow: 'hidden', position: 'relative' }">
 
-        <iframe v-if="props.section.mode === 'html'" :srcdoc="props.section.content" sandbox="allow-same-origin"
-            :style="{ width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px', border: 'none', display: 'block' }">
+        <iframe v-if="props.section.mode === 'html'" sandbox="allow-scripts"
+            :srcdoc="'<style>html,body{margin:0;padding:0;width:100%;height:100%}</style>' + props.section.content"
+            class="section_frame"
+            :style="{ width: props.slide.width * props.sectionWidth + 'px', height: props.slide.height + 'px' }">
         </iframe>
 
         <div v-else-if="props.section.mode === 'vue'" :id="sectionScopeId"
@@ -153,5 +155,16 @@ h1 {
     font-family: 'Roboto', sans-serif;
     font-weight: bold;
     z-index: 999;
+}
+
+.section_frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* was "heigth" */
+    border: 0;
+    padding: 0;
+    /* "none" isn't valid for padding */
+    box-sizing: border-box;
 }
 </style>

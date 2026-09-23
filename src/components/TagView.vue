@@ -51,6 +51,9 @@ function onAddTag() {
             .then(() => {
                 emit('tagAdded', tagVal);
                 newTag.value = '';
+                if (!existingTags.value.includes(tagVal)) {
+                    existingTags.value.push(tagVal);
+                }
             })
             .catch(error => {
                 toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add tag' });

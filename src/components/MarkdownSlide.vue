@@ -2,7 +2,7 @@
 
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { renderSlide } from '@/services/slide_service';
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onBeforeUnmount } from 'vue';
 
 const props = defineProps<{
     slide: Slide,
@@ -14,6 +14,9 @@ const props = defineProps<{
 
 const marpDocument = ref<string>("");
 const isRendering = ref(false);
+const bgColor = computed(() => props.section.properties?.bg ?? 'transparent')
+const debouncedBgColor = ref(bgColor.value);
+let bgTimer: ReturnType<typeof setTimeout> | undefined;
 
 function toDocument(html: string, css: string): string {
     return `
@@ -31,11 +34,12 @@ function toDocument(html: string, css: string): string {
     `;
 }
 
+
 async function getMarpContent() {
     const renderWidth = props.slide.width * props.sectionWidth;
     isRendering.value = true;
     try {
-        const content = await renderSlide(props.section.content, renderWidth, props.slide.height);
+        const content = await renderSlide(props.section.content, renderWidth, props.slide.height, debouncedBgColor.value);
         marpDocument.value = toDocument(content.data.html, content.data.css);
     } catch (error) {
         console.error("Error rendering slide:", error);
@@ -44,8 +48,17 @@ async function getMarpContent() {
     }
 }
 
+watch(bgColor, (newColor) => {
+    clearTimeout(bgTimer);
+    bgTimer = setTimeout(() => {
+        debouncedBgColor.value = newColor;
+    }, 300);
+})
+
+onBeforeUnmount(() => clearTimeout(bgTimer));
+
 watch(
-    () => [props.section.content, props.sectionWidth],
+    () => [props.section.content, props.sectionWidth, debouncedBgColor.value],
     () => { getMarpContent(); },
     { immediate: true }
 );
