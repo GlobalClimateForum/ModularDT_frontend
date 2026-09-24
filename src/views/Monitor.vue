@@ -10,6 +10,7 @@ import { settings } from '@/globals/settings'
 import { type ParameterChange } from '@/services/parameter_service'
 import parameterStore from '@/services/parameter_service'
 import { useWebsocketService } from '@/services/websocket_service'
+import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
 // components
@@ -163,6 +164,12 @@ const handleMessage = (data) => {
         //need_to_rerender = true
       }
 
+      if (settings.value.background_image != data.settings.background_image) {
+        settings.value.background_image = data.settings.background_image
+        fetchBackgoundImage(settings.value.background_image);
+        //need_to_rerender = true
+      }
+
       if (need_to_rerender) {
         const instance = getCurrentInstance();
         if (instance?.proxy) {
@@ -176,10 +183,10 @@ const handleMessage = (data) => {
   }
 }
 
-
 onMounted(() => {
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
+  fetchBackgoundImage(settings.value.background_image);
 })
 
 // important: close the socket when the component is unmounted to avoid memory leaks
@@ -190,8 +197,14 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <div v-if="settings.show_screen_id" class="monitor_ID">
+    {{ currentId }}
+  </div>
   <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
     <div v-if="currentSlide === null && livePresentationActive">
+      <div v-if="settings.background_image_on_empty_screens && background_image">
+        <img class="bg_image" :src="background_image?.src || ''" alt="">
+      </div>
     </div>
     <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
       style="width: 100vw; height: 100vh; overflow: hidden;">
@@ -201,9 +214,14 @@ onUnmounted(() => {
         :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
     </div>
   </div>
-  <div v-else class="welcome show-bg-text">
-    <div style="position: absolute;">
-      <h2>{{ t('monitor.greeting') }}</h2>
+  <div v-else>
+    <div v-if="settings.background_image_on_welcome_screens && background_image">
+        <img class="bg_image" :src="background_image?.src || ''" alt="">
+    </div>
+    <div v-else class="welcome show-bg-text">
+    </div>
+    <div class="centered">
+      <h2 style="font-size: 2rem;">{{ t('monitor.greeting') }}</h2>
       <!-- Monitor ID is between 1 and the number of screens -->
       <div v-if="activeMonitor">
         <p>{{ t('monitor.waiting') }}</p>
@@ -229,19 +247,28 @@ onUnmounted(() => {
 }
 
 .monitor_ID {
-  content: var(--app-title);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotateX(10deg);
-  font-size: clamp(3.5rem, 12vw, 9rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--p-primary-550);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--p-primary-50) 40%, transparent), 0 0 12px color-mix(in srgb, var(--p-primary-100) 20%, transparent), 0 8px 20px rgba(0, 0, 0, 0.16);
-  opacity: 0.1;
+  /* fixed ignoriert andere Elemente und fixiert es am Bildschirm */
+  position: fixed;
+  top: 20px;
+  left: 20px;
+
+  /*transform: rotateX(10deg); */
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-weight: 600;
+  color: white;
   pointer-events: none;
-  z-index: 0;
+  z-index: 9999;
+  /* Hoher z-index, damit es über allem anderen liegt */
   white-space: nowrap;
+}
+
+.bg_image {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+	
+  /* Preserve aspet ratio */
+  min-width: 100%;
+  min-height: 100%;
 }
 </style>

@@ -16,6 +16,7 @@ import { fetchParticipants } from '@/globals/participants';
 import { registerContentServer } from '@/services/cs_service.ts';
 import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
+import { fetchBackgoundImage } from '@/globals/background_image';
 import DynamicDialog from 'primevue/dynamicdialog';
 import OptionDialog from '@/components/OptionDialog.vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
@@ -63,12 +64,12 @@ onBeforeMount(async () => {
   isSettingsLoaded.value = true
   const appName = proxy.$APP_NAME || 'Default App Title';
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
-  console.log()
 })
 
 onMounted(async () => {
   liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   await fetchSlides();
+  fetchBackgoundImage(settings.value.background_image);
   fetchScenes();
   fetchPresentations();
   stopPresentation();

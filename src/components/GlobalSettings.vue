@@ -139,6 +139,7 @@ function updateSettingsForMonitors() {
       'event_type': 'settings_update',
       'settings': {
         'number_of_screens': settings.value.number_of_screens,
+        'background_image': settings.value.background_image,
         'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
         'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
         'show_screen_id': settings.value.show_screen_id,
@@ -178,21 +179,21 @@ function updateSettingsForMonitors() {
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_empty_screens" binary
-            inputId="background_image_on_empty_screens-checkbox" />
+            inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()"/>
           <Label for="background_image_on_empty_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_empty_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_welcome_screens" binary
-            inputId="background_image_on_welcome_screens-checkbox" />
+            inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()"/>
           <Label for="background_image_on_welcome_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
-            inputId="background_image_on_all_slides_per_default-checkbox" />
+            inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()"/>
           <Label for="background_image_on_all_slides_per_default-checkbox"> {{
             $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
         </div>
@@ -284,7 +285,7 @@ function updateSettingsForMonitors() {
             fluid @update:modelValue="updateSettingsForMonitors()" />
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" />
+          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" @change="updateSettingsForMonitors()"/>
           <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
         </div>
       </div>

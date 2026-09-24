@@ -52,6 +52,7 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
             }
             )
         } else {
+            console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
             sendMonitorUpdate((Number(index) + 1), {
                 'payload': {
                     'event_type': 'slide_change',
