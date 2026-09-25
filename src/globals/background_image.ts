@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 export const background_image = ref<HTMLImageElement | null>(null)
 
-export function fetchBackgoundImage(url: string) {
+export async function fetchBackgoundImage(url: string) {
   console.log(url)
 
   const image = new Image()
@@ -13,7 +13,4 @@ export function fetchBackgoundImage(url: string) {
       console.warn("background image ", url, " could not be loaded. Check URL and permissions.")
     }
   }
-
-  
-
 }

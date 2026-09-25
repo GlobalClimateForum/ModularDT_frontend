@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted, ref, provide, getCurrentInstance } from 'vue'
+import { computed, onMounted, onUnmounted, onBeforeMount, ref, provide, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
@@ -11,6 +11,7 @@ import { type ParameterChange } from '@/services/parameter_service'
 import parameterStore from '@/services/parameter_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
+import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
 // components
@@ -27,8 +28,9 @@ const socketUrl = wsUrlMonitor + `${currentId.value}/`
 
 const wsService = useWebsocketService()
 
-var livePresentationActive = ref<Boolean>(false)
-var liveSlidesActive = ref<Boolean>(false)
+let livePresentationActive = ref<Boolean>(false)
+let liveSlidesActive = ref<Boolean>(false)
+let ready_to_render = ref<Boolean>(false) 
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -88,6 +90,46 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
   return { ...slide, sections: updatedSections }
 }
 
+function updateSettings(data) {
+      let need_to_rerender = false
+
+      settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
+
+      if (settings.value.number_of_screens != data.settings.number_of_screens) {
+        settings.value.number_of_screens = data.settings.number_of_screens
+        need_to_rerender = true
+      }
+
+      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
+        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
+        need_to_rerender = true
+      }
+
+      if (settings.value.show_screen_id != data.settings.show_screen_id) {
+        settings.value.show_screen_id = data.settings.show_screen_id
+        need_to_rerender = true
+      }
+
+      if (settings.value.palette != data.settings.palette) {
+        settings.value.palette = data.settings.palette
+        updatePrimaryPalette(palettes[settings.value.palette]);
+        //need_to_rerender = true
+      }
+
+      if (settings.value.background_image != data.settings.background_image) {
+        settings.value.background_image = data.settings.background_image
+        fetchBackgoundImage(settings.value.background_image);
+        //need_to_rerender = true
+      }
+
+      if (need_to_rerender) {
+        const instance = getCurrentInstance();
+        if (instance?.proxy) {
+          instance.proxy.$forceUpdate();
+        }
+      }
+}
+
 const handleMessage = (data) => {
   console.debug("got message: ", data)
   try {
@@ -139,53 +181,25 @@ const handleMessage = (data) => {
     }
 
     if (data.event_type === 'settings_update' || data.message) {
-      let need_to_rerender = false
-
-      settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
-
-      if (settings.value.number_of_screens != data.settings.number_of_screens) {
-        settings.value.number_of_screens = data.settings.number_of_screens
-        need_to_rerender = true
-      }
-
-      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
-        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
-        need_to_rerender = true
-      }
-
-      if (settings.value.show_screen_id != data.settings.show_screen_id) {
-        settings.value.show_screen_id = data.settings.show_screen_id
-        need_to_rerender = true
-      }
-
-      if (settings.value.palette != data.settings.palette) {
-        settings.value.palette = data.settings.palette
-        updatePrimaryPalette(palettes[settings.value.palette]);
-        //need_to_rerender = true
-      }
-
-      if (settings.value.background_image != data.settings.background_image) {
-        settings.value.background_image = data.settings.background_image
-        fetchBackgoundImage(settings.value.background_image);
-        //need_to_rerender = true
-      }
-
-      if (need_to_rerender) {
-        const instance = getCurrentInstance();
-        if (instance?.proxy) {
-          instance.proxy.$forceUpdate();
-        }
-      }
+      updateSettings(data)
     }
 
+    if (data.event_type === 'data_update' || data.message) {
+      updateSettings(data)
+      liveSlidesActive.value = data.presentation.liveSlidesActive
+      livePresentationActive.value = data.presentation.livePresentationActive
+      currentSlide.value = data.presentation.slide
+      ready_to_render.value = true
+    }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
   }
 }
 
-onMounted(() => {
+onBeforeMount(() => {
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
+  sendModeratorAMonitorRequest(`${currentId.value}`)
   fetchBackgoundImage(settings.value.background_image);
 })
 
@@ -197,6 +211,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <div v-if="ready_to_render">
   <div v-if="settings.show_screen_id" class="monitor_ID">
     {{ currentId }}
   </div>
@@ -231,6 +246,7 @@ onUnmounted(() => {
         <p>{{ t('monitor.invalid') }}</p>
       </div>
     </div>
+  </div>
   </div>
 </template>
 

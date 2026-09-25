@@ -80,7 +80,7 @@ onMounted(async () => {
 
 <template>
   <Toast position="bottom-right" />
-  <RouterView v-if="isSettingsLoaded" />
+  <RouterView v-if="isSettingsLoaded" :key="$route.path"/>
   <div v-else class="loading-screen">
     <ProgressSpinner  animationDuration="1s" style="width: 100px; height: 100px" />
     <p style="color: black">Load Settings ...</p>
