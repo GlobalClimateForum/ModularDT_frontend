@@ -3,12 +3,12 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl, { Map as MaplibreMap, type StyleSpecification } from "maplibre-gl";
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { basemaps, type Basemap } from '@/utils/map_utils';
+import { basemaps } from '@/utils/map_utils';
 import type { Layer } from '@/services/map_service';
-import { identifyVectorType } from "@/services/map_service";
 import { registerMap, unregisterMap } from "@/services/map_service";
 import parameterStore from "@/services/parameter_service"
 import { type ParameterChange } from '@/services/parameter_service'
+import { syncLayers } from '@/services/map_layers_service';
 
 const props = defineProps<{
     slide: Slide,
@@ -22,15 +22,8 @@ const props = defineProps<{
 const parameterChanges = ref<ParameterChange[]>([])
 const currentBasemap = ref<keyof typeof basemaps>(props.basemap ?? 'esri');
 const mapContainer = ref<HTMLDivElement | null>(null);
+const styleReady = ref(false);
 let map: MaplibreMap | null = null;
-
-
-const asHexValue = (value: string) => {
-    if (value.startsWith('#')) {
-        return value;
-    }
-    return '#' + value;
-};
 
 function rasterStyle(basemapKey: keyof typeof basemaps): StyleSpecification {
 
@@ -61,63 +54,17 @@ function rasterStyle(basemapKey: keyof typeof basemaps): StyleSpecification {
     };
 }
 
+function currentLayers(): Layer[] {
+    return props.section.content ? JSON.parse(props.section.content).layers ?? [] : [];
+}
+
+function refreshLayers() {
+    if (map && styleReady) syncLayers(map, currentLayers());
+}
+
 function resolveStyle(key: keyof typeof basemaps): string | StyleSpecification {
     const b = basemaps[key];
     return 'style' in b ? b.style : rasterStyle(key);
-}
-
-async function addLayer(layer: Layer) {
-    if (!map || !layer.uploaded) return;
-
-
-    if (layer.filetype === 'geojson') {
-
-        if (map.getLayer(layer.name)) {
-            map.removeLayer(layer.name);
-        };
-
-        const url = `${import.meta.env.VITE_API_BASE_URL}${layer.path}`;
-
-        if (!map.getSource(layer.name)) {
-            map.addSource(layer.name, {
-                type: 'geojson',
-                data: url,
-            });
-        }
-
-        switch (layer?.marker?.type) {
-            case 'dot':
-                map.addLayer({
-                    id: layer.name,
-                    type: 'circle',
-                    source: layer.name,
-                    paint: {
-                        'circle-radius': layer.marker.style['circle-radius'],
-                        'circle-color': asHexValue(layer.marker.style['circle-color']),
-                        'circle-stroke-width': layer.marker.style['circle-stroke-width'],
-                        'circle-stroke-color': asHexValue(layer.marker.style['circle-stroke-color']),
-                    },
-                });
-                break;
-
-            case 'emoji': {
-                const imgId = `emoji-${layer.name}`;
-                if (!map.hasImage(imgId)) {
-                    map.addImage(imgId, emojiImageMarker(layer.marker.value, 64), { pixelRatio: 2 });
-                }
-                map.addLayer({
-                    id: layer.name,
-                    type: 'symbol',
-                    source: layer.name,
-                    layout: {
-                        'icon-image': imgId,
-                        'icon-allow-overlap': true
-                    }
-                });
-                break;
-            }
-        }
-    }
 }
 
 function flyToPosition(center: [number, number], zoom: number) {
@@ -150,21 +97,6 @@ function onParameterChange(change: ParameterChange) {
     flyToPosition(change.value.coord, change.value.zoom);
 };
 
-function emojiImageMarker(emoji: string, size: number): ImageData {
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-
-    ctx.font = `${size * 0.8}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, size / 2, size / 2);
-
-    return ctx.getImageData(0, 0, size, size);;
-}
-
-
 onMounted(() => {
     if (!mapContainer.value) return;
 
@@ -178,11 +110,9 @@ onMounted(() => {
         attributionControl: { compact: false }
     });
 
-    map.on('load', () => {
-        if (!props.section.content) return;
-        JSON.parse(props.section.content).layers.forEach((layer: Layer) => {
-            addLayer(layer);
-        });
+    map.on('style.load', () => {
+        styleReady.value = true;
+        refreshLayers();
     });
 
     if (props.section.id) {
@@ -205,25 +135,20 @@ onUnmounted(() => {
     if (props.section.id) {
         unregisterMap(props.section.id);
     }
-    onUnmounted(() => stop?.())
+    stop?.();
 });
 
 watch(() => props.basemap, (newBasemap) => {
     if (newBasemap && newBasemap !== currentBasemap.value) {
         currentBasemap.value = newBasemap;
         if (map) {
-            map.setStyle(resolveStyle(newBasemap));
+            styleReady.value = false;
+            map.setStyle(resolveStyle(newBasemap), { diff: false });
         }
     }
 })
 
-watch(() => props.section.content, (newContent) => {
-    if (!map) return;
-
-    JSON.parse(newContent).layers.forEach((layer: Layer) => {
-        addLayer(layer);
-    });
-});
+watch(() => props.section.content, refreshLayers);
 
 watch(() => props.section.id, (newId, oldId) => {
     if (oldId) {

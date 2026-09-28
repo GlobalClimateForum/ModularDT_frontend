@@ -10,14 +10,8 @@ import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
 import { useDialog } from 'primevue/usedialog';
 import Button from 'primevue/button';
-import {
-    type MapProperties,
-    type Layer,
-    saveMapLayer,
-    localMapLayer,
-    identifyVectorType,
-    getMap,
-} from '@/services/map_service';
+import { type MapProperties, type Layer, saveMapLayer, localMapLayer, identifyVectorType, getMap } from '@/services/map_service';
+import { normalizeLayer } from '@/services/map_layers_service';
 import { settings } from '@/globals/settings.ts';
 
 const DEFAULT_START_POSITION: [number, number] = [13.350103005033793, 52.51451583081903];
@@ -96,7 +90,7 @@ function buildLocationParameter(): Parameters {
 
 function addExistingLayer() {
     if (!selectedExistingLayer.value) return;
-    layers.value.push({ ...selectedExistingLayer.value, uploaded: true });
+    layers.value.push(normalizeLayer({ ...selectedExistingLayer.value, uploaded: true }));
     selectedExistingLayer.value = null;
     saveSection();
 }
@@ -166,11 +160,13 @@ async function onFileSelect(event: { files: File[] }) {
 }
 
 function updateLayer(layer: Layer, idx: number) {
-    layers.value[idx] = layer;
+    layers.value[idx] = normalizeLayer(layer);
     saveSection();
 }
 
 function uploadLayer(layer: Layer, idx: number) {
+    if (layer.uploaded || !(layer.file instanceof File)) return;
+
     if (!props.slideSection?.id) {
         console.error('SlideSection ID is not available. Cannot upload layer.');
         return;
@@ -180,7 +176,8 @@ function uploadLayer(layer: Layer, idx: number) {
             layer.uploaded = true;
             layer.path = response.data.path.replace(/^\//, '');
             layer.id = response.data.id;
-            layers.value[idx] = layer;
+            layers.value[idx] = normalizeLayer({ ...layer, uploaded: true, id: response.data.id, path: response.data.path });
+            existingLayers.value.push(normalizeLayer({ ...layer, uploaded: true, id: response.data.id, path: response.data.path }));
             saveSection();
         })
         .catch((error) => {
@@ -188,7 +185,7 @@ function uploadLayer(layer: Layer, idx: number) {
         });
 }
 
-function openMarkerEditor(item: Layer) {
+function openMarkerEditor(item: Layer, idx: number) {
     dialog.open(MapMarkerEditor, {
         props: {
             header: 'Edit Marker',
@@ -198,9 +195,7 @@ function openMarkerEditor(item: Layer) {
         data: { layer: item },
         onClose: (opt) => {
             const result = opt?.data;
-            if (result) {
-                updateLayer({ ...item, marker: result }, layers.value.findIndex((l) => l === item));
-            }
+            if (result) updateLayer({ ...item, marker: result }, idx);
         },
     });
 }
@@ -259,7 +254,7 @@ function savePosition() {
 
                         <!-- Map Marker for Layer -->
                         <span>
-                            <div class="marker-container" @click="openMarkerEditor(item)">
+                            <div class="marker-container" @click="openMarkerEditor(item, i)">
                                 <div v-if="item.marker?.type === 'dot'">
                                     <div class="dot-marker" :style="{
                                         width: item.marker.style['circle-radius'] * 2 + 'px',

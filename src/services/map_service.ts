@@ -113,7 +113,7 @@ export async function localMapLayer() {
     const data = response.data;
     return data.map((layer: any) => ({
         id: layer.id,
-        name: layer.name,
+        name: layer.path.split('/').pop() ?? layer.name,
         filetype: layer.filetype,
         path: layer.path,
         marker: layer.marker,
