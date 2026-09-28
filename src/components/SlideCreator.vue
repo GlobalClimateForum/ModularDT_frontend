@@ -95,6 +95,7 @@ async function confirmedUpdateSlide() {
 
     try {
         const response = await updateSlide(currentSlide.value.id, slide, sections)
+        applySavedSlide(response.data.slide)
         await fetchSlides();
         // here: refresh the updated slide on monitors
         const newslide = slides.value.find(slide => slide.id === currentSlide.value.id);
@@ -103,14 +104,21 @@ async function confirmedUpdateSlide() {
             updateSlideViews(newslide)
         }
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-        ready = false
-        edited.value = false
-        nextTick(() => { ready = true })
         return response
     } catch (error) {
         console.error('Error saving slide:', error)
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     }
+}
+
+function applySavedSlide(saved: Slide) {
+    ready = false // stop the watcher from marking this as "edited"
+    currentSlide.value = { ...saved }
+    slideSections.value = (saved.sections ?? []).map(s => ({ ...s }))
+    sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
+    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+    edited.value = false
+    nextTick(() => { ready = true })
 }
 
 function confirmUpdateSlide() {
@@ -155,14 +163,8 @@ function storeSlide() {
             return
         }
 
-        currentSlide.value = { ...saved }
-        slideSections.value = saved.sections.map(s => ({ ...s }))
-        sectionWidths.value = saved.sections.map(s => s.width_fraction ?? 1.0)
-        selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
-
-        edited.value = false
-        nextTick(() => { ready = true })
-
+        applySavedSlide(saved)
+        
         fetchSlides()
         slideSaved.value = true;
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
