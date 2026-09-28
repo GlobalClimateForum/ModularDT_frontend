@@ -84,25 +84,25 @@ const items = computed(() => [
     items: [
       {
         key: 'liveslides',
-        label: "Live " + t('moderator.nav.slides'),
+        label: t('moderator.nav.slides'),
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'liveslides'; }
       },
       {
         key: 'live',
-        label: "Live " + t('moderator.nav.presentation'),
+        label: t('moderator.nav.presentation'),
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'live'; }
       },
       {
         key: 'liveparticipants',
-        label: "Live " + t('moderator.nav.participants'),
+        label: t('moderator.nav.participants'),
         materialIcon: 'tune',
         command: () => { currentDashboard.value = 'live_participants'; }
       },
       {
         key: 'liveparameters',
-        label: "Live " + t('moderator.nav.parameters'),
+        label: t('moderator.nav.parameters'),
         materialIcon: 'tune',
         command: () => { currentDashboard.value = 'live_parameters'; }
       }
