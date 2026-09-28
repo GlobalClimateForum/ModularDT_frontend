@@ -47,6 +47,9 @@ onMounted(() => {
 watch(() => props.targetSlide, (newSlide) => {
     if (newSlide) localTargetSlide.value = newSlide
 })
+
+const hexColor = (color:string) => `#${color}`
+
 </script>
 
 
@@ -55,7 +58,9 @@ watch(() => props.targetSlide, (newSlide) => {
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
         border: props.showframe ? '3px solid var(--accent)' : 'none',
+        backgroundColor: section?.properties?.bg ? hexColor(section?.properties?.bg) : 'linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%)'
     }">
+
 
         <h1 class="dashboard_label header_label">
             {{ localTargetSlide?.name ?? 'Loading...' }} | {{ localTargetSlide?.id ?? 'N/A' }}
@@ -109,7 +114,7 @@ watch(() => props.targetSlide, (newSlide) => {
     box-sizing: border-box;
     overflow: hidden;
     padding: var(--space-large);
-    background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%);
+    /* background: linear-gradient(135deg, var(--p-primary-700) 0%, var(--p-primary-900) 100%); */
     display: flex;
     flex-direction: column;
     gap: var(--space-medium);
@@ -120,9 +125,9 @@ watch(() => props.targetSlide, (newSlide) => {
     content: '';
     position: absolute;
     inset: 0;
-    background:
+    /* background:
         radial-gradient(circle at 50% 0%, var(--p-primary-500), transparent 50%),
-        radial-gradient(circle at 100% 100%, var(--p-primary-500), transparent 50%);
+        radial-gradient(circle at 100% 100%, var(--p-primary-500), transparent 50%); */
     pointer-events: none;
 }
 
