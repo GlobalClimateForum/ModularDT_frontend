@@ -26,9 +26,13 @@
     },
     "settings": {
       "numberscreens": "Number of Screens",
+      "show_screen_id": "Show monitor ID",
       "language": "Language",
       "cs_url": "URL of default content server",
-      "background_image": "Background image"
+      "background_image": "Background image",
+      "background_image_on_empty_screens": "Show background image on empty screens",
+      "background_image_on_welcome_screens": "Show background image on welcome screens",
+      "background_image_on_all_slides_per_default": "Use background image as background on slides per default"
     },
     "presentation": {
       "presentation": "Presentation",

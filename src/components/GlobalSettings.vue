@@ -1,10 +1,10 @@
 <script setup lang="ts">
+// Vue-stuff
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
 import { useDialog } from 'primevue/usedialog';
-
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
@@ -15,18 +15,19 @@ import Password from 'primevue/password';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Textarea from 'primevue/textarea';
 import DatePicker from 'primevue/datepicker';
-
+import Checkbox from 'primevue/checkbox';
+// globals and services
 import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings } from "@/services/settings_service";
-import ContentServerStatus from '@/components/ContentServerStatus.vue';
-import BackendServerStatus from '@/components/BackendServerStatus.vue';
+import { sendMonitorsUpdate } from "@/services/monitor_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
-
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
-
 import palettes from '@/assets/palettes.json'
 import '@/assets/main.css'
+// components
+import ContentServerStatus from '@/components/ContentServerStatus.vue';
+import BackendServerStatus from '@/components/BackendServerStatus.vue';
 
 const { availableLocales } = useI18n()
 const toast = useToast();
@@ -62,6 +63,10 @@ const saveSettings = async () => {
   const current_settings = {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
+    show_screen_id: settings.value.show_screen_id,
+    background_image_on_empty_screens: settings.value.background_image_on_empty_screens,
+    background_image_on_welcome_screens: settings.value.background_image_on_welcome_screens,
+    background_image_on_all_slides_per_default: settings.value.background_image_on_all_slides_per_default,
     background_image: settings.value.background_image,
     language: settings.value.language,
     palette: settings.value.palette,
@@ -84,6 +89,7 @@ const saveSettings = async () => {
 const onPaletteChange = ({ value }: { value: string }) => {
   updatePrimaryPalette(palettes[value]);
   settings.value.palette = value;
+  updateSettingsForMonitors()
 };
 
 function changePassword() {
@@ -127,6 +133,21 @@ onMounted(async () => {
   onEventChange(settings.value.event_id);
 });
 
+function updateSettingsForMonitors() {
+  sendMonitorsUpdate({
+    'payload': {
+      'event_type': 'settings_update',
+      'settings': {
+        'number_of_screens': settings.value.number_of_screens,
+        'background_image': settings.value.background_image,
+        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
+        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+        'show_screen_id': settings.value.show_screen_id,
+        'palette': settings.value.palette,
+      }
+    }
+  })
+}
 </script>
 
 <template>
@@ -154,6 +175,27 @@ onMounted(async () => {
         <div class="label-container">
           <label for="background_url" class="form-label">{{ $t('moderator.settings.background_image') }}</label>
           <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_empty_screens" binary
+            inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()"/>
+          <Label for="background_image_on_empty_screens-checkbox"> {{
+            $t('moderator.settings.background_image_on_empty_screens') }} </Label>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_welcome_screens" binary
+            inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()"/>
+          <Label for="background_image_on_welcome_screens-checkbox"> {{
+            $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
+            inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()"/>
+          <Label for="background_image_on_all_slides_per_default-checkbox"> {{
+            $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
         </div>
 
         <div class="label-container">
@@ -240,18 +282,22 @@ onMounted(async () => {
         <div class="label-container">
           <label for="number_of_screens" class="form-label">{{ $t('moderator.settings.numberscreens') }}</label>
           <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
-            fluid />
+            fluid @update:modelValue="updateSettingsForMonitors()" />
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" @change="updateSettingsForMonitors()"/>
+          <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
         </div>
       </div>
 
       <div class="sub-panel">
-          <h1 class="dashboard_label">Event Settings</h1>
+        <h1 class="dashboard_label">Event Settings</h1>
 
-          <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
-            <template #icon>
-              <i class="material-symbols-outlined">event</i>
-            </template>
-          </Button>
+        <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
+          <template #icon>
+            <i class="material-symbols-outlined">event</i>
+          </template>
+        </Button>
 
         <div class="label-container">
           <label>Active Event</label>

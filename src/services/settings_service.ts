@@ -3,7 +3,11 @@ import {api, marpApi} from "./api";
 export interface Settings {
     cs_url: string;
     number_of_screens: number;
+    show_screen_id: boolean;
     background_image: string;
+    background_image_on_empty_screens: boolean,
+    background_image_on_welcome_screens: boolean,
+    background_image_on_all_slides_per_default: boolean,
     language: string;
     avatar_style: string;
     palette: string;

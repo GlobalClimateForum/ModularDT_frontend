@@ -16,7 +16,9 @@ import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { updateParticipantParameters, participantParameters } from '@/globals/participant_parameters';
+import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
+import { sendMonitorUpdate } from "@/services/monitor_service"
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -39,14 +41,15 @@ const { t } = useI18n();
 const wsService = useWebsocketService()
 
 const livePresentationState = useLivePresentationState()
-var liveSlidesOnMonitors = useLiveSlidesOnMonitors();
+var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
+const liveSlidesActive = useLiveSlidesActive()
+let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 const channelId = `moderator/`
 const wsUrlMonitor = new URL('/ws/moderator/', import.meta.env.VITE_API_BASE_URL)
 const socketUrl = wsUrlMonitor + ``
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');
-//const participants = ref<any[]>([]);
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
@@ -184,6 +187,9 @@ const handleMessage = (data) => {
     if (data.event_type === 'update_participant_parameter' || data.message) {
       updateParticipantParameters(data.parameter_name, data.participant, data.value)
     }
+    if (data.event_type === 'monitor_request' || data.message) {
+      updateDataForMonitors(data.monitorid)
+    }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
   }
@@ -197,6 +203,28 @@ function updateParticipantParameter(parameter_name: string, value: string) {
 
 provide('updateParticipantParameter', updateParticipantParameter);
 provide('SlideLink', SlideLink)
+
+
+function updateDataForMonitors(monitorid: string) {
+  sendMonitorUpdate(Number(monitorid),{
+    'payload': {
+      'event_type': 'data_update',
+      'settings': {
+        'number_of_screens': settings.value.number_of_screens,
+        'background_image': settings.value.background_image,
+        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
+        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+        'show_screen_id': settings.value.show_screen_id,
+        'palette': settings.value.palette,
+      },
+      'presentation' : {
+        'livePresentationActive': livePresentationState.value.active,
+        'liveSlidesActive': liveSlidesActive.value,
+        'slide': whatYouSeeOnMonitors.value[Number(monitorid)-1]
+      }
+    }
+  })
+}
 
 onMounted(() => {
   wsService.connect(channelId, socketUrl)

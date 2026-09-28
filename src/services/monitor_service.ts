@@ -5,6 +5,7 @@ import { settings } from '@/globals/settings'
 
 
 export const sendMonitorUpdate = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);
+export const sendMonitorsUpdate = (message: any) => api.patch("/monitor/", message);
 
 export const updateMonitorStatesFromScene = async (scene: Scene) => {
     const grid = Array(settings.value.number_of_screens).fill(null)
@@ -51,6 +52,7 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
             }
             )
         } else {
+            console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
             sendMonitorUpdate((Number(index) + 1), {
                 'payload': {
                     'event_type': 'slide_change',

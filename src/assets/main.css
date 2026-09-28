@@ -80,7 +80,7 @@ body {
     color: var(--p-primary-500) !important;
   }
 
-  .assigned-slide-label{
+  .assigned-slide-label {
     color: var(--p-primary-500) !important;
     font-weight: bold !important;
   }
@@ -96,29 +96,29 @@ body {
     color: var(--p-primary-50);
   }
 
-   .monitor-label {
+  .monitor-label {
     color: var(--p-primary-50) !important;
   }
 
-  .assigned-slide-label{
+  .assigned-slide-label {
     color: var(--p-primary-50) !important;
     font-weight: bold !important;
   }
 
 }
 
-.p-datatable .p-datatable-tbody > tr.p-datatable-row-selected {
-    background: var(--p-primary-50);
-    color: var(--p-primary-900);
-    box-shadow: inset 3px 0 0 var(--p-primary-400);
-    font-weight: 500;
+.p-datatable .p-datatable-tbody>tr.p-datatable-row-selected {
+  background: var(--p-primary-50);
+  color: var(--p-primary-900);
+  box-shadow: inset 3px 0 0 var(--p-primary-400);
+  font-weight: 500;
 }
 
-.dark-mode .p-datatable .p-datatable-tbody > tr.p-datatable-row-selected {
-    background: var(--p-primary-700);
-    color: var(--text-color);
-    box-shadow: inset 3px 0 0 var(--p-primary-400);
-    font-weight: 500;
+.dark-mode .p-datatable .p-datatable-tbody>tr.p-datatable-row-selected {
+  background: var(--p-primary-700);
+  color: var(--text-color);
+  box-shadow: inset 3px 0 0 var(--p-primary-400);
+  font-weight: 500;
 }
 
 .monitor-info {
@@ -268,3 +268,13 @@ h6 {
   color: var(--p-primary-50);
 }
 
+.centered {
+  position: fixed;
+  /* or absolute */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}

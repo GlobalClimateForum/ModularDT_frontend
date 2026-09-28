@@ -46,11 +46,10 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 }, { immediate: true }); // immediate to execute also at start
 
 onMounted(() => {
-  
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
-  console.log(currentPresentation.value)
-  updateMonitors();
+  updatePresentationState();
   sceneToMonitorGrid();
+  updateMonitors();
 });
 
 function sceneToMonitorGrid() {

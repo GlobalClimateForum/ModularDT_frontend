@@ -146,25 +146,6 @@ function onConfirmDeleteScene(scene: Scene) {
 
 function onDuplicateEditScene(scene: Scene) {
     if (scene.id) {
-        /*
-        const new_scene = {
-            name: `${scene.name} (${t('moderator.copy')})`,
-            description: scene.description,
-            slides: scene.slides,
-            tags: scene.tags
-        };
-
-        saveScene(new_scene).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene saved successfully', life: 3000 })
-            fetchScenes();
-        }).catch(error => {
-            console.error("Error saving scene:", error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save scene', life: 3000 })
-            fetchScenes();
-        });
-    } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Scene ID is missing', life: 3000 });
-        console.error("Error deleting scene: no valid scene.id");*/
         scene.name = `${scene.name} (${t('moderator.copy')})`
         emit('edit-scene', { ...scene });
     }

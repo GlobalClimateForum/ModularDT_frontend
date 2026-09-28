@@ -4,7 +4,11 @@ import { getSettings, type Settings } from '@/services/settings_service';
 export const settings = ref<Settings>({
   cs_url: 'http://127.0.0.1:8002',
   number_of_screens: 4,
+  show_screen_id: false,
   background_image: '',
+  background_image_on_empty_screens: true,
+  background_image_on_welcome_screens: false,
+  background_image_on_all_slides_per_default: true,
   language: 'en',
   avatar_style: 'glyphs',
   palette: 'indigo', 

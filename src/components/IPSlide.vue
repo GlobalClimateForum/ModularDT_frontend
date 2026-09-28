@@ -40,7 +40,7 @@ onMounted(() => {
             localTargetSlide.value = slide.data as Slide
         })
     } else {
-        localTargetSlide.value = props.targetSlide
+        localTargetSlide.value = props.targetSlide ?? null
     }
 })
 

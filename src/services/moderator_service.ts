@@ -7,3 +7,8 @@ export const sendUpdateParticipantParameter = (parameter_name: string, value: st
     parameter_name: parameter_name,
     value: value
 });
+
+export const sendModeratorAMonitorRequest = (monitorid: string) => api.patch(`/moderator/`, {
+    event_type: "monitor_request",
+    monitorid: monitorid
+});
