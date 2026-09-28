@@ -1,27 +1,34 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, type Ref } from 'vue';
-
+import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Button from 'primevue/button'
 import InputText from 'primevue/inputtext';
 import { useI18n } from 'vue-i18n';
 import { FilterMatchMode } from '@primevue/core/api'
 // globals and services
 import type { Slide } from '@/services/slide_service'
-import { slides } from '@/globals/slides';
 import { formatDate } from '@/utils/date_utils';
+import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
+import SlideSearch from '@/components/GenericSearch.vue';
 
-const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+const filters = ref<SearchFilters>({
+  global: {
+    value: null,
+    matchMode: FilterMatchMode.CONTAINS,
+  },
 })
+const selectedTags = ref<string[]>([]);
+const filterLogic = ref<'and' | 'or'>('and');
+
 const { t } = useI18n();
 const selectedSlide = defineModel<Slide | null>('selectedSlide', { default: null });
 const emit = defineEmits(['slide-drag-start']);
+
+const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
 // Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
@@ -40,9 +47,8 @@ function onDragEnd(e: DragEvent) {
 </script>
 
 <template>
-    <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex" responsiveLayout="scroll"
-        class="slide-table" v-model:selection="selectedSlide" selectionMode="single"
-        :globalFilterFields="['name', 'content', 'tags']" v-model:filters="filters">
+    <DataTable :value="filteredSlides" dataKey="id" editMode="row" scrollable scrollHeight="flex" responsiveLayout="scroll"
+        class="slide-table" v-model:selection="selectedSlide" selectionMode="single">
 
         <Column field="name" header="">
             <template #editor="slotProps">
@@ -63,13 +69,7 @@ function onDragEnd(e: DragEvent) {
         </Column>
 
         <template #header>
-            <div style="display: flex; gap: 8px; width: 100%;">
-                <InputText class="search-input" v-model="filters.global.value" :placeholder="$t('moderator.search')"
-                    type="text" />
-                <Button @click="filters.global.value = null" rounded :disabled="!filters.global.value">
-                    <i class="pi pi-times"></i>
-                </Button>
-            </div>
+            <SlideSearch v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters"/> 
         </template>
     </DataTable>
 </template>

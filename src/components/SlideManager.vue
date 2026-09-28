@@ -2,8 +2,6 @@
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
-import SelectButton from 'primevue/selectbutton';
-import OverlayBadge from 'primevue/overlaybadge';
 import { useToast } from 'primevue/usetoast';
 import type { Slide } from "@/services/slide_service"
 import SplitterPanel from 'primevue/splitterpanel';
@@ -13,33 +11,34 @@ import SlideView from '@/components/SlideView.vue';
 import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
-import MultiSelect from 'primevue/multiselect';
 import Chip from 'primevue/chip';
 import { slides, fetchSlides } from '@/globals/slides';
 import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
-import { getAvailableTags } from '@/services/slide_service';
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
+import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
+import GenericSearch from '@/components/GenericSearch.vue';
 
 const confirm = useConfirm();
 const { t } = useI18n();
+const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
 const selectedSlide = ref<Slide | null>(null);
 const selectedTags = ref<string[]>([]);
-const existingTags = ref<string[]>([]);
 const editingRows = ref<Slide[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
-const doFilter = ref(false);
 const toast = useToast();
 
-const filters = ref<{ global: { value: string | null; matchMode: any } }>({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+const filters = ref<SearchFilters>({
+  global: {
+    value: null,
+    matchMode: FilterMatchMode.CONTAINS,
+  },
 })
-const activeFilterCount = computed(() =>
-    (filters.value.global.value ? 1 : 0) + selectedTags.value.length
-);
+
+const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
 function onRowEditSave(event: any) {
     const { id, name } = event.newData
@@ -98,75 +97,24 @@ function onConfirmDeleteSlide(slide: Slide) {
 
 function onDuplicateEditSlide(slide: Slide) {
     if (slide.id) {
-        /*
-        const new_sections = slide.sections?.map((section, index) => ({
-            view_type: section.view_type,
-            content: section.content,
-            content_path: section.content_path,
-            width_fraction: section.width_fraction
-        })) || [];
-
-        const new_slide = {
-            name: `${slide.name} (${t('moderator.copy')})`,
-            width: slide.width,
-            height: slide.height,
-            tags: slide.tags
-        };
-
-        saveSlide(new_slide, new_sections).then(() => {
-            fetchSlides();
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-        }).catch(error => {
-            console.error("Error saving slide:", error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-        });
-    } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-        console.error("Error deleting slide: no valid slide.id"); */
         slide.name = `${slide.name} (${t('moderator.copy')})`
         emit('edit-slide', { ...slide, sections: slide.sections || [] });
     }
 }
 
-const filteredSlides = computed(() =>
-    slides.value.filter(s => {
-        const q = filters.value.global.value?.toLowerCase() ?? '';
-        const textOk = !q || s.name.toLowerCase().includes(q);
-        const tagsOk = selectedTags.value.length === 0
-            || selectedTags.value.some(t => s.tags.includes(t));
-        if (filterLogic.value === 'or') {
-            return textOk || tagsOk;
-        } else if (filterLogic.value === 'and') {
-            return textOk && tagsOk;
-        }
-    })
-);
-
 function onTagRemoved(removedTag: string) {
     if (selectedSlide.value) {
         selectedSlide.value.tags = selectedSlide.value.tags.filter(tag => tag !== removedTag);
     }
+    searchComponent.value?.fetchTags()
 }
 
 function onTagAdded(addedTag: string) {
     if (selectedSlide.value) {
         selectedSlide.value.tags = [...selectedSlide.value.tags, addedTag];
     }
-    existingTags.value = Array.from(new Set([...existingTags.value, addedTag]));
+    searchComponent.value?.fetchTags()
 }
-
-onMounted(() => {
-    getAvailableTags().then(tags => {
-        existingTags.value = tags.data.tags;
-    });
-});
-
-watch(doFilter, (newVal) => {
-    if (!newVal) {
-        filters.value.global.value = null;
-        selectedTags.value = [];
-    }
-});
 </script>
 
 
@@ -174,7 +122,6 @@ watch(doFilter, (newVal) => {
     <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
 
         <SplitterPanel class="sub-panel" :size="30">
-
             <DataTable dataKey="id" editMode="row" scrollable scrollHeight="flex" :value="filteredSlides"
                 @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
                 v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single">
@@ -218,37 +165,8 @@ watch(doFilter, (newVal) => {
                 </Column>
 
                 <template #header>
-                    <div style="display: flex; flex-direction: column; width: 100%; gap: var(--space-small);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <h1 class="dashboard_label">Slides</h1>
-                            <OverlayBadge :value="activeFilterCount ? String(activeFilterCount) : undefined"
-                                severity="warn">
-                                <Button @click="doFilter = !doFilter" label="Filter"
-                                    :badge="activeFilterCount ? String(activeFilterCount) : undefined">
-                                    <template #icon>
-                                        <i class="pi" :class="doFilter ? 'pi-filter-slash' : 'pi-filter'"></i>
-                                    </template>
-                                </Button>
-                            </OverlayBadge>
-                        </div>
-
-                        <transition name="rolldown">
-                            <div v-if=" doFilter" class="filter-container">
-                            <InputText v-model="filters.global.value" :placeholder="$t('moderator.search')"
-                                :showClear="true" class="filter-field" />
-                            <SelectButton :options="['and', 'or']" v-model="filterLogic">
-                                <template #option="{ option }">
-                                    <span v-if="option == 'and'">AND</span>
-                                    <span v-else>OR</span>
-                                </template>
-                            </SelectButton>
-                            <MultiSelect v-model="selectedTags" :options="existingTags" placeholder="Tags"
-                                display="chip" :showClear="true" class="filter-field" />
-                    </div>
-                    </transition>
-                    </div>
+                    <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters"/> 
                 </template>
-
             </DataTable>
         </SplitterPanel>
 
