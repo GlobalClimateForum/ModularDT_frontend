@@ -100,16 +100,22 @@ async function addLayer(layer: Layer) {
                 });
                 break;
 
-            case 'emoji':
+            case 'emoji': {
+                const imgId = `emoji-${layer.name}`;
+                if (!map.hasImage(imgId)) {
+                    map.addImage(imgId, emojiImageMarker(layer.marker.value, 64), { pixelRatio: 2 });
+                }
                 map.addLayer({
                     id: layer.name,
                     type: 'symbol',
                     source: layer.name,
                     layout: {
-                        'text-field': layer.marker.value
+                        'icon-image': imgId,
+                        'icon-allow-overlap': true
                     }
                 });
                 break;
+            }
         }
     }
 }
@@ -144,6 +150,19 @@ function onParameterChange(change: ParameterChange) {
     flyToPosition(change.value.coord, change.value.zoom);
 };
 
+function emojiImageMarker(emoji: string, size: number): ImageData {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.font = `${size * 0.8}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, size / 2, size / 2);
+
+    return ctx.getImageData(0, 0, size, size);;
+}
 
 
 onMounted(() => {
