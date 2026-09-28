@@ -106,7 +106,7 @@ onMounted(() => {
         container: mapContainer.value,
         style: resolveStyle(mapprops.basemap) || resolveStyle(currentBasemap.value),
         center: mapprops.startPosition || [13.350103005033793, 52.51451583081903],
-        zoom: mapprops.zoom || 18,
+        zoom: mapprops.startZoom ?? mapprops.zoom ?? 18,
         attributionControl: { compact: false }
     });
 

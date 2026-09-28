@@ -223,6 +223,9 @@ function savePosition() {
         inEdit: false,
     });
 }
+
+watch(savedPositions, () => saveSection(), { deep: true });
+
 </script>
 
 <template>
