@@ -15,11 +15,19 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import SlideSearch from '@/components/GenericSearch.vue';
 
+// Define Input Proerties
+const props = defineProps({
+    slide_preview: {
+        type: Boolean,
+        default: true
+    }
+})
+
 const filters = ref<SearchFilters>({
-  global: {
-    value: null,
-    matchMode: FilterMatchMode.CONTAINS,
-  },
+    global: {
+        value: null,
+        matchMode: FilterMatchMode.CONTAINS,
+    },
 })
 const selectedTags = ref<string[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
@@ -47,14 +55,14 @@ function onDragEnd(e: DragEvent) {
 </script>
 
 <template>
-    <DataTable :value="filteredSlides" dataKey="id" editMode="row" scrollable scrollHeight="flex" responsiveLayout="scroll"
-        class="slide-table" v-model:selection="selectedSlide" selectionMode="single">
+    <DataTable :value="filteredSlides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+        responsiveLayout="scroll" class="slide-table" v-model:selection="selectedSlide" selectionMode="single">
 
         <Column field="name" header="">
             <template #editor="slotProps">
                 <InputText v-model="slotProps.data.name" />
             </template>
-            <template #body="slotProps">
+            <template v-if="props.slide_preview" #body="slotProps">
                 <div class="slide-info">
                     <p class="slide-label">{{ slotProps.data.name }}</p>
                     <p class="slide-date">{{ formatDate(slotProps.data.updated_at) }}</p>
@@ -66,10 +74,17 @@ function onDragEnd(e: DragEvent) {
                         :shadow="true" />
                 </div>
             </template>
+            <template v-else #body="slotProps">
+                <div draggable="true" @dragstart="onDragStart($event, slotProps.data)">
+                    <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                    <span style="font-size: 0.875rem; color: #64748b;">Updated {{ formatDate(slotProps.data.updated_at) }}</span>
+                </div>
+            </template>
         </Column>
 
         <template #header>
-            <SlideSearch v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters"/> 
+            <SlideSearch v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic"
+                v-model:filters="filters" />
         </template>
     </DataTable>
 </template>

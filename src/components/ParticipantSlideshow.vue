@@ -26,6 +26,7 @@ import { participants } from '@/globals/participants';
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 // components
 import SlideView from '@/components/SlideView.vue';
+import SlideGallery from '@/components/SlideGallery.vue';
 
 
 interface SelectedSlide {
@@ -203,32 +204,19 @@ const onPlaySlideshow = async (slideshow: Slideshow) => {
 
 }
 
-const onDragStart = (event: DragEvent, item: Slide) => {
-    if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = 'copy';
-        event.dataTransfer.setData('application/json', JSON.stringify(item));
-    }
-};
-
-const handleNativeDrop = async (event: DragEvent) => {
-    if (!event.dataTransfer) return;
-
-    const dataString = event.dataTransfer.getData('application/json');
-    if (!dataString) return;
+const onDrop = async (event: DragEvent) => {
+    const slideData = event.dataTransfer?.getData('slide');
+    if (!slideData) return;
 
     try {
-        const rawScene = JSON.parse(dataString);
-
-        const deepClonedScene = structuredClone(rawScene);
-
+        const slide = JSON.parse(slideData) as SelectedSlide;
         const newElement: SelectedSlide = {
-            ...deepClonedScene,
+            ...structuredClone(slide),
             uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
         };
 
         await nextTick();
         selectedOrder.value.push(newElement);
-
     } catch (error) {
         console.error('Drop error:', error);
     }
@@ -273,6 +261,10 @@ const saveOrderToApi = async () => {
 const removeItem = (index: number) => {
     selectedOrder.value.splice(index, 1);
 };
+
+const handleDragStart = (item) => {
+    // Track if needed, but actual drag setup happens in child
+};
 </script>
 
 
@@ -281,34 +273,7 @@ const removeItem = (index: number) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <h2 class="dashboard_label">{{ $t('moderator.nav.slides') }}</h2>
-                    <DataTable :value="slides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                        responsiveLayout="scroll" class="my-table" v-model:selection="selectedSlide"
-                        selectionMode="single" :globalFilterFields="['name', 'tags']" v-model:filters="filters">
-
-                        <Column field="name" header="">
-                            <template #editor="slotProps">
-                                <InputText v-model="slotProps.data.name" />
-                            </template>
-                            <template #body="slotProps">
-                                <div draggable="true" @dragstart="onDragStart($event, slotProps.data)">
-                                    <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
-                                    <span style="font-size: 0.875rem; color: #64748b;">Updated
-                                        {{ formatDate(slotProps.data.updated_at) }}</span>
-                                </div>
-                            </template>
-                        </Column>
-
-                        <template #header>
-                            <InputText class="input-field" v-model="filters.global.value"
-                                :placeholder="$t('moderator.search')" type="text" />
-                            <Button class="button-reset-search" @click="filters.global.value = null" rounded
-                                :disabled="!filters.global.value">
-                                <i class="pi pi-times"></i>
-                            </Button>
-                        </template>
-
-                    </DataTable>
+                    <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" :slide_preview="false" />
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
                     <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
@@ -369,7 +334,7 @@ const removeItem = (index: number) => {
                 </SplitterPanel>
                 <SplitterPanel :size="colRightSize">
                     <div v-if="selectedSlideshow" style="overflow: auto; height: 100%;">
-                        <div class="target-panel" @dragover.prevent @drop="handleNativeDrop">
+                        <div class="target-panel" @dragover.prevent @drop="onDrop">
                             <div class="header-container">
                                 <h3>{{ t('moderator.order') }}</h3>
                                 <Button class="button-add-presentation" :label="$t('moderator.save_order')"

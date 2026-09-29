@@ -50,7 +50,7 @@ defineExpose({
 <template>
     <div style="display: flex; flex-direction: column; width: 100%; gap: var(--space-small);">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <h1 class="dashboard_label">Slides</h1>
+            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
             <OverlayBadge :value="activeFilterCount ? String(activeFilterCount) : undefined" severity="warn">
                 <Button @click="doFilter = !doFilter" label="Filter"
                     :badge="activeFilterCount ? String(activeFilterCount) : undefined">

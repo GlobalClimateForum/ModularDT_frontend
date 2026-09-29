@@ -174,7 +174,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     <Splitter :gutter-size="2" class="dashboard">
         <!-- Available Slides -->
         <SplitterPanel :size="25" class="sub-panel">
-            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
             <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
         </SplitterPanel>
         <!-- Scene Builder -->
