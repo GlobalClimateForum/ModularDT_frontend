@@ -24,20 +24,33 @@ import { useConfirm } from "primevue/useconfirm";
 import { updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
 import { startPresentation } from "@/services/live_presentation_service";
+import GenericSearch from '@/components/GenericSearch.vue';
+import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
+
 
 const { t } = useI18n();
 const confirm = useConfirm();
+const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
 const selectedScene = ref<Scene | null>(null);
+const selectedTags = ref<string[]>([]);
+const filterLogic = ref<'and' | 'or'>('and');
+
+const filters = ref<SearchFilters>({
+  global: {
+    value: null,
+    matchMode: FilterMatchMode.CONTAINS,
+  },
+})
+
+const filteredScenes = useFilteredScenes(filters, selectedTags, filterLogic)
+
 const editingRows = ref<Scene[]>([]);
 
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
 
 const toast = useToast();
-const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-})
 
 interface SelectedScene {
     id: string;
@@ -307,14 +320,12 @@ const removeItem = (index: number) => {
 
 <template>
     <div style="display: flex; flex-direction: column; height: 100vh; gap: var(--space-small);"> <!-- Obere Reihe -->
-        <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
+        <div style="height: 300px; flex: 1; display: flex; width: 100%; ">                    
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <h2 class="dashboard_label">{{ $t('moderator.nav.scenes') }}</h2>
-                    <DataTable :value="scenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                    <DataTable :value="filteredScenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                         @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll" class="my-table"
-                        v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single"
-                        :globalFilterFields="['name', 'tags']" v-model:filters="filters">
+                        v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single">
 
                         <Column field="name" header="">
                             <template #editor="slotProps">
@@ -350,12 +361,7 @@ const removeItem = (index: number) => {
                         </Column>
 
                         <template #header>
-                            <InputText class="input-field" v-model="filters.global.value"
-                                :placeholder="$t('moderator.search')" type="text" />
-                            <Button class="button-reset-search" @click="filters.global.value = null" rounded
-                                :disabled="!filters.global.value">
-                                <i class="pi pi-times"></i>
-                            </Button>
+                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters" :title="$t('moderator.available_scenes')"/> 
                         </template>
 
                     </DataTable>

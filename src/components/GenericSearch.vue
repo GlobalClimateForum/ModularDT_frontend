@@ -13,6 +13,9 @@ import { getAvailableTags } from '@/services/slide_service';
 import { type SearchFilters } from '@/globals/filters';
 import '@/assets/main.css'
 
+const props = defineProps({
+    title: String
+})
 
 const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
 const filterLogic = defineModel<'and' | 'or'> ('filterLogic', { default: 'and' });
@@ -50,7 +53,7 @@ defineExpose({
 <template>
     <div style="display: flex; flex-direction: column; width: 100%; gap: var(--space-small);">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <h2 class="dashboard_label">{{ $t('moderator.available_slides') }}</h2>
+            <h2 class="dashboard_label">{{ title }}</h2>
             <OverlayBadge :value="activeFilterCount ? String(activeFilterCount) : undefined" severity="warn">
                 <Button @click="doFilter = !doFilter" label="Filter"
                     :badge="activeFilterCount ? String(activeFilterCount) : undefined">

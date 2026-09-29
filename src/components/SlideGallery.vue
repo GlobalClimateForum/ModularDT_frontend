@@ -84,7 +84,7 @@ function onDragEnd(e: DragEvent) {
 
         <template #header>
             <SlideSearch v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic"
-                v-model:filters="filters" />
+                v-model:filters="filters" :title="$t('moderator.available_slides')"/>
         </template>
     </DataTable>
 </template>
