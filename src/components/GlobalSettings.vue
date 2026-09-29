@@ -12,13 +12,14 @@ import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import SelectButton from 'primevue/selectbutton';
 import Password from 'primevue/password';
-import ToggleSwitch from 'primevue/toggleswitch';
 import Textarea from 'primevue/textarea';
 import DatePicker from 'primevue/datepicker';
 import Checkbox from 'primevue/checkbox';
+
 // globals and services
+import { useRouter } from 'vue-router';
 import { settings, fetchSettings } from '@/globals/settings'
-import { updateSettings } from "@/services/settings_service";
+import { updateSettings, isModerator, clearModerator } from "@/services/settings_service";
 import { sendMonitorsUpdate } from "@/services/monitor_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
 // @ts-ignore: module has no declaration file
@@ -33,6 +34,7 @@ const { availableLocales } = useI18n()
 const toast = useToast();
 const dialog = useDialog();
 const changePasswordComponent = defineAsyncComponent(() => import('@/components/ChangePasswordDialog.vue'));
+const router = useRouter();
 
 const availablePalettes = computed(() => {
   return Object.keys(palettes).map(key => ({
@@ -115,6 +117,11 @@ function onEventChange(eventID: number) {
   }
 }
 
+function onLogout() {
+  clearModerator(); 
+  router.push('/home');
+}
+
 function onAddEvent() {
   dialog.open(defineAsyncComponent(() => import('@/components/AddEventDialog.vue')), {
     props: {
@@ -179,21 +186,21 @@ function updateSettingsForMonitors() {
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_empty_screens" binary
-            inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()"/>
+            inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_empty_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_empty_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_welcome_screens" binary
-            inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()"/>
+            inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_welcome_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
           <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
-            inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()"/>
+            inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_all_slides_per_default-checkbox"> {{
             $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
         </div>
@@ -274,6 +281,15 @@ function updateSettingsForMonitors() {
               </template>
             </Button>
           </div>
+
+          <div class="label-container" v-if="isModerator()">
+            <label>Logout Moderator</label>
+            <Button size="small" label="Logout" @click="onLogout()">
+              <template #icon>
+                <i class="material-symbols-outlined">logout</i>
+              </template>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -285,7 +301,8 @@ function updateSettingsForMonitors() {
             fluid @update:modelValue="updateSettingsForMonitors()" />
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox" @change="updateSettingsForMonitors()"/>
+          <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox"
+            @change="updateSettingsForMonitors()" />
           <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
         </div>
       </div>
@@ -293,7 +310,7 @@ function updateSettingsForMonitors() {
       <div class="sub-panel">
         <h1 class="dashboard_label">Event Settings</h1>
 
-        <Button label="Add Event" style="width: 200px; margin-left: auto;" @click="onAddEvent()">
+        <Button label="Add Event" fluid size="small" @click="onAddEvent()">
           <template #icon>
             <i class="material-symbols-outlined">event</i>
           </template>
@@ -305,23 +322,20 @@ function updateSettingsForMonitors() {
             @change="onEventChange($event.value)"></Select>
         </div>
 
-        <span style="height: 100%; display: flex; flex-direction: column; gap: var(--space-medium);"
-          v-if="selectedEvent">
-          <div class="label-container">
-            <label>Event Name</label>
-            <InputText v-model="selectedEvent.name" fluid />
-          </div>
+        <div class="label-container" v-if="selectedEvent">
+          <label>Event Name</label>
+          <InputText v-model="selectedEvent.name" fluid />
+        </div>
 
-          <div class="label-container">
-            <label>Description</label>
-            <Textarea v-model="selectedEvent.description" fluid />
-          </div>
+        <div class="label-container" v-if="selectedEvent">
+          <label>Description</label>
+          <Textarea v-model="selectedEvent.description" fluid />
+        </div>
 
-          <div class="label-container">
-            <label>Date</label>
-            <DatePicker v-model="selectedEvent.date" fluid />
-          </div>
-        </span>
+        <div class="label-container" v-if="selectedEvent">
+          <label>Date</label>
+          <DatePicker v-model="selectedEvent.date" fluid appendTo="body" />
+        </div>
 
 
       </div>
@@ -362,6 +376,9 @@ function updateSettingsForMonitors() {
 }
 
 .sub-panel {
+  min-height: max-content;
+  align-self: start;
+
   background-color: var(--surface);
   border-radius: var(--br-small);
   box-shadow: var(--shadow-light);
@@ -369,21 +386,36 @@ function updateSettingsForMonitors() {
   display: flex;
   flex-direction: column;
   gap: var(--space-medium);
-  padding-top: 0;
-}
+  padding: var(--space-small) var(--space-medium) var(--space-medium);
 
-
-.settings-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-large);
 }
 
 .settings-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-large);
+
+  height: 100%;
+  min-height: 0;
 }
+
+.settings-container {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  align-items: start;
+  gap: var(--space-large);
+
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-small);
+
+  mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent);
+  padding-bottom: 2.5rem;
+}
+
 
 .label-container :deep(.p-password) {
   width: 100%;

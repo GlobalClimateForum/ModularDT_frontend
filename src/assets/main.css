@@ -173,7 +173,6 @@ body,
   background: transparent;
 }
 
-
 .inset-control {
   border: 2px solid var(--p-primary-200);
   background-color: var(--p-primary-100);
@@ -277,4 +276,18 @@ h6 {
   justify-content: center;
   align-items: center;
   text-align: center;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }

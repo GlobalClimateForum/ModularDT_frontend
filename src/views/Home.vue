@@ -1,28 +1,31 @@
 <script setup lang="ts">
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import InputOtp from 'primevue/inputotp'
+import Message from 'primevue/message'
 
 import { ref, onMounted, computed } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
 import { type Event, getEventById } from '@/services/event_service'
+import { authorizeModerator } from '@/services/settings_service' // adjust path
 
 import { type Participant, getParticipants } from '@/services/participant_service'
 import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
 
-
 const { t } = useI18n();
-const selected = ref('')
 const event = ref<Event | null>(null)
 
 const selectedRole = ref<string | null>(null)
-const selectedParticipant = ref<Participant | null>(null)
+const pin = ref<any>(null)
+const pinError = ref(false)
 const participants = ref<Participant[]>([])
 const seatedParticipants = computed(() => participants.value.filter(p => p.seat !== null));
 
 import '@/assets/main.css'
+import { useSessionStorage } from '@vueuse/core'
+
+const pinOk = useSessionStorage('pin_ok', '0')
 
 onMounted(() => {
 
@@ -48,10 +51,43 @@ function avatarUri(seed: string) {
   return buildAvatarUri(makeStyle('glyphs'), seed);
 }
 
+async function submitPin() {
+  try {
+    const valid = await authorizeModerator(pin.value ?? '')
+    if (!valid) {
+      pinError.value = true
+      pin.value = ''
+      return
+    }
+    sessionStorage.setItem('pin_ok', '1')
+    router.push('/moderator')
+  } catch (e) {
+    console.error('PIN check failed:', e)
+    pinError.value = true
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('pin_ok')
+  pinOk.value = '0'
+  selectedRole.value = null
+  pin.value = ''
+  router.push('/home')
+}
+
 </script>
 
 <template>
   <div class="welcome">
+
+    <Message class="dev-mode-message" v-if="settings.dev_mode" severity="warn">
+      <template #default>
+        Development Mode is enabled. Authorization is bypassed.
+      </template>
+      <template #icon>
+        <i class="material-symbols-outlined">warning</i>
+      </template>
+    </Message>
 
     <h1 v-if="!event" class="welcome-title">{{ this.$APP_NAME }}</h1>
     <div v-if="event" class="event-info">
@@ -64,8 +100,8 @@ function avatarUri(seed: string) {
     <div class="role_options" v-if="selectedRole === null">
 
 
-      <Card class="role_option_card " v-if="selectedRole === null || selectedRole === 'moderator'"
-        @click="selectedRole = 'moderator'">
+      <Card class="role_option_card " v-if="selectedRole === null"
+        @click="selectedRole = 'moderator'; router.push('/moderator')">
 
         <template #content>
           <div class="role_option_card_content">
@@ -100,34 +136,6 @@ function avatarUri(seed: string) {
       <i class="material-symbols-outlined">home</i>
     </Button>
 
-    <div class="pin_enter" v-if="selectedRole !== null">
-      <p v-if="selectedRole !== null && selectedRole === 'moderator'"
-        style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-        <i class="material-symbols-outlined">lock</i>
-        {{ t('pin-message') }}
-      </p>
-
-      <div v-if="selectedRole == 'moderator'">
-        <InputOtp :length="6" />
-        <Button style="margin-top: 1rem;" :label="t('submit')" @click="router.push('/moderator')" />
-      </div>
-
-      <p v-if="selectedRole !== null && selectedRole === 'monitor'"
-        style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-        <i class="material-symbols-outlined">monitor</i>
-      </p>
-
-      <div v-if="selectedRole == 'monitor'">
-        <label class="monitor_select_label">{{ t('select_monitor') }}<select class="monitor_select" v-model="selected">
-            <option disabled value="">{{ t('please_select') }}</option>
-            <option v-for="i in settings.number_of_screens" :key="i" :value="i"> Monitor{{ i }} </option>
-          </select> </label>
-
-        <Button style="margin-top: 1rem;" :disabled="!selected" :label="t('submit')"
-          @click="router.push('/monitor/' + String(selected));" />
-      </div>
-    </div>
-
     <!-- Participant Menu -->
     <div v-if="selectedRole !== null && selectedRole === 'participant'">
       <p style="text-align: center;">Who are you?</p>
@@ -145,6 +153,13 @@ function avatarUri(seed: string) {
 
 
 <style scoped>
+.dev-mode-message {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
 .welcome-title {
   font-size: 3rem;
   color: var(--p-primary-50);
@@ -195,19 +210,7 @@ function avatarUri(seed: string) {
   left: 1rem;
 }
 
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
 
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
 
 .event-info {
   text-align: center;
@@ -282,25 +285,6 @@ function avatarUri(seed: string) {
 
 .big-icon {
   font-size: 4rem;
-}
-
-.pin_enter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-}
-
-.pin_enter:deep(.p-inputtext) {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--br-large);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4.3px);
-  -webkit-backdrop-filter: blur(4.3px);
-  color: white;
-  font-weight: 700;
-  font-family: 'Fira Code', monospace;
-  border: 1px solid rgba(255, 255, 255, 0.31);
 }
 
 .monitor_select_label {

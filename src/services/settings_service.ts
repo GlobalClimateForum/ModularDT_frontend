@@ -1,5 +1,7 @@
 import {api, marpApi} from "./api";
 
+const PIN_KEY = 'pin_ok';
+
 export interface Settings {
     cs_url: string;
     number_of_screens: number;
@@ -21,5 +23,18 @@ export interface Settings {
 
 export const getSettings = () => api.get("/settings/");
 export const updateSettings = (settings: Settings) => api.patch("/settings/", settings);
+
+// Moderator Authorization
 export const authorizeModerator = (pin: string) => api.get(`/authorize/${pin}`).then((response) => response.data.valid);
 export const changePin = (oldPin: string, newPin: string) => api.post("/authorize/", { old_pin: oldPin, new_pin: newPin }).then((response) => response.data.success);
+
+export const setModerator = (persist: boolean) =>
+  (persist ? localStorage : sessionStorage).setItem(PIN_KEY, '1')
+
+export const clearModerator = () => {
+  sessionStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(PIN_KEY);
+}
+
+export const isModerator = () =>
+  sessionStorage.getItem(PIN_KEY) === '1' || localStorage.getItem(PIN_KEY) === '1'

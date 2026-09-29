@@ -5,7 +5,7 @@ export interface Event {
     id: number | null;
     name: string;
     description: string | null;
-    date: string | null;
+    date: Date | null;
 }
 
 export interface EventOption {
