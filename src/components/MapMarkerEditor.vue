@@ -10,6 +10,8 @@ import emojis from '@/assets/emojis.json';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 
+const MARKERS_KEY = 'markersByType';
+
 export type Marker =
     | { type: 'dot'; value: string; category: string; style: { mode: 'circle'; 'circle-radius': number; 'circle-color': string; 'circle-stroke-width': number; 'circle-stroke-color': string } }
     | { type: 'emoji'; value: string; category: string; style: { mode: 'symbol'; value: string; 'text-size': number; } }
@@ -25,31 +27,53 @@ const defaultHTMLMarker = `<div style="width: 100%; height: 100%; display: flex;
         <circle cx="12" cy="10" r="3"></circle>
     </svg>`
 
+const defaultDotStyle = { mode: 'circle', 'circle-radius': 15, 'circle-color': '#EF6F6C', 'circle-stroke-width': 1, 'circle-stroke-color': '#FEB95F' } as const;
+
+const STORAGE_KEY = 'lastMarker';
+
 const dialogRef = inject('dialogRef') as any;
-const selectedMarker = ref<Marker>({
-    type: 'dot', value: '', category: '', style:
-        { mode: 'circle', 'circle-radius': 10, 'circle-color': '#F7F9F9', 'circle-stroke-width': 1, 'circle-stroke-color': '#363946' }
-});
+const selectedMarker = ref<Marker>(loadMarker());
 
 function filterEmojisByCategory(category: string) {
     if (!category) return emojis;
     return emojis.filter(e => e.category === category);
 }
 
-function onChangeMarkerType(type: 'dot' | 'emoji' | 'html') {
-    selectedMarker.value.type = type;
-    switch(type) {
-        case 'dot':
-            selectedMarker.value.style = { mode: 'circle', 'circle-radius': 15, 'circle-color': '#EF6F6C', 'circle-stroke-width': 1, 'circle-stroke-color': '#FEB95F' };
-            break;
-        case 'emoji':
-            selectedMarker.value.style = { mode: 'symbol', value: '', 'text-size': 24 };
-            break;
-        case 'html':
-            selectedMarker.value.style = { mode: 'html', value: defaultHTMLMarker, size: 24 };
-            break;
+function loadAllMarkers(): Partial<Record<Marker['type'], Marker>> {
+    try {
+        return JSON.parse(localStorage.getItem(MARKERS_KEY) ?? '{}');
+    } catch {
+        return {};
     }
 }
+
+function defaultMarker(type: Marker['type']): Marker {
+    switch (type) {
+        case 'dot':
+            return { type, value: '', category: '', style: { ...defaultDotStyle } };
+        case 'emoji':
+            return { type, value: '', category: '', style: { mode: 'symbol', value: '', 'text-size': 24 } };
+        case 'html':
+            return { type, value: '', category: '', style: { mode: 'html', value: defaultHTMLMarker, size: 24 } };
+    }
+}
+
+function onChangeMarkerType(type: Marker['type']) {
+    const all = loadAllMarkers();
+    all[selectedMarker.value.type] = selectedMarker.value;
+    localStorage.setItem(MARKERS_KEY, JSON.stringify(all));
+    selectedMarker.value = all[type] ?? defaultMarker(type);
+}
+
+// Function to get the last saved marker from localStorage, or return a default marker if none is found
+function loadMarker(): Marker {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+    } catch { }
+    return { type: 'dot', value: '', category: '', style: { ...defaultDotStyle } };
+}
+
 
 const asHexValue = computed(() => (value: string) => {
     if (value.startsWith('#')) {
@@ -62,19 +86,21 @@ function selectEmoji(emoji: Emoji) {
     selectedMarker.value.type = 'emoji';
     selectedMarker.value.value = emoji.emoji;
     selectedMarker.value.category = emoji.category;
-    selectedMarker.value.style = { mode: 'symbol', value: emoji.emoji, 'text-size': 24, 'text-halo-color': '#ffffff', 'text-halo-width': 2 };
+    selectedMarker.value.style = { mode: 'symbol', value: emoji.emoji, 'text-size': 24 };
 }
 
 function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedMarker.value));
     dialogRef.value.close(selectedMarker.value);
 }
+
 </script>
 
 <template>
     <div class="container">
 
-        <SelectButton v-model="selectedMarker.type" :options="['dot', 'emoji', 'html']"
-            @change="onChangeMarkerType($event.value)" fluid />
+        <SelectButton :modelValue="selectedMarker.type" :options="['dot', 'emoji', 'html']"
+            @update:modelValue="onChangeMarkerType" :allowEmpty="false" fluid />
 
         <div v-if="selectedMarker.type === 'dot'" class="preview">
             <div class="dot-marker" :style="{
@@ -94,7 +120,7 @@ function save() {
                     <template #icon>
                         <i class="material-symbols-outlined">function</i>
                     </template>
-                </Button> -->
+</Button> -->
             </div>
 
             <div class="knob-container">
@@ -106,13 +132,15 @@ function save() {
             <div class="color-container">
                 <label>Fill Color </label>
                 <ColorPicker mode="hex" v-model="selectedMarker.style['circle-color']" />
-                <InputText size="small" style="width: 100px;" :value="asHexValue(selectedMarker.style['circle-color'])" />
+                <InputText size="small" style="width: 100px;"
+                    :value="asHexValue(selectedMarker.style['circle-color'])" />
             </div>
 
             <div class="color-container">
                 <label>Stroke Color </label>
                 <ColorPicker mode="hex" v-model="selectedMarker.style['circle-stroke-color']" />
-                <InputText size="small" style="width: 100px;" :value="asHexValue(selectedMarker.style['circle-stroke-color'])" />
+                <InputText size="small" style="width: 100px;"
+                    :value="asHexValue(selectedMarker.style['circle-stroke-color'])" />
             </div>
         </div>
 
@@ -131,9 +159,10 @@ function save() {
         <div v-if="selectedMarker.type === 'html'"
             style="display: flex; flex-direction: column; align-items: center; gap: var(--space-small);">
             <div class="preview">
-                <iframe class="htmlmarker" :srcdoc="selectedMarker.value" style="width: 100%; height: 100%; border: none;"></iframe>
+                <iframe class="htmlmarker" :srcdoc="selectedMarker.style.value"
+                    style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
-            <Textarea v-model="selectedMarker.value" placeholder="Enter HTML code" rows="10" cols="60" />
+            <Textarea v-model="selectedMarker.style.value" placeholder="Enter HTML code" rows="10" cols="60" />
         </div>
 
         <Button label="Save" @click="save" :disabled="!selectedMarker" />
@@ -231,8 +260,8 @@ function save() {
 }
 
 .marker-controls {
-    display: flex; 
-    flex-direction: row; 
+    display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: flex-start;
     gap: var(--space-large);
