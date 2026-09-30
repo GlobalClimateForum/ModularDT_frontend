@@ -74,6 +74,7 @@ watch(pin, async (value) => {
 
             <div class="pin_enter" :class="{ shake: shaking }" @animationend="shaking = false" ref="pinWrapper">
                 <InputOtp v-model="pin" :length="settings.pin_length" :invalid="pinError" :disabled="checking"
+                type="password"
                     integer-only mask />
             </div>
 
