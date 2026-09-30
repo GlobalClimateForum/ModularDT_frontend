@@ -243,7 +243,7 @@ watch(savedPositions, () => saveSection(), { deep: true });
                 <Select v-model="selectedExistingLayer" :options="existingLayers ?? []" optionLabel="name"
                     placeholder="Add Existing Layer" @change="addExistingLayer" />
 
-                <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Upload Layer"
+                <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Add Layer"
                     :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
 
 
@@ -273,28 +273,44 @@ watch(savedPositions, () => saveSection(), { deep: true });
                             </div>
                         </span>
 
-                        <div
-                            style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
+                        <div style="display: flex; flex-direction: column; gap: var(--space-small); justify-content: center; align-items: flex-start;">
                             <span class="filename">{{ item.name }}</span>
-                            <Tag v-if="item.uploaded" severity="success" value="Uploaded" />
-                            <!-- <Tag severity="contrast" :value="item.filetype" v-if="item.filetype" /> -->
+                            <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
+                                <Tag v-if="item.uploaded" severity="success" value="Uploaded">
+                                    <template #icon>
+                                        <i class="material-symbols-outlined">cloud_done</i>
+                                    </template>
+                                </Tag>
+                                <Tag severity="info">
+                                    <template #default>
+                                        {{ item.vectorType ? item.vectorType.toUpperCase() : 'unknown' }}
+                                    </template>
+                                    <template #icon>
+                                        <i class="material-symbols-outlined"
+                                            v-if="item.vectorType == 'point'">point_scan</i>
+                                        <i class="material-symbols-outlined"
+                                            v-if="item.vectorType == 'polygon'">shapes</i>
+                                    </template>
+                                </Tag>
+                            </div>
                         </div>
 
                         <div class="layer-controls">
-                            <Button @click="uploadLayer(item, i)" size="small" rounded
-                                :disabled="!props.slideSection?.id">
+                            <Button @click="uploadLayer(item, i)" size="small" 
+                                :disabled="!props.slideSection?.id" v-if="!item.uploaded"
+                                label="Upload">
                                 <template #icon>
                                     <i class="material-symbols-outlined"
-                                        style="font-size: var(--fs-medium);">upload_2</i>
+                                        style="font-size: var(--fs-medium);">upload</i>
                                 </template>
                             </Button>
 
-                            <Button rounded size="small">
+                            <!-- <Button  size="small">
                                 <template #icon>
                                     <i class="material-symbols-outlined"
                                         style="font-size: var(--fs-medium);">control_point_duplicate</i>
                                 </template>
-                            </Button>
+                            </Button> -->
                         </div>
                     </div>
                 </template>

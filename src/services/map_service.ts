@@ -111,11 +111,13 @@ export function identifyVectorType(file: File): Promise<'point' | 'line' | 'poly
 export async function localMapLayer() {
     const response = await api.get('maps/layers/');
     const data = response.data;
+    console.log("Fetched Existing Layer", data)
     return data.map((layer: any) => ({
         id: layer.id,
         name: layer.path.split('/').pop() ?? layer.name,
         filetype: layer.filetype,
         path: layer.path,
         marker: layer.marker,
+        vectorType: layer.vectorType
     }));
 }
