@@ -66,11 +66,9 @@ watch(pin, async (value) => {
             <i class="material-symbols-outlined lock-icon">lock_person</i>
 
             <div class="heading">
-                <h1>Moderator login</h1>
-                <p>Enter your PIN to continue.</p>
+                <h1>Are you a Moderator?</h1>
+                <p>This page is restricted to Moderators, enter your PIN to continue.</p>
             </div>
-
-                {{  settings.pin_length }}-digit PIN
 
             <div class="pin_enter" :class="{ shake: shaking }" @animationend="shaking = false" ref="pinWrapper">
                 <InputOtp v-model="pin" :length="settings.pin_length" :invalid="pinError" :disabled="checking"
@@ -84,7 +82,7 @@ watch(pin, async (value) => {
 
             <label class="stay-row" for="stay-logged-in">
                 <ToggleSwitch v-model="stayLoggedIn" input-id="stay-logged-in" />
-                <span>Stay logged in</span>
+                <span style="color: white;">Stay logged in</span>
             </label>
         </div>
     </div>
@@ -130,6 +128,7 @@ watch(pin, async (value) => {
 .heading p {
     margin: 0;
     opacity: 0.75;
+    margin-top: var(--space-small);
 }
 
 .pin_enter:deep(.p-inputotp) {
