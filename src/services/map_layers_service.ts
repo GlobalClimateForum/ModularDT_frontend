@@ -1,6 +1,8 @@
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { Layer } from '@/services/map_service';
 import type { Marker } from '@/components/MapMarkerEditor.vue';
+import type { ExpressionSpecification } from 'maplibre-gl';
+import type { ColorRule } from '@/components/MapMarkerEditor.vue';
 
 
 const PREFIX = 'userlayer-' // a prefix for user-defined map layers
@@ -33,15 +35,16 @@ export function normalizeLayer(layer: Layer): Layer {
     }
 }
 
+// Small Helper to ensure a color string is in hexadecimal format, adding a '#' prefix if necessary.
 const asHex = (v: string) => (v.startsWith('#') ? v : '#' + v); // Helper to ensure a color string is in hexadecimal format, adding a '#' prefix if necessary.
 
 
 // Helper to create an ImageData object represneting a emoji, which then can be used as a marker on the map
 function emojiMarker(emoji: string, size = 64): ImageData {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    ctx.font = `${size * 0.8}px serif`;
+    const canvas = document.createElement('canvas'); // Init a new canvas element to draw the emoji
+    canvas.width = canvas.height = size; // Set the canvas size to the specified size (default is 64x64 pixels)
+    const ctx = canvas.getContext('2d'); // Get the 2D rendering context for the canvas
+    ctx.font = `${size * 0.8}px serif`; // Set the font size to 80% of the canvas size and use a serif font
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(emoji, size / 2, size / 2);
@@ -89,7 +92,7 @@ function addUserLayer(map: MaplibreMap, layer: Layer) {
                 source: id,
                 paint: {
                     'circle-radius': s['circle-radius'],
-                    'circle-color': asHex(s['circle-color']),
+                    'circle-color': colorExpression(s['circle-color'], marker.type === 'dot' ? marker.rules : undefined),
                     'circle-stroke-width': s['circle-stroke-width'],
                     'circle-stroke-color': asHex(s['circle-stroke-color']),
                 },
@@ -97,6 +100,21 @@ function addUserLayer(map: MaplibreMap, layer: Layer) {
         }
     }
 }
+
+// Helper function to create a color expression for a map layer, 
+// which can be either a single color or a set of rules for different values.
+// returns a string for a single color or a mapLibre ExpressionSpecification for multiple rules.
+function colorExpression(color: string, rules?: ColorRule): string | ExpressionSpecification {
+    const fallback = asHex(color); // Fallback color if no rules match or if no rules are provided
+    if (!rules?.property || !rules.cases.length) return fallback; // If no property or cases are provided, return the fallback color
+    // Else, create a match expression for the color based on the provided rules
+    return [
+        'match', ['to-string', ['get', rules.property]],
+        ...rules.cases.flatMap(c => [c.value, asHex(c.color)]), // flatMap = for each case, return an array with the value and the corresponding color
+        fallback,
+    ] as ExpressionSpecification;
+}
+
 
 // Function to synchronize the map with the provided layers, clearing existing user-defined layers and adding the new ones.
 export function syncLayers(map: MaplibreMap, layers: Layer[]) {

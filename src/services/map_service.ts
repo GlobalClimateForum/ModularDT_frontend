@@ -1,7 +1,6 @@
 import { uploadApi, api } from "./api";
 import { type SlideSection } from "@/services/slide_service";
 import { basemaps } from '@/utils/map_utils';
-import type { Marker } from '@/components/MapMarkerEditor.vue';
 import type { LocationParameter } from '@/services/slide_service';
 
 export interface Layer {
@@ -23,6 +22,16 @@ export interface MapProperties {
     layers: Layer[];
     positions: { position: [number, number]; zoom: number; name: string }[];
 }
+
+export type Marker =
+    | { type: 'dot'; value: string; category: string; rules?:Rule[], style: { mode: 'circle'; 'circle-radius': number; 'circle-color': string; 'circle-stroke-width': number; 'circle-stroke-color': string } }
+    | { type: 'emoji'; value: string; category: string; style: { mode: 'symbol'; value: string; 'text-size': number; } }
+    | { type: 'html'; value: string; category: string; style: { mode: 'html'; value: string; size: number } };
+
+export type DotStyle = Extract<Marker, { type: 'dot' }>['style']; // Extract the style type from the 'dot' marker type and define it as DotStyle
+export type Condition = { property: string; op: '==' | '!=' | '>' | '<' | '>=' | '<='; value: string };
+export type Rule = { conditions: Condition[]; style: Partial<DotStyle> };
+export type ColorKey = 'circle-color' | 'circle-stroke-color';
 
 export interface MapHandle {
     getCurrentMapPosition: () => { center: [number, number]; zoom: number } | null;
@@ -120,4 +129,19 @@ export async function localMapLayer() {
         marker: layer.marker,
         vectorType: layer.vectorType
     }));
+}
+
+// --- Marker Previews ------------------------------------------------------
+export function dotMarkerPreview(style?: Partial<DotStyle>) {
+    if (!style) return {};
+    return {
+        width: (style['circle-radius'] ?? 0) * 2 + 'px',
+        height: (style['circle-radius'] ?? 0) * 2 + 'px',
+        backgroundColor: asHexValue(style['circle-color'] ?? ''),
+        border: `${style['circle-stroke-width'] ?? 0}px solid ${asHexValue(style['circle-stroke-color'] ?? '')}`,
+    };
+}
+
+export function asHexValue(value: string) {
+    return value.startsWith('#') ? value : '#' + value;
 }

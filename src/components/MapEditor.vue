@@ -13,6 +13,8 @@ import Button from 'primevue/button';
 import { type MapProperties, type Layer, saveMapLayer, localMapLayer, identifyVectorType, getMap } from '@/services/map_service';
 import { normalizeLayer } from '@/services/map_layers_service';
 import { settings } from '@/globals/settings.ts';
+import type { Marker } from '@/services/map_service';
+import { dotMarkerPreview, asHexValue } from '@/services/map_service';
 
 const DEFAULT_START_POSITION: [number, number] = [13.350103005033793, 52.51451583081903];
 const DEFAULT_START_ZOOM = 2;
@@ -137,7 +139,6 @@ function onChangeBasemap() {
 
 // --- Layers -----------------------------------------------------------------
 
-const asHexValue = computed(() => (value: string) => (value.startsWith('#') ? value : '#' + value));
 
 async function onFileSelect(event: { files: File[] }) {
     const newLayers: Layer[] = await Promise.all(
@@ -188,9 +189,8 @@ function uploadLayer(layer: Layer, idx: number) {
 function openMarkerEditor(item: Layer, idx: number) {
     dialog.open(MapMarkerEditor, {
         props: {
-            header: 'Edit Marker',
             modal: true,
-            style: { width: '600px', height: '600px' },
+            style: { width: '800px', height: '800px' },
         },
         data: { layer: item },
         onClose: (opt) => {
@@ -224,6 +224,8 @@ function savePosition() {
     });
 }
 
+
+
 watch(savedPositions, () => saveSection(), { deep: true });
 
 </script>
@@ -241,7 +243,16 @@ watch(savedPositions, () => saveSection(), { deep: true });
             <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
 
                 <Select v-model="selectedExistingLayer" :options="existingLayers ?? []" optionLabel="name"
-                    placeholder="Add Existing Layer" @change="addExistingLayer" />
+                    placeholder="Add Existing Layer" @change="addExistingLayer">
+                    <template #option="slotProps">
+                        <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
+                            <Tag severity="info">{{ slotProps.option.vectorType?.toUpperCase() ?? 'unknown' }}</Tag>
+                            <span class="filename">
+                                {{ slotProps.option.name }}
+                            </span>
+                        </div>
+                    </template>
+                </Select>
 
                 <FileUpload mode="basic" customUpload auto @select="onFileSelect" chooseLabel="Add Layer"
                     :chooseButtonProps="{ severity: 'primary', variant: 'filled' }" />
@@ -259,12 +270,7 @@ watch(savedPositions, () => saveSection(), { deep: true });
                         <span>
                             <div class="marker-container" @click="openMarkerEditor(item, i)">
                                 <div v-if="item.marker?.type === 'dot'">
-                                    <div class="dot-marker" :style="{
-                                        width: item.marker.style['circle-radius'] * 2 + 'px',
-                                        height: item.marker.style['circle-radius'] * 2 + 'px',
-                                        backgroundColor: asHexValue(item.marker.style['circle-color']),
-                                        border: item.marker.style['circle-stroke-width'] + 'px solid ' + asHexValue(item.marker.style['circle-stroke-color'])
-                                    }"></div>
+                                    <div class="dot-marker" :style="dotMarkerPreview(item.marker)"></div>
                                 </div>
 
                                 <div v-if="item.marker?.type === 'emoji'">
@@ -273,9 +279,11 @@ watch(savedPositions, () => saveSection(), { deep: true });
                             </div>
                         </span>
 
-                        <div style="display: flex; flex-direction: column; gap: var(--space-small); justify-content: center; align-items: flex-start;">
+                        <div
+                            style="display: flex; flex-direction: column; gap: var(--space-small); justify-content: center; align-items: flex-start;">
                             <span class="filename">{{ item.name }}</span>
-                            <div style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
+                            <div
+                                style="display: flex; flex-direction: row; gap: var(--space-small); align-items: center;">
                                 <Tag v-if="item.uploaded" severity="success" value="Uploaded">
                                     <template #icon>
                                         <i class="material-symbols-outlined">cloud_done</i>
@@ -296,12 +304,10 @@ watch(savedPositions, () => saveSection(), { deep: true });
                         </div>
 
                         <div class="layer-controls">
-                            <Button @click="uploadLayer(item, i)" size="small" 
-                                :disabled="!props.slideSection?.id" v-if="!item.uploaded"
-                                label="Upload">
+                            <Button @click="uploadLayer(item, i)" size="small" :disabled="!props.slideSection?.id"
+                                v-if="!item.uploaded" label="Upload">
                                 <template #icon>
-                                    <i class="material-symbols-outlined"
-                                        style="font-size: var(--fs-medium);">upload</i>
+                                    <i class="material-symbols-outlined" style="font-size: var(--fs-medium);">upload</i>
                                 </template>
                             </Button>
 
