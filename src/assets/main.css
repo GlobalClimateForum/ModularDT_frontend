@@ -185,14 +185,31 @@ body,
   background-color: var(--surface-dark);
 }
 
+/* fixed height (max) */
 .sub-panel {
-  padding: var(--space-medium);
+  padding: var(--space-small) var(--space-medium) var(--space-medium);
+  gap: var(--space-medium);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+/* adaptive heigth */
+.sub-panel-adaptive {
+  min-height: max-content;
+  align-self: start;
+
+  background-color: var(--surface);
+  border-radius: var(--br-small);
+  box-shadow: var(--shadow-light);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  padding: var(--space-small) var(--space-medium) var(--space-medium);
 }
 
 .dashboard {
@@ -276,6 +293,12 @@ h6 {
   justify-content: center;
   align-items: center;
   text-align: center;
+}
+
+.labeled-checkbox {
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
 }
 
 @keyframes gradient {

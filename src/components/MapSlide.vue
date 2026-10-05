@@ -6,8 +6,8 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { basemaps } from '@/utils/map_utils';
 import type { Layer } from '@/services/map_service';
 import { registerMap, unregisterMap } from "@/services/map_service";
-import parameterStore from "@/services/parameter_service"
-import { type ParameterChange } from '@/services/parameter_service'
+import parameterStore from "@/services/parameterstore_service"
+import { type ParameterChange } from '@/services/parameterstore_service'
 import { syncLayers } from '@/services/map_layers_service';
 
 const props = defineProps<{

@@ -32,7 +32,16 @@
       "background_image": "Hintergrundbild",
       "background_image_on_empty_screens": "Hintergrundbild auf leeren Bildschirmen anzeigen",
       "background_image_on_welcome_screens": "Hintergrundbild auf Begrüßuns-Bildschirmen anzeigen",
-      "background_image_on_all_slides_per_default": "Hintergrundbild als standard Folienhintergrund verwenden"
+      "background_image_on_all_slides_per_default": "Hintergrundbild als standard Folienhintergrund verwenden",
+      "general": "Allgemein",
+      "moderator_pin": "PIN-Code für Moderator",
+      "global_settings": "Systemweite Einstellungen",
+      "appearance": "Erscheinungsbild",
+      "select_palette": "Palette auswählen",
+      "theme": "Thema",
+      "palette": "Farbschema",
+      "server": "Server",
+      "moderator_logout": "Moderator abmelden"
     },
     "presentation": {
       "presentation": "Präsentation",
@@ -46,6 +55,13 @@
       "no_presentation_showing": "Zur Zeit wird keine Präsentation abgespielt",
       "no_presentation_showing_short": "Keine Präsentation aktiv",
       "new_slideshow": "Neue Teilnehmer-Folien"
+    },
+    "parameter": {
+      "global_parameter_name": "Name des globalen Parameters",
+      "global_parameter_type": "Typ des globalen Parameters",
+      "global_parameter_type_config": "Typ-Konfiguration des globalen Parameters",
+      "global_parameter_connection": "Mit Folien-Parametern verbinden",
+      "auto_parameter_connection": "Automatisch verbinden (mit Folien-Parametern gleichen Namens)"
     },
     "scene": "Szene",
     "slide": "Folie",
@@ -61,6 +77,7 @@
     "save": "Speichern",
     "copy": "Kopie",
     "search": "Suche",
+    "add": "Hinzufügen",
     "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen",
     "save_order": "Reihenfolge speichern",
     "confirmation": "Bestätigung",
@@ -73,7 +90,8 @@
     "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?",
     "choose_presentation": "Präsentation wählen",
     "live_monitors": "Live Monitore",
-    "send_to_multiple_monitors": "Mehrere Monitore"
+    "send_to_multiple_monitors": "Mehrere Monitore",
+    "confirmation-message-all-parameters": "Alle globalen parameter löschen?"
   },
   "participant": {
     "name": "Teilnehmer",

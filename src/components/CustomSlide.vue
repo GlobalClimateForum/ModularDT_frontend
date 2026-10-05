@@ -6,8 +6,8 @@ import { defineAsyncComponent, shallowRef, watchEffect, computed } from 'vue';
 import { loadModule, type Options } from 'vue3-sfc-loader';
 import { buildModuleCache } from '@/globals/slide_runtime'
 import { inject, provide } from 'vue';
-import { type ParameterChange } from '@/services/parameter_service'
-import parameterStore from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameterstore_service'
+import parameterStore from '@/services/parameterstore_service'
 
 const props = defineProps<{
     slide: Slide,

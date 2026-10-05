@@ -163,7 +163,7 @@ function updateSettingsForMonitors() {
     <Toolbar fluid>
       <template #start>
         <h1 class="dashboard_label">
-          Global Settings
+          {{ $t('moderator.settings.global_settings') }}
         </h1>
       </template>
 
@@ -174,9 +174,9 @@ function updateSettingsForMonitors() {
 
     <div class="settings-container">
 
-      <div class="sub-panel">
+      <div class="sub-panel-adaptive">
         <h1 class="dashboard_label">
-          Appearance
+          {{ $t('moderator.settings.appearance') }}
         </h1>
 
         <div class="label-container">
@@ -184,21 +184,21 @@ function updateSettingsForMonitors() {
           <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="labeled-checkbox">
           <Checkbox v-model="settings.background_image_on_empty_screens" binary
             inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_empty_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_empty_screens') }} </Label>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="labeled-checkbox">
           <Checkbox v-model="settings.background_image_on_welcome_screens" binary
             inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_welcome_screens-checkbox"> {{
             $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="labeled-checkbox">
           <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
             inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()" />
           <Label for="background_image_on_all_slides_per_default-checkbox"> {{
@@ -206,7 +206,7 @@ function updateSettingsForMonitors() {
         </div>
 
         <div class="label-container">
-          <label>Main Color</label>
+          <label>{{ $t('moderator.settings.palette') }}</label>
 
           <Select fluid v-model="settings.palette" :options="availablePalettes" optionLabel="label" optionValue="value"
             @change="onPaletteChange">
@@ -228,21 +228,21 @@ function updateSettingsForMonitors() {
                 </div>
                 <p>{{ value }}</p>
               </div>
-              <span v-else>Select a palette</span>
+              <span v-else>{{ $t('moderator.settings.select_palette') }}</span>
             </template>
           </Select>
         </div>
 
         <div class="label-container">
-          <label>Theme</label>
+          <label>{{ $t('moderator.settings.theme') }}</label>
           <SelectButton fluid v-model="settings.theme" :options="themeOptions" optionLabel="label"
             optionValue="value" />
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel-adaptive">
         <h1 class="dashboard_label">
-          Server
+          {{ $t('moderator.settings.server') }}
         </h1>
 
         <div style="display: flex; flex-direction: column; gap: var(--space-medium); width: 100%;">
@@ -255,9 +255,9 @@ function updateSettingsForMonitors() {
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel-adaptive">
         <h1 class="dashboard_label">
-          General
+          {{ $t('moderator.settings.general') }}
         </h1>
 
         <div class="label-container">
@@ -274,7 +274,7 @@ function updateSettingsForMonitors() {
 
         <div style="display: flex; flex-direction: row; gap: var(--space-medium); align-items: flex-end; width: 100%;">
           <div class="label-container">
-            <label>Moderator Pin</label>
+            <label>{{ $t('moderator.settings.moderator_pin') }}</label>
             <Button label="Change" size="small" @click="changePassword">
               <template #icon>
                 <i class="material-symbols-outlined">password</i>
@@ -283,7 +283,7 @@ function updateSettingsForMonitors() {
           </div>
 
           <div class="label-container" v-if="isModerator()">
-            <label>Logout Moderator</label>
+            <label>{{ $t('moderator.settings.moderator_logout') }}</label>
             <Button size="small" label="Logout" @click="onLogout()">
               <template #icon>
                 <i class="material-symbols-outlined">logout</i>
@@ -293,21 +293,21 @@ function updateSettingsForMonitors() {
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel-adaptive">
         <h1 class="dashboard_label">Presentation</h1>
         <div class="label-container">
           <label for="number_of_screens" class="form-label">{{ $t('moderator.settings.numberscreens') }}</label>
           <InputNumber id="number_of_screens" v-model="settings.number_of_screens" :min="1" :max="8" placeholder="4"
             fluid @update:modelValue="updateSettingsForMonitors()" />
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="labeled-checkbox">
           <Checkbox v-model="settings.show_screen_id" binary inputId="show_screen_id-checkbox"
             @change="updateSettingsForMonitors()" />
           <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel-adaptive">
         <h1 class="dashboard_label">Event Settings</h1>
 
         <Button label="Add Event" fluid size="small" @click="onAddEvent()">
@@ -373,21 +373,6 @@ function updateSettingsForMonitors() {
 .swatch {
   width: 20px;
   height: 20px;
-}
-
-.sub-panel {
-  min-height: max-content;
-  align-self: start;
-
-  background-color: var(--surface);
-  border-radius: var(--br-small);
-  box-shadow: var(--shadow-light);
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-medium);
-  padding: var(--space-small) var(--space-medium) var(--space-medium);
-
 }
 
 .settings-form {

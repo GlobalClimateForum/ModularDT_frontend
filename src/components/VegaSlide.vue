@@ -4,7 +4,7 @@ import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
 import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
-import parameterStore from '@/services/parameter_service'
+import parameterStore from '@/services/parameterstore_service'
 
 const props = defineProps<{
   slide: Slide,

@@ -2,11 +2,11 @@
 
 import type { Slide, SlideSection } from '@/services/slide_service'
 import { getSlide } from '@/services/slide_service'
-import { type ParameterChange } from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameterstore_service'
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Select from 'primevue/select';
-import parameterStore from '@/services/parameter_service'
+import parameterStore from '@/services/parameterstore_service'
 import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{

@@ -17,7 +17,7 @@
       "dashboard": "Dashboard",
       "globalsettings": "DT Settings",
       "participants": "Participants",
-      "participants_slideshow": "Participant slideshow", 
+      "participants_slideshow": "Participant slideshow",
       "parameterchanges": "Parameter Changes",
       "parameters": "Parameters",
       "control": "Control",
@@ -32,7 +32,16 @@
       "background_image": "Background image",
       "background_image_on_empty_screens": "Show background image on empty screens",
       "background_image_on_welcome_screens": "Show background image on welcome screens",
-      "background_image_on_all_slides_per_default": "Use background image as background on slides per default"
+      "background_image_on_all_slides_per_default": "Use background image as background on slides per default",
+      "general": "General",
+      "moderator_pin": "Moderator PIN",
+      "global_settings": "Global settings",
+      "appearance": "Appearance",
+      "select_palette": "Select a palette",
+      "theme": "Theme",
+      "palette": "Palette",
+      "server": "Server",
+      "moderator_logout": "Moderator logout"
     },
     "presentation": {
       "presentation": "Presentation",
@@ -46,6 +55,13 @@
       "no_presentation_showing": "Currently no presentation playing",
       "no_presentation_showing_short": "No presentation active",
       "new_slideshow": "New slideshow"
+    },
+    "parameter": {
+      "global_parameter_name": "Name of global parameter",
+      "global_parameter_type": "Type of global parameter",
+      "global_parameter_type_config": "Type configuration of global parameter",
+      "global_parameter_connection": "Connect to slide parameters",
+      "auto_parameter_connection": "Automatic connection (with slide parameters with same name)"
     },
     "scene": "Scene",
     "slide": "Slide",
@@ -61,6 +77,7 @@
     "save": "Save",
     "copy": "Copy",
     "search": "Search",
+    "add": "Add",
     "order_instruction": "Drag the scenes here to specify order",
     "save_order": "Save order",
     "confirmation": "Confirmation",
@@ -73,12 +90,13 @@
     "update-slide-confirmation-message-tail": "already exits. Overwrite?",
     "choose_presentation": "Choose presentation",
     "live_monitors": "Live monitors",
-    "send_to_multiple_monitors": "Multiple monitors"
+    "send_to_multiple_monitors": "Multiple monitors",
+    "confirmation-message-all-parameters": "Delete all global parameters?"
   },
   "participant": {
     "name": "Participant",
     "greeting": "@:appName Participant",
-    "waiting" :"Please wait until the participant slideshow is started by the moderator.",
+    "waiting": "Please wait until the participant slideshow is started by the moderator.",
     "seat": "Seat",
     "live_presentation_state": "Participant live presentation state"
   },
@@ -92,7 +110,7 @@
   "submit": "submit",
   "select_monitor": "Select monitor:",
   "select_monitors": "Select monitors:",
-  "select_participants" : "Select participants",
+  "select_participants": "Select participants",
   "select_all": "Select all",
   "select_options": "Select options",
   "please_select": "-- please select --",

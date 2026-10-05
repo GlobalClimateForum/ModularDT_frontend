@@ -7,8 +7,8 @@ import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { settings } from '@/globals/settings'
-import { type ParameterChange } from '@/services/parameter_service'
-import parameterStore from '@/services/parameter_service'
+import { type ParameterChange } from '@/services/parameterstore_service'
+import parameterStore from '@/services/parameterstore_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
