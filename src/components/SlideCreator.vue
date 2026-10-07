@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, watch, defineAsyncComponent, nextTick, onMounted } from 'vue'
+import { ref, watch, defineAsyncComponent, nextTick, onMounted, computed } from 'vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
@@ -42,7 +42,13 @@ const DEFAULT_CONTENT = ''
 const DEFAULT_SLIDE = { name: '', width: 1920, height: 1080, tags: [] }
 const DEFAULT_SECTION = { view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 }
 const SECTION_LIMIT = 3
-
+const SECTION_BG_COLOR_EDITING: Record<string, boolean> = {
+    markdown: true,
+    map: false,
+    vega: true,
+    ipanel: true,
+    custom: false,
+}
 // Define Input Proerties
 const props = defineProps<{ slide?: Slide | null }>()
 
@@ -54,10 +60,11 @@ const slideSections = ref<SlideSection[]>([]) // Track the sections of the curre
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
+const sectionBgColor = computed(() => slideSections.value[currentSectionIndex.value]?.properties?.bg ?? '#ffffff') // Track the background color of the current section
+const sectionBgColorEditable = computed(() => SECTION_BG_COLOR_EDITING[slideSections.value[currentSectionIndex.value]?.view_type ?? 'markdown'] ?? false) // Track whether background editing is allowed for current section
 const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
-const bgColor = ref<string>('#ffffff') // Track the selected background color for the slide preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 const slideSaved = ref<boolean>(false) // Track whether the slide has been saved to the server
@@ -289,6 +296,19 @@ async function fetchVegaForSection(index: number) {
     }
 }
 
+// Handler to set the background color for the current section when the LayoutEditor emits a bgcolor event
+function setSectionBgColor(color: string) {
+    const i = currentSectionIndex.value
+    const updated = [...slideSections.value]
+    updated[i] = {
+        ...updated[i],
+        properties: { ...updated[i].properties, bg: color },
+    }
+    slideSections.value = updated
+    currentSlide.value = { ...currentSlide.value } // Trigger re-render of SlideView with updated Background Color
+    edited.value = true // Mark the slide as edited since the background color has changed
+}
+
 // Watch for changes in the slide prop and update the currentSlide and slideSections accordingly
 watch(() => props.slide, (newSlide) => {
 
@@ -334,25 +354,12 @@ watch(autosizeVega, (on) => {
     currentSlide.value = { ...currentSlide.value }
 })
 
-// Watch for changes in the background color and update the slide's background color accordingly
-watch(bgColor, (newColor) => {
-    const i = currentSectionIndex.value
-    const section = slideSections.value[i]
-    const updatedSections = [...slideSections.value]
-    updatedSections[i] = {
-        ...section,
-        properties: { ...section.properties, bg: newColor },
-    }
-    slideSections.value = updatedSections
-    currentSlide.value = { ...currentSlide.value }
-})
-
 watch(currentSectionIndex, (i) => {
     autosizeVega.value = !!slideSections.value[i]?.properties?.autosize
 })
 
 watch(
-    [currentSlide, slideSections, sectionWidths, bgColor, layout, selectedTypes, autosizeVega, basemap, targetSlide],
+    [currentSlide, slideSections, sectionWidths, layout, selectedTypes, autosizeVega, basemap, targetSlide],
     () => { if (ready) edited.value = true },
     { deep: true }
 )
@@ -396,7 +403,7 @@ onMounted(() => {
                         <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
                     </template>
                     <template v-else>
-                        No unsaved changes. 
+                        No unsaved changes.
                         <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
                     </template>
                 </template>
@@ -435,7 +442,7 @@ onMounted(() => {
                                                 <div>
                                                     <p style="margin: 0; font-size: var(--fs-medium)"> {{
                                                         slotProps.option.label
-                                                        }}</p>
+                                                    }}</p>
                                                     <p style="margin: 0; font-size: var(--fs-small)">{{
                                                         slotProps.option.description }}</p>
                                                 </div>
@@ -491,7 +498,8 @@ onMounted(() => {
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                         @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                        @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" :slide="currentSlide" />
+                        @autosize="autosizeVega = $event" @bgcolor="setSectionBgColor" :backgroundColor="sectionBgColor" :slide="currentSlide"
+                        :bgPicker="sectionBgColorEditable" />
                 </div>
             </SplitterPanel>
         </Splitter>
@@ -509,7 +517,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: var(--space-small);
-    padding: var(--space-small) var(--space-medium);
+    padding: var(--space-small);
 
     background-color: var(--surface);
     border-radius: var(--br-medium);

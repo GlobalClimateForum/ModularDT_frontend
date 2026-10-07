@@ -2,9 +2,13 @@
 import Toolbar from 'primevue/toolbar'
 import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button'
+import InputGroup from 'primevue/inputgroup'
+import InputGroupAddon from 'primevue/inputgroupaddon'
+import InputText from 'primevue/inputtext';
 import ColorPicker from 'primevue/colorpicker';
 import { useDialog } from 'primevue/usedialog'
 import type { Slide } from '@/services/slide_service'
+
 
 import CustomLayoutDialog from '@/components/CustomLayoutDialog.vue'
 
@@ -25,10 +29,12 @@ const props = defineProps<{
     widths?: number[],
     showFrame?: boolean,
     autoSizeButton?: boolean
-    bgSelection?: boolean
+    bgPicker?: boolean
     slide?: Slide
+    backgroundColor?: string
 }>()
 
+const hexBgColor = ref(props.backgroundColor ?? '')
 const currentLayout = ref<string>(props.layout || 'fullscreen');
 const currentWidths = ref<number[]>(props.widths || [0.5]);
 const showFrame = ref<boolean>(props.showFrame || false);
@@ -87,6 +93,16 @@ function activeLayout(): string {
     )?.id ?? ''
 }
 
+function onToggleSectionFrame() {
+    emit('showframe', showFrame.value);
+    return showFrame.value;
+}
+
+function onHexInput(v: string | undefined) {
+    const hex = (v ?? '').replace('#', '')
+    if (/^[0-9a-f]{6}$/i.test(hex)) emit('bgcolor', hex)
+}
+
 watch(() => props.widths, (newWidths) => {
     if (newWidths) currentWidths.value = newWidths;
 }, { immediate: true });
@@ -94,6 +110,14 @@ watch(() => props.widths, (newWidths) => {
 watch(() => props.layout, (newLayout) => {
     if (newLayout) currentLayout.value = newLayout;
 }, { immediate: true });
+
+watch(() => props.backgroundColor, v => { if (v !== undefined) hexBgColor.value = v })
+
+watch(hexBgColor, v => {
+    const clean = v.replace(/#/g, '')
+    if (clean !== v) { hexBgColor.value = clean; return }  // strip and re-run
+    if (/^[0-9a-f]{6}$/i.test(clean)) emit('bgcolor', clean)
+})
 
 </script>
 
@@ -112,8 +136,8 @@ watch(() => props.layout, (newLayout) => {
                                     :style="{ flex: f }" />
                             </div>
                         </div>
-                        <Button v-if="currentWidths.length > 1" outlined size="small" label="Custom" @click="onCustomLayout"
-                            :class="{ active: isCustom }" />
+                        <Button v-if="currentWidths.length > 1" outlined size="small" label="Custom"
+                            @click="onCustomLayout" :class="{ active: isCustom }" />
                     </div>
                 </div>
             </template>
@@ -121,7 +145,7 @@ watch(() => props.layout, (newLayout) => {
                 <div class="layout-btn-controls">
                     <div class="label-container" center>
                         <label for="showFrame">section frame</label>
-                        <ToggleSwitch></ToggleSwitch>
+                        <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
                         <!-- <Button small rounded text @click="showFrame = !showFrame; emit('showframe', showFrame)">
                             <template #icon>
                                 <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
@@ -140,10 +164,19 @@ watch(() => props.layout, (newLayout) => {
                         </Button>
                     </div>
 
-                    <div class="label-container" center>
-                        <label>background</label>
-                        <ColorPicker class="background-btn" @change="emit('bgcolor', $event.value)"></ColorPicker>
+                    <div class="label-container">
+                        <label>Background Color</label>
+                        <InputGroup v-if="props.bgPicker" class="">
+                            <InputGroupAddon>
+                                <InputText v-model="hexBgColor" size="small" style="width: 80px" />
+                            </InputGroupAddon>
+                            <InputGroupAddon>
+                                <ColorPicker class="background-btn" :modelValue="props.backgroundColor"
+                                    @update:modelValue="emit('bgcolor', $event)" />
+                            </InputGroupAddon>
+                        </InputGroup>
                     </div>
+
 
                 </div>
             </template>
@@ -171,16 +204,14 @@ watch(() => props.layout, (newLayout) => {
 }
 
 .background-btn :deep(.p-colorpicker-preview) {
-    width: 50px;
+    width: 40px;
     height: 40px;
-    border-radius: var(--br-small);
+    border-radius: 20px;
     border: 5px solid var(--p-primary-200);
 }
 
 .background-btn :deep(.p-colorpicker-preview:focus) {
-    width: 50px;
-    height: 40px;
-    border-radius: var(--br-small);
+
     border: 5px solid var(--p-primary-400);
     outline: none;
 }
@@ -230,9 +261,9 @@ watch(() => props.layout, (newLayout) => {
 .p-button.active {
     background: var(--p-primary-200);
     border: 4px solid var(--p-primary-200);
-    background-color: var(--p-primary-400); 
-    color: var(--text); 
+    background-color: var(--p-primary-400);
+    color: var(--text);
     box-sizing: border-box;
-    color: white; 
+    color: white;
 }
 </style>
