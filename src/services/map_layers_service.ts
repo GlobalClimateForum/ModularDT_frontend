@@ -1,5 +1,5 @@
 import type { Map as MaplibreMap } from 'maplibre-gl';
-import { readGeoJSON, type Layer } from '@/services/map_service';
+import { readGeoJSON, type Layer, type DotStyle, type Marker } from '@/services/map_service';
 import type { ExpressionSpecification } from 'maplibre-gl';
 
 const PREFIX = 'userlayer-' // a prefix for user-defined map layers
@@ -28,7 +28,7 @@ export function layerKey(layer: Layer): string {
 }
 
 // Helper function to normalize a map layer by ensuring its path uses forward slashes and providing a default marker if none is specified.
-export function normalizeLayer(layer: Layer): Layer{
+export function normalizeLayer(layer: Layer): Layer {
     return {
         ...layer,
         path: (layer.path ?? '').replace(/\\/g, '/'), // Normalize path to use forward slashes
@@ -91,36 +91,21 @@ function addUserLayer(map: MaplibreMap, layer: Layer) {
 
         case 'dot':
         default: {
-            const s = marker.type === 'dot' ? marker.style : DEFAULT_MARKER.style;
+            const m = marker.type === 'dot' ? marker : DEFAULT_MARKER;
             map.addLayer({
                 id,
                 type: 'circle',
                 source: id,
                 paint: {
-                    'circle-radius': s['circle-radius'],
-                    'circle-color': colorExpression(s['circle-color'], marker.type === 'dot' ? marker.rules : undefined),
-                    'circle-stroke-width': s['circle-stroke-width'],
-                    'circle-stroke-color': asHex(s['circle-stroke-color']),
+                    'circle-radius': ruleExpr(m, 'circle-radius'),
+                    'circle-color': ruleExpr(m, 'circle-color', asHex),
+                    'circle-stroke-width': ruleExpr(m, 'circle-stroke-width'),
+                    'circle-stroke-color': ruleExpr(m, 'circle-stroke-color', asHex),
                 },
             });
         }
     }
 }
-
-// Helper function to create a color expression for a map layer, 
-// which can be either a single color or a set of rules for different values.
-// returns a string for a single color or a mapLibre ExpressionSpecification for multiple rules.
-function colorExpression(color: string, rules?: ColorRule): string | ExpressionSpecification {
-    const fallback = asHex(color); // Fallback color if no rules match or if no rules are provided
-    if (!rules?.property || !rules.cases.length) return fallback; // If no property or cases are provided, return the fallback color
-    // Else, create a match expression for the color based on the provided rules
-    return [
-        'match', ['to-string', ['get', rules.property]],
-        ...rules.cases.flatMap(c => [c.value, asHex(c.color)]), // flatMap = for each case, return an array with the value and the corresponding color
-        fallback,
-    ] as ExpressionSpecification;
-}
-
 
 // Function to synchronize the map with the provided layers, clearing existing user-defined layers and adding the new ones.
 export async function syncLayers(map: MaplibreMap, layers: Layer[]) {
@@ -165,4 +150,17 @@ export async function getProperties(source: File | Layer): Promise<PropertyInfo[
     }
 
     return [...types].map(([name, type]) => ({ name, type }));
+}
+
+// Transform a marker's style into a mapLibre expression, which can be used to style the marker based on its properties and rules.
+function ruleExpr<K extends keyof DotStyle>(m: Marker & { type: 'dot' }, key: K, fmt = (v: any) => v): any {
+    const cases = (m.rules ?? []).flatMap(r => {
+        if (!(key in r.style)) return [];
+        const conds = r.conditions
+            .filter(c => c.property?.name)
+            .map(c => [c.op, ['get', c.property.name], c.value]);
+        return conds.length ? [['all', ...conds], fmt(r.style[key])] : [];
+    });
+    const base = fmt(m.style[key]);
+    return cases.length ? ['case', ...cases, base] : base;
 }

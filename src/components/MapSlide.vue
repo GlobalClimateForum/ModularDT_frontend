@@ -59,7 +59,7 @@ function currentLayers(): Layer[] {
 }
 
 function refreshLayers() {
-    if (map && styleReady) syncLayers(map, currentLayers());
+    if (map && styleReady.value) syncLayers(map, currentLayers());
 }
 
 function resolveStyle(key: keyof typeof basemaps): string | StyleSpecification {
