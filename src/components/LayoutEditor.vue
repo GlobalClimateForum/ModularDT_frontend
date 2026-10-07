@@ -3,6 +3,10 @@ import Toolbar from 'primevue/toolbar'
 import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button'
 import ColorPicker from 'primevue/colorpicker';
+import { useDialog } from 'primevue/usedialog'
+import type { Slide } from '@/services/slide_service'
+
+import CustomLayoutDialog from '@/components/CustomLayoutDialog.vue'
 
 import { ref, watch } from 'vue'
 import { Color } from 'maplibre-gl';
@@ -14,18 +18,22 @@ const emit = defineEmits<{
     (e: 'bgcolor', color: string): void // emits a Color object representing the selected background color
 }>()
 
+const dialog = useDialog();
+
 const props = defineProps<{
     layout?: string,
     widths?: number[],
     showFrame?: boolean,
     autoSizeButton?: boolean
     bgSelection?: boolean
+    slide?: Slide
 }>()
 
 const currentLayout = ref<string>(props.layout || 'fullscreen');
 const currentWidths = ref<number[]>(props.widths || [0.5]);
 const showFrame = ref<boolean>(props.showFrame || false);
 const autoSize = ref<boolean>(props.autoSizeButton || false);
+const isCustom = ref<boolean>(false);
 
 interface Layout {
     id: string;
@@ -42,8 +50,30 @@ const layouts = [
     { id: 'thirds', label: '1|3 each', widths: [1 / 3, 1 / 3, 1 / 3], fractions: [4, 4, 4] },
 ]
 
+function onCustomLayout() {
+    dialog.open(CustomLayoutDialog, {
+        props: {
+            header: 'Custom Layout',
+            style: { width: '400px', height: '380px' },
+            maximizable: false,
+            modal: true,
+        },
+        data: { widths: currentWidths.value, slide: props.slide, dialogwidth: 400 },
+        emits: {
+            onSectionWidths: (widths: number[]) => emit('sectionWidths', [...widths]),
+        },
+        onClose: (opt) => {
+            if (opt?.data) {
+                emit('sectionWidths', [...opt.data])
+                isCustom.value = true
+            }
+
+        },
+    });
+}
 function selectLayout(widths: number[]) {
     emit('sectionWidths', [...widths]);
+    isCustom.value = false;
 }
 
 function isDisabled(layout: Layout): boolean {
@@ -75,13 +105,15 @@ watch(() => props.layout, (newLayout) => {
                     <label class="layout-label">Layout</label>
                     <div class="layout-controls ">
                         <div v-for="layout in layouts" :key="layout.id"
-                            :class="{ 'layout-btn': true, active: layout.id === activeLayout(), disabled: isDisabled(layout) }"
+                            :class="{ 'layout-btn': true, active: layout.id === activeLayout() && !isCustom, disabled: isDisabled(layout) }"
                             :title="layout.label" @click="selectLayout(layout.widths)">
                             <div class="col-preview">
                                 <div v-for="(f, i) in layout.fractions" :key="i" class="col-block"
                                     :style="{ flex: f }" />
                             </div>
                         </div>
+                        <Button outlined size="small" label="Custom" @click="onCustomLayout"
+                            :class="{ active: isCustom }" />
                     </div>
                 </div>
             </template>
@@ -90,14 +122,12 @@ watch(() => props.layout, (newLayout) => {
                     <div class="label-container" center>
                         <label for="showFrame">section frame</label>
                         <ToggleSwitch></ToggleSwitch>
-                        
-                        
                         <!-- <Button small rounded text @click="showFrame = !showFrame; emit('showframe', showFrame)">
                             <template #icon>
                                 <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
                                 <i v-else class="material-symbols-outlined">grid_on</i>
                             </template>
-                        </Button> -->
+</Button> -->
                     </div>
 
                     <div class="label-container" center v-if="props.autoSizeButton">
@@ -126,11 +156,12 @@ watch(() => props.layout, (newLayout) => {
     display: flex;
     align-items: center;
     gap: 0.375rem;
+    box-sizing: border-box;
 }
 
 .layout-btn-controls {
     display: flex;
-    align-items: flex-start; 
+    align-items: flex-start;
     gap: 1.5rem;
 }
 
@@ -194,5 +225,14 @@ watch(() => props.layout, (newLayout) => {
 .layout-btn:hover .col-block,
 .layout-btn.active .col-block {
     background: var(--p-primary-400);
+}
+
+.p-button.active {
+    background: var(--p-primary-200);
+    border: 4px solid var(--p-primary-200);
+    background-color: var(--p-primary-400); 
+    color: var(--text); 
+    box-sizing: border-box;
+    color: white; 
 }
 </style>

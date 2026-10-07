@@ -491,7 +491,7 @@ onMounted(() => {
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                         @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                        @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" />
+                        @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" :slide="currentSlide" />
                 </div>
             </SplitterPanel>
         </Splitter>
