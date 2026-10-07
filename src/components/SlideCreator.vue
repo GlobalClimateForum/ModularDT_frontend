@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
 import { ref, watch, defineAsyncComponent, nextTick, onMounted } from 'vue'
-import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Splitter from 'primevue/splitter'
@@ -30,6 +29,8 @@ import '@/assets/main.css'
 import LayoutEditor from '@/components/LayoutEditor.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import SlideView from '@/components/SlideView.vue'
+
+import { formatDate } from '@/utils/date_utils'
 
 const { t } = useI18n();
 const confirm = useConfirm();
@@ -164,7 +165,7 @@ function storeSlide() {
         }
 
         applySavedSlide(saved)
-        
+
         fetchSlides()
         slideSaved.value = true;
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
@@ -356,7 +357,7 @@ watch(
     { deep: true }
 )
 
-onMounted(() =>  {
+onMounted(() => {
     // if the slide is injected we want to set saved to true
     if (props.slide) {
         slideSaved.value = true
@@ -366,147 +367,168 @@ onMounted(() =>  {
 </script>
 
 <template>
+    <div class="slide-creator-container">
 
-    <!-- Editor -->
-    <Splitter :gutter-size="2" class="dashboard">
-        <SplitterPanel :size="50" class="sub-panel">
+        <div class="slide-creator-header">
 
-            <h1 class="dashboard_label">Slide Editor</h1>
+            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
+                :disabled="slideSaved" />
 
-            <Tabs value="0" style="height: 100%;" scrollable>
+            <Button :disabled="currentSlide.name === ''" size="small" label="Save" @click="updateOrStoreSlide">
+                <template #icon>
+                    <i class="material-symbols-outlined">save</i>
+                </template>
+            </Button>
 
-                <!-- For every section in the slide, create a tab with an editor -->
-                <TabList class="tab-header">
-                    <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab"
-                        @click="currentSectionIndex = index">
-                        <div class="tab-title">
-                            <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
-                                <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
-                            </Button>
-                            <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
-                                optionLabel="label" scrollHeight="auto" class="tab-type-select">
-                                <template #value="slotProps">
-                                    <div class="tab-type-selected" v-if="slotProps.value">
-                                        <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
-                                        <span>{{ slotProps.value.label }}</span>
-                                    </div>
-                                </template>
-                                <template #option="slotProps">
-                                    <div>
-                                        <div class="tab-type-option"
-                                            style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; border-radius: var(--br-medium); cursor: pointer;">
-                                            <i class="material-symbols-outlined">{{ slotProps.option.icon }}</i>
-                                            <div>
-                                                <p style="margin: 0; font-size: var(--fs-medium)"> {{
-                                                    slotProps.option.label
-                                                    }}</p>
-                                                <p style="margin: 0; font-size: var(--fs-small)">{{
-                                                    slotProps.option.description }}</p>
+            <Button outlined :label="$t('moderator.clear')" @click="clearCurrentSlide()" size="small">
+                <template #icon>
+                    <i class="material-symbols-outlined">delete</i>
+                </template>
+            </Button>
+
+            <Message size="small" :closable="false" :severity="edited ? 'warn' : 'info'">
+                <template #icon>
+                    <i class="material-symbols-outlined">info</i>
+                </template>
+                <template #default>
+                    <template v-if="edited">
+                        Unsaved Changes.
+                        <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
+                    </template>
+                    <template v-else>
+                        No unsaved changes. 
+                        <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
+                    </template>
+                </template>
+            </Message>
+
+        </div>
+        <!-- Editor -->
+        <Splitter :gutter-size="2" class="dashboard">
+            <SplitterPanel :size="50" class="sub-panel">
+
+                <h1 class="dashboard_label">Slide Editor</h1>
+
+                <Tabs value="0" style="height: 100%;" scrollable>
+
+                    <!-- For every section in the slide, create a tab with an editor -->
+                    <TabList class="tab-header">
+                        <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab"
+                            @click="currentSectionIndex = index">
+                            <div class="tab-title">
+                                <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
+                                    <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
+                                </Button>
+                                <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
+                                    optionLabel="label" scrollHeight="auto" class="tab-type-select">
+                                    <template #value="slotProps">
+                                        <div class="tab-type-selected" v-if="slotProps.value">
+                                            <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
+                                            <span>{{ slotProps.value.label }}</span>
+                                        </div>
+                                    </template>
+                                    <template #option="slotProps">
+                                        <div>
+                                            <div class="tab-type-option"
+                                                style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; border-radius: var(--br-medium); cursor: pointer;">
+                                                <i class="material-symbols-outlined">{{ slotProps.option.icon }}</i>
+                                                <div>
+                                                    <p style="margin: 0; font-size: var(--fs-medium)"> {{
+                                                        slotProps.option.label
+                                                        }}</p>
+                                                    <p style="margin: 0; font-size: var(--fs-small)">{{
+                                                        slotProps.option.description }}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                            </Select>
-                        </div>
-                    </Tab>
-                    <Button text rounded v-if="slideSections.length < SECTION_LIMIT" class="add-tab-btn"
-                        @click="addSection()">
-                        <i class="material-symbols-outlined">add</i>
-                    </Button>
-                </TabList>
-
-                <!-- For every section in the slide, create a tab panel with a CodeMirror editor -->
-                <TabPanels class="tab-panel">
-                    <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
-                        style="height: 100%;">
-
-                        <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
-                        <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
-                            :slideSection="sectionWithWidth(index)"
-                            :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                            @contentUpdated="updateSectionContent(index, $event)"
-                            @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
-                            @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
-                            :sectionIdx="index" :autosize="autosizeVega" :slide="currentSlide">
-                        </component>
-                    </TabPanel>
-                </TabPanels>
-            </Tabs>
-
-        </SplitterPanel>
-
-        <!-- Preview & Layout, Save, ... -->
-        <SplitterPanel id="slide-settings" class="sub-panel">
-
-            <div>
-                <!-- Save Toolbar -->
-                <h1 class="dashboard_label">Save</h1>
-                <Toolbar class="editor-toolbar">
-                    <template #start>
-                        <div class="toolbar-start">
-
-                            <div class="save-controls">
-
-                                <div v-if="slideSaved" class="slide-name">
-                                    {{ currentSlide.name }}
-                                </div>
-
-                                <InputText v-if="!slideSaved" v-model="currentSlide.name"
-                                    :placeholder="$t('moderator.enter_slide_name')" :disabled="slideSaved" fluid />
-
-                                <Button :disabled="currentSlide.name === ''" label="Save" fluid
-                                    @click="updateOrStoreSlide">
-                                    <template #icon>
-                                        <i class="material-symbols-outlined">save</i>
                                     </template>
-                                </Button>
-
-                                <Button fluid outlined :label="$t('moderator.clear')" @click="clearCurrentSlide()">
-                                    <template #icon>
-                                        <i class="material-symbols-outlined">delete</i>
-                                    </template>
-                                </Button>
+                                </Select>
                             </div>
+                        </Tab>
+                        <Button text rounded v-if="slideSections.length < SECTION_LIMIT" class="add-tab-btn"
+                            @click="addSection()">
+                            <i class="material-symbols-outlined">add</i>
+                        </Button>
+                    </TabList>
 
+                    <!-- For every section in the slide, create a tab panel with a CodeMirror editor -->
+                    <TabPanels class="tab-panel">
+                        <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
+                            style="height: 100%;">
 
-                        </div>
-                    </template>
+                            <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
+                            <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
+                                :slideSection="sectionWithWidth(index)"
+                                :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
+                                @contentUpdated="updateSectionContent(index, $event)"
+                                @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
+                                @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
+                                :sectionIdx="index" :autosize="autosizeVega" :slide="currentSlide">
+                            </component>
+                        </TabPanel>
+                    </TabPanels>
+                </Tabs>
 
-                    <template #end>
-                        <Message v-if="edited" :closable="false" severity="warn">
-                            <template #icon>
-                                <i class="material-symbols-outlined">info</i>
-                            </template>
-                            Unsaved Changes
-                        </Message>
-                    </template>
-                </Toolbar>
-            </div>
+            </SplitterPanel>
 
-            <div class="preview-panel">
+            <!-- Preview & Layout, Save, ... -->
+            <SplitterPanel id="slide-settings" class="sub-panel">
 
-                <h1 class="dashboard_label">Preview</h1>
+                <div class="preview-panel">
 
-                <!-- Slide Preview -->
-                <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
-                    :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                    :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
+                    <h1 class="dashboard_label">Preview</h1>
 
-            </div>
+                    <!-- Slide Preview -->
+                    <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
+                        :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
+                        :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
 
-            <div>
-                <h1 class="dashboard_label">Slide Settings</h1>
-                <!-- Layout Editor -->
-                <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
-                    @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
-                    :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                    @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" />
-            </div>
-        </SplitterPanel>
-    </Splitter>
+                </div>
+
+                <div>
+                    <h1 class="dashboard_label">Slide Settings</h1>
+                    <!-- Layout Editor -->
+                    <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
+                        @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
+                        :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
+                        @autosize="autosizeVega = $event" @bgcolor="bgColor = $event" />
+                </div>
+            </SplitterPanel>
+        </Splitter>
+    </div>
 </template>
 
 <style scoped>
+.slide-creator-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.slide-creator-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    padding: var(--space-small) var(--space-medium);
+
+    background-color: var(--surface);
+    border-radius: var(--br-medium);
+    margin-bottom: var(--space-small);
+    box-shadow: var(--shadow-light);
+}
+
+.slide-creator-header .p-inputtext {
+    width: 450px;
+}
+
+.slide-creator-header .p-message {
+    margin-left: auto;
+}
+
+.slide-creator-header :deep(.p-message-content) {
+    padding-block: 0.4rem;
+}
+
 .p-toolbar {
     margin: 0;
 }
@@ -541,21 +563,6 @@ onMounted(() =>  {
     gap: 0.5rem;
     font-size: var(--fs-medium);
     font-weight: 700;
-}
-
-.slide-name {
-    font-size: var(--fs-medium);
-    font-weight: 700;
-    color: var(--p-primary-500);
-    width: 500px;
-    display: flex;
-    align-items: center;
-    font-family: "Fira Code", monospace;
-
-    background-color: var(--p-primary-50);
-    border: 1px solid var(--p-primary-200);
-    border-radius: var(--br-medium);
-    padding: 0.25rem 0.5rem;
 }
 
 :deep(.p-tab) {
@@ -667,30 +674,5 @@ onMounted(() =>  {
     border-radius: 0.75rem;
     cursor: pointer;
     margin: 0;
-}
-
-.toolbar-start {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-small);
-    width: 100%;
-}
-
-.save-controls {
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-small);
-}
-
-.editor-toolbar {
-    margin-bottom: 1rem;
-}
-
-.editor-toolbar-start {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    gap: 0.5rem;
 }
 </style>
