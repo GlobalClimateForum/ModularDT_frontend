@@ -1,11 +1,12 @@
 import type { Map as MaplibreMap } from 'maplibre-gl';
-import type { Layer } from '@/services/map_service';
-import type { Marker } from '@/components/MapMarkerEditor.vue';
+import { readGeoJSON, type Layer } from '@/services/map_service';
 import type { ExpressionSpecification } from 'maplibre-gl';
-import type { ColorRule } from '@/components/MapMarkerEditor.vue';
-
 
 const PREFIX = 'userlayer-' // a prefix for user-defined map layers
+
+// Types for Layer Properties and PropertyInfo, which are used to describe the properties of a map layer and their types.
+export type PropertyType = 'number' | 'string' | 'boolean' | 'mixed' | 'unknown';
+export type PropertyInfo = { name: string; type: PropertyType };
 
 // The default marker for user-defined map layers.
 export const DEFAULT_MARKER: Extract<Marker, { type: 'dot' }> = {
@@ -27,7 +28,7 @@ export function layerKey(layer: Layer): string {
 }
 
 // Helper function to normalize a map layer by ensuring its path uses forward slashes and providing a default marker if none is specified.
-export function normalizeLayer(layer: Layer): Layer {
+export function normalizeLayer(layer: Layer): Layer{
     return {
         ...layer,
         path: (layer.path ?? '').replace(/\\/g, '/'), // Normalize path to use forward slashes
@@ -38,6 +39,11 @@ export function normalizeLayer(layer: Layer): Layer {
 // Small Helper to ensure a color string is in hexadecimal format, adding a '#' prefix if necessary.
 const asHex = (v: string) => (v.startsWith('#') ? v : '#' + v); // Helper to ensure a color string is in hexadecimal format, adding a '#' prefix if necessary.
 
+// Small Helper to generate a URL for a given layer's path, ensuring it is absolute and correctly formatted.
+export function layerUrl(path: string): string {
+    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, ''); // Get the API base URL from environment variables and remove any trailing slashes
+    return /^(blob:|https?:)/.test(path) ? path : `${API_BASE}/${path.replace(/^\//, '')}`;
+}
 
 // Helper to create an ImageData object represneting a emoji, which then can be used as a marker on the map
 function emojiMarker(emoji: string, size = 64): ImageData {
@@ -117,15 +123,46 @@ function colorExpression(color: string, rules?: ColorRule): string | ExpressionS
 
 
 // Function to synchronize the map with the provided layers, clearing existing user-defined layers and adding the new ones.
-export function syncLayers(map: MaplibreMap, layers: Layer[]) {
+export async function syncLayers(map: MaplibreMap, layers: Layer[]) {
     clearUserLayers(map);
     for (const layer of layers) {
         console.log('sync', layer.name, layer.filetype, layer.uploaded, layer.path);
         if (!layer.uploaded || layer.filetype !== 'geojson') continue;
         try {
-            addUserLayer(map, normalizeLayer(layer));
+            await addUserLayer(map, await normalizeLayer(layer));
         } catch (e) {
             console.error(`Could not render layer "${layer.name}":`, e);
         }
     }
+}
+
+// Helper function to determine the type of a property value, returning a PropertyType string.
+function typeOf(value: unknown): PropertyType | null {
+    if (value === null || value === undefined || value === '') return null; // ignore empty values
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    if (typeof value === 'string') return 'string';
+    return 'mixed'; // objects/arrays
+}
+
+export async function getProperties(source: File | Layer): Promise<PropertyInfo[]> {
+    const geojson = await readGeoJSON(source);
+    if (geojson?.type !== 'FeatureCollection') return [];
+
+    const types = new Map<string, PropertyType>();
+    for (const feature of geojson.features ?? []) {
+        for (const [key, value] of Object.entries(feature.properties ?? {})) {
+            const t = typeOf(value);
+            const current = types.get(key);
+            if (t === null) {
+                if (!current) types.set(key, 'unknown');
+            } else if (!current || current === 'unknown') {
+                types.set(key, t);
+            } else if (current !== t) {
+                types.set(key, 'mixed');
+            }
+        }
+    }
+
+    return [...types].map(([name, type]) => ({ name, type }));
 }

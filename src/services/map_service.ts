@@ -2,6 +2,8 @@ import { uploadApi, api } from "./api";
 import { type SlideSection } from "@/services/slide_service";
 import { basemaps } from '@/utils/map_utils';
 import type { LocationParameter } from '@/services/slide_service';
+import { layerUrl } from '@/services/map_layers_service';
+import type { PropertyInfo} from '@/services/map_layers_service';
 
 export interface Layer {
     id: number | null;
@@ -13,6 +15,7 @@ export interface Layer {
     section: SlideSection; // Reference to the SlideSection this layer belongs to
     uploaded: boolean; // Flag to indicate if the layer has been uploaded
     vectorType?: 'point' | 'line' | 'polygon' | 'unknown'; // Optional vector type property
+    properties?: string[]; // Optional properties array
 }
 
 export interface MapProperties {
@@ -29,7 +32,7 @@ export type Marker =
     | { type: 'html'; value: string; category: string; style: { mode: 'html'; value: string; size: number } };
 
 export type DotStyle = Extract<Marker, { type: 'dot' }>['style']; // Extract the style type from the 'dot' marker type and define it as DotStyle
-export type Condition = { property: string; op: '==' | '!=' | '>' | '<' | '>=' | '<='; value: string };
+export type Condition = { property: PropertyInfo; op: '==' | '!=' | '>' | '<' | '>=' | '<='; value: string };
 export type Rule = { conditions: Condition[]; style: Partial<DotStyle> };
 export type ColorKey = 'circle-color' | 'circle-stroke-color';
 
@@ -71,6 +74,25 @@ export function saveMapLayer(layer: Omit<Layer, "id">, sectionId: number): Promi
     }
 
     return uploadApi.post('maps/layers/', form);
+}
+
+export async function readGeoJSON(source: File | Layer): Promise<any> {
+    if (source instanceof File) {
+        return JSON.parse(await source.text());
+    }
+    if (source.file instanceof File) {
+        return JSON.parse(await source.file.text());
+    }
+    if (source.path) {
+        const url = layerUrl(source.path);
+        const res = await fetch(url);
+        const type = res.headers.get('content-type') ?? '';
+        if (!res.ok || type.includes('text/html')) {
+            throw new Error(`Expected GeoJSON from ${url}, got ${res.status} ${type}`);
+        }
+        return res.json();
+    }
+    throw new Error('Layer has neither a file nor a path');
 }
 
 export function identifyVectorType(file: File): Promise<'point' | 'line' | 'polygon' | 'unknown'> {

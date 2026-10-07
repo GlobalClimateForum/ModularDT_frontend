@@ -157,6 +157,7 @@ async function onFileSelect(event: { files: File[] }) {
             vectorType: await identifyVectorType(file),
         })),
     );
+    console.log('New layers added:', newLayers);
     layers.value.push(...newLayers);
 }
 
@@ -177,8 +178,9 @@ function uploadLayer(layer: Layer, idx: number) {
             layer.uploaded = true;
             layer.path = response.data.path.replace(/^\//, '');
             layer.id = response.data.id;
-            layers.value[idx] = normalizeLayer({ ...layer, uploaded: true, id: response.data.id, path: response.data.path });
-            existingLayers.value.push(normalizeLayer({ ...layer, uploaded: true, id: response.data.id, path: response.data.path }));
+            const normalizedLayer = normalizeLayer({ ...layer, uploaded: true, id: response.data.id, path: response.data.path });
+            layers.value[idx] = normalizedLayer;
+            existingLayers.value.push(normalizedLayer);
             saveSection();
         })
         .catch((error) => {

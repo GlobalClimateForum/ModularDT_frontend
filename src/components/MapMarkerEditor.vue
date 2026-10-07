@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 
-import { ref, inject, computed } from 'vue';
+import { ref, inject, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import ColorPicker from 'primevue/colorpicker';
@@ -11,11 +11,18 @@ import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
+import ToggleSwitch from 'primevue/toggleswitch';
+import Tag from 'primevue/tag';
 import Listbox from 'primevue/listbox';
 import Slider from 'primevue/slider';
 import type { Marker, DotStyle, Condition, Rule, ColorKey } from '@/services/map_service';
 import { dotMarkerPreview, asHexValue } from '@/services/map_service';
+import { getProperties, type PropertyInfo } from '@/services/map_layers_service';
 import InputNumber from 'primevue/inputnumber';
+import type { Layer } from '@/services/map_service';
+
+const dialogRef = inject('dialogRef') as any;
+const layer = computed<Layer | null>(() => dialogRef.value?.data?.layer ?? null);
 
 const MARKERS_KEY = 'markersByType'; // Key to persist markers by type in localStorage
 const STORAGE_KEY = 'lastMarker'; // Key to persist the last selected marker in localStorage
@@ -27,6 +34,8 @@ const defaultHTMLMarker = `<div style="width: 100%; height: 100%; display: flex;
         <circle cx="12" cy="10" r="3"></circle>
     </svg>`
     ;
+
+const layerProperties = ref<PropertyInfo[]>([]);
 
 const ops = [
     { label: 'is', value: '==' },
@@ -71,8 +80,6 @@ const emojiCategories = Array.from(new Set(emojis.map(e => e.category))).sort();
 
 const dot = computed(() => selectedMarker.value.type === 'dot' ? selectedMarker.value : null);
 const previewStyle = computed(() => items.value.find(i => i.id === selectedId.value)?.style ?? dot.value?.style);
-
-const dialogRef = inject('dialogRef') as any;
 
 function filterEmojisByCategory(category: string) {
     if (!category) return emojis;
@@ -133,9 +140,33 @@ function addRule() {
     selectedId.value = dot.value.rules.length - 1;
 }
 
+onMounted(async () => {
+    const l = layer.value;
+    if (!l) return;
+
+    try {
+        if (l.properties?.length) {
+            layerProperties.value = l.properties;
+        } else if (l.file instanceof File) {
+            layerProperties.value = await getProperties(l.file);
+        } else if (l.path) {
+            const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+            const url = /^(blob:|https?:)/.test(l.path)
+                ? l.path
+                : `${API_BASE}/${l.path.replace(/^\//, '')}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+            layerProperties.value = await getProperties(new File([await res.blob()], l.name));
+        }
+    } catch (e) {
+        console.error('Could not read layer properties:', e);
+    }
+});
+
 </script>
 
 <template>
+  
     <div class="container">
 
         <div class="header">
@@ -157,22 +188,28 @@ function addRule() {
                             <span class="dot-slot">
                                 <div class="mini-dot" :style="dotMarkerPreview(option.style)"></div>
                             </span>
-                            <p class="rule-item-label">{{ option.label }}</p>
+                            <div class="rule-item-label">
+                                {{ option.label }}
+                            </div>
                         </div>
 
                     </template>
                 </Listbox>
 
-                <Button label="Add Rule" text fluid size="small" class="space-above" @click="addRule">
+                <Button label="Add Rule" fluid size="small" class="space-above" @click="addRule">
                     <template #icon>
                         <i class="material-symbols-outlined">add</i>
                     </template>
                 </Button>
 
+                <!-- <Button label="Clear Rules" text fluid size="small" class="space-below" @click="dot.value!.rules = []">
+                    <template #icon>
+                        <i class="material-symbols-outlined">delete</i>
+                    </template>
+                </Button> -->
+
             </div>
             <div class="marker-controls">
-
-
 
                 <!-- Default Marker Settings -->
                 <div v-if="dot">
@@ -182,14 +219,26 @@ function addRule() {
                         <div class="preview">
                             <div class="dot-marker" :style="dotMarkerPreview(previewStyle)"></div>
                         </div>
-
                     </div>
 
                     <template v-if="rule">
                         <label>Condition</label>
                         <div v-for="(c, i) in rule.conditions" :key="i" class="condition-row inset-control">
                             <label>When</label>
-                            <InputText v-model="c.property" placeholder="property" size="small" />
+                            <Select placeholder="property" :options="layerProperties" v-model="c.property"
+                                style="width: 160px">
+                                <template #option="{ option }">
+                                    <div
+                                        style="display: flex; flex-direction: row; align-items: center; gap: var(--space-small);">
+                                        <Tag severity="info">{{ option?.type }}</Tag>
+                                        <span class="property-name">{{ option?.name }}</span>
+                                    </div>
+                                </template>
+                                <template #value="{ value, placeholder }">
+                                    <span :class="value?.name ? 'property-name' : 'property-placeholder'">{{ value?.name
+                                        ?? placeholder }}</span>
+                                </template>
+                            </Select>
                             <Select v-model="c.op" :options="ops" optionLabel="label" optionValue="value" size="small"
                                 class="logic-operator-select">
                                 <template #option="{ option }">
@@ -199,7 +248,16 @@ function addRule() {
                                     <span class="logic-operator">{{ value }}</span>
                                 </template>
                             </Select>
-                            <InputText v-model="c.value" placeholder="value" size="small" />
+                            <div v-if="c.property.type === 'boolean'" class="switch-container"">
+                                <label>False</label>
+                                <ToggleSwitch v-model="c.value">
+                                </ToggleSwitch>
+                                <label>True</label>
+                            </div>
+                            <InputText v-if="c.property.type === 'string'" v-model="c.value" placeholder="value"
+                                size="small" />
+                            <InputNumber v-if="c.property.type === 'number'" v-model="c.value" placeholder="value"
+                                size="small" :maxFractionDigits="6" locale="en-US" />
                         </div>
                     </template>
 
@@ -320,7 +378,6 @@ function addRule() {
         </div>
 
 
-
         <div v-if="selectedMarker.type === 'emoji'"
             style="display: flex; flex-direction: column; align-items: center; gap: var(--space-small);">
             <div class="preview">{{ selectedMarker.value }}</div>
@@ -344,7 +401,6 @@ function addRule() {
     </div>
 
 </template>
-
 
 <style scoped>
 .header {
@@ -398,7 +454,7 @@ function addRule() {
 
 .marker-editor {
     display: grid;
-    grid-template-columns: 1fr 3fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
     gap: var(--space-medium);
     width: 100%;
     height: 500px;
@@ -516,26 +572,24 @@ function addRule() {
 }
 
 .rule-item {
-    display: flex; 
-    flex-direction: row;
-    align-items: space-between;
-    padding: 0; 
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    width: 100%;
+    justify-content: space-between;
 }
 
 .rule-item-label {
-    position: relative;
-    z-index: 2;
+    flex: 1;
+    min-width: 0;
     margin: 0;
-    padding: 0;
-    min-width: 100%;
-    height: 100%;
-  
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: var(--space-small);
-    border-radius: var(--br-small);
-    backdrop-filter: blur(4px);
     color: var(--p-primary-700);
-    font-size: var(--fs-medium); 
+    font-size: var(--fs-medium);
+    text-align: right;
+    color: var(--p-primary-700);
+    font-family: 'Fira Code', monospace;
+    font-size: var(--fs-small);
+    letter-spacing: 0.1px;
 }
 
 .mini-dot {
@@ -581,6 +635,15 @@ function addRule() {
     border: 1px solid var(--p-primary-300);
 }
 
+.condition-row>* {
+    min-width: 0;
+}
+
+.condition-row :deep(.p-inputtext) {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
 .logic-operator-select {
     width: 100px;
     outline: none;
@@ -597,5 +660,30 @@ function addRule() {
     font-weight: bold;
     width: 100%;
     font-size: var(--fs-medium);
+}
+
+.property-name {
+    font-family: 'Fira Code', monospace;
+    font-size: var(--fs-small) !important;
+    color: var(--p-primary-700);
+    text-align: left;
+    font-weight: bold;
+}
+
+.property-placeholder {
+    font-family: 'Fira Code', monospace;
+    font-size: var(--fs-small) !important;
+    color: var(--p-primary-300);
+    text-align: left;
+    font-weight: normal;
+}
+
+.switch-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-small);
+    width: 160px;
+    justify-content: center;
 }
 </style>
