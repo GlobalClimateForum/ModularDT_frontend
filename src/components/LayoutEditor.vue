@@ -112,7 +112,7 @@ watch(() => props.layout, (newLayout) => {
                                     :style="{ flex: f }" />
                             </div>
                         </div>
-                        <Button outlined size="small" label="Custom" @click="onCustomLayout"
+                        <Button v-if="currentWidths.length > 1" outlined size="small" label="Custom" @click="onCustomLayout"
                             :class="{ active: isCustom }" />
                     </div>
                 </div>
