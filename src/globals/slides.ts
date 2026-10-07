@@ -25,3 +25,7 @@ export function getSlideMode(sections: SlideSection[]): string {
 export function getSlideById(id: number): Slide | undefined {
     return slides.value.find(slide => slide.id === id);
 }
+
+export function getSlideBySectionId(id: number): Slide | undefined {
+    return slides.value.find(slide => (slide.sections?.find(section => section.id === id))!=null);
+}

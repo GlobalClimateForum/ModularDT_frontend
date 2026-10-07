@@ -67,29 +67,29 @@ export function useLiveSlidesActive() {
 }
 
 export const whatYouSeeOnMonitors = computed(() => {
-    const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
-    return Array.from({ length: maxLen }, (_, i) => {
-      return liveSlidesOnMonitors.value[i] ?? sceneOnMonitors.value[i] ?? null;
-    });
+  const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
+  return Array.from({ length: maxLen }, (_, i) => {
+    return liveSlidesOnMonitors.value[i] ?? sceneOnMonitors.value[i] ?? null;
   });
+});
 
-  export function useWhatYouSeeOnMonitors() {
-    return whatYouSeeOnMonitors
-  }
+export function useWhatYouSeeOnMonitors() {
+  return whatYouSeeOnMonitors
+}
 
-  watch(
-    () => settings.value.number_of_screens,
-    (newCount) => {
-      const currentCount = sceneOnMonitors.value.length
+watch(
+  () => settings.value.number_of_screens,
+  (newCount) => {
+    const currentCount = sceneOnMonitors.value.length
 
-      if (newCount > currentCount) {
-        const extraSlots = Array(newCount - currentCount).fill(null)
-        sceneOnMonitors.value.push(...extraSlots)
-        liveSlidesOnMonitors.value.push(...extraSlots)
-      } else if (newCount < currentCount) {
-        sceneOnMonitors.value.splice(newCount)
-        liveSlidesOnMonitors.value.splice(newCount)
-      }
-    },
-    { immediate: true }
-  )
+    if (newCount > currentCount) {
+      const extraSlots = Array(newCount - currentCount).fill(null)
+      sceneOnMonitors.value.push(...extraSlots)
+      liveSlidesOnMonitors.value.push(...extraSlots)
+    } else if (newCount < currentCount) {
+      sceneOnMonitors.value.splice(newCount)
+      liveSlidesOnMonitors.value.splice(newCount)
+    }
+  },
+  { immediate: true }
+)

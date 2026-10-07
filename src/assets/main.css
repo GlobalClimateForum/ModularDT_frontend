@@ -180,6 +180,12 @@ body,
   box-shadow: var(--shadow-controls-inset);
 }
 
+.flexbox {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
 .dark-mode .inset-control {
   border: 2px solid var(--surface);
   background-color: var(--surface-dark);

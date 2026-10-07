@@ -327,7 +327,7 @@ const removeItem = (index: number) => {
                         @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll" class="my-table"
                         v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single">
 
-                        <Column field="name" header="">
+                        <Column field="name" header="" style="text-align: left">
                             <template #editor="slotProps">
                                 <InputText v-model="slotProps.data.name" />
                             </template>
@@ -340,7 +340,7 @@ const removeItem = (index: number) => {
                             </template>
                         </Column>
 
-                        <Column style="width: 10rem" bodyClass="flex justify-content-end white-space-nowrap"
+                        <Column style="width: 10rem; text-align: right" bodyClass="flex justify-content-end white-space-nowrap"
                             editorClass="flex justify-content-end white-space-nowrap">
                             <template #body="slotProps">
                                 <Button size="small" rounded text icon="pi pi-code"
@@ -386,7 +386,7 @@ const removeItem = (index: number) => {
                         class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedPresentation"
                         selectionMode="single">
 
-                        <Column field="name" header="">
+                        <Column field="name" header="" style="text-align: left">
                             <template #editor="slotProps">
                                 <InputText v-model="slotProps.data.name" />
                             </template>
@@ -397,8 +397,9 @@ const removeItem = (index: number) => {
                             </template>
                         </Column>
 
-                        <Column style="width: 12rem" bodyClass="flex justify-content-end white-space-nowrap"
-                            editorClass="flex justify-content-end white-space-nowrap">
+                        <!-- bodyClass="flex justify-content-end white-space-nowrap"
+                            editorClass="flex justify-content-end white-space-nowrap" -->
+                        <Column style="width: 12rem; text-align: right">
                             <template #body="slotProps">
                                 <Button size="small" rounded text icon="pi pi-clone"
                                     @click="onDuplicatePresentation(slotProps.data)" />
