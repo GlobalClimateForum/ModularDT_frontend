@@ -242,15 +242,12 @@ function updateSectionContent(index: number, newContent: string) {
 
 // Handler to update the entire section (view_type, content, content_path, width_fraction) when the editor emits a sectionUpdated event
 function updateSection(index: number, updatedSection: SlideSection) {
-    console.log('PARENT received:', JSON.stringify(updatedSection.parameters))
 
     const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
     const updatedSections = [...slideSections.value]
     updatedSections[index] = { ...updatedSections[index], ...updatedSection }
     slideSections.value = updatedSections
     currentSlide.value = { ...currentSlide.value }
-
-    console.log('PARENT stored:', JSON.stringify(slideSections.value[index].parameters))
 
     if (pathChanged && (updatedSection.mode === 'url' || updatedSection.mode === 'interactive')) {
         fetchVegaForSection(index)
