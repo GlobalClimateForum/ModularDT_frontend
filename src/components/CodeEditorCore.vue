@@ -188,6 +188,14 @@ function initEditor() {
                 basicSetup,
                 lang.value ? languageExtensions[lang.value] : markdown(),
                 editorUpdateListener(),
+                EditorView.theme({
+                    '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground': {
+                        background: 'var(--p-primary-100) !important',
+                    },
+                    '.dark-mode &.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground': {
+                        background: 'var(--p-primary-400) !important',
+                    },
+                }),
             ],
         }),
     });
@@ -211,8 +219,8 @@ watch(() => section.value?.content, (newContent) => {
 <template>
     <div class="editor-container">
 
-            <SlideView v-if="dialogRef" :preview="true" :showframe="false" :slide="slide" :sections="previewSections"
-                class="editor-mini-preview" />
+        <SlideView v-if="dialogRef" :preview="true" :showframe="false" :slide="slide" :sections="previewSections"
+            class="editor-mini-preview" />
 
         <div ref="editorHost" class="editor-host"></div>
         <Toolbar class="editor-toolbar">
@@ -234,7 +242,7 @@ watch(() => section.value?.content, (newContent) => {
                         </template>
                     </Message>
 
-                    <Button  :label="fileHandle ? 'Disconnect' : 'Connect File'" @click="connectFile"
+                    <Button :label="fileHandle ? 'Disconnect' : 'Connect File'" @click="connectFile"
                         style="width: 150px;">
                         <template #icon>
                             <i :style="{
@@ -249,7 +257,7 @@ watch(() => section.value?.content, (newContent) => {
                         </template>
                     </Button>
 
-                    <Button  v-if="!dialogRef" @click="emit('requestFullscreen')">
+                    <Button v-if="!dialogRef" @click="emit('requestFullscreen')">
                         <template #icon>
                             <i class="material-symbols-outlined">fullscreen</i>
                         </template>
@@ -296,6 +304,7 @@ watch(() => section.value?.content, (newContent) => {
     outline: none;
     overflow: hidden;
     box-shadow: inset 0 0 5px 2.5px var(--p-primary-50);
+    background-color: var(--surface);
 }
 
 .dark-mode .editor-host :deep(.cm-editor) {
@@ -315,7 +324,9 @@ watch(() => section.value?.content, (newContent) => {
     border: none;
 }
 
-
+.editor-host :deep(.cm-activeLineGutter) {
+    background-color: transparent;
+}
 
 .editor-host :deep(.cm-lineNumbers .cm-activeLineGutter) {
     border-left: 3px solid var(--p-primary-400);
@@ -331,7 +342,7 @@ watch(() => section.value?.content, (newContent) => {
 }
 
 .dark-mode .editor-host :deep(.cm-activeLine) {
-    background-color: var(--surface-dark);
+    background-color: var(--p-primary-500);
     color: var(--p-primary-50);
 }
 
@@ -349,9 +360,9 @@ watch(() => section.value?.content, (newContent) => {
 
 .editor-host :deep(.cm-content) {
     font-family: "Fira Code", monospace;
-    font-variant-ligatures: contextual;
-    background-color: var(--surface);
+    font-variant-ligatures: none;
 }
+
 
 .editor-toolbar {
     background-color: var(--p-primary-50);
