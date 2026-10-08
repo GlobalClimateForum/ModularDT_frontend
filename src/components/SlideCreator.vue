@@ -376,7 +376,7 @@ onMounted(() => {
 <template>
     <div class="slide-creator-container">
 
-        <div class="slide-creator-header">
+        <div class="dashboard-header">
 
             <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
                 :disabled="slideSaved" />
@@ -513,29 +513,15 @@ onMounted(() => {
     height: 100%;
 }
 
-.slide-creator-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-small);
-    padding: var(--space-small);
-
-    background-color: var(--surface);
-    border-radius: var(--br-medium);
-    margin-bottom: var(--space-small);
-    box-shadow: var(--shadow-light);
+.dashboard-header .p-inputtext {
+    width: 30%;
 }
 
-.slide-creator-header .p-inputtext {
-    width: 450px;
-}
-
-.slide-creator-header .p-message {
+.dashboard-header .p-message {
     margin-left: auto;
 }
 
-.slide-creator-header :deep(.p-message-content) {
-    padding-block: 0.4rem;
-}
+
 
 .p-toolbar {
     margin: 0;

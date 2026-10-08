@@ -206,7 +206,7 @@ provide('SlideLink', SlideLink)
 
 
 function updateDataForMonitors(monitorid: string) {
-  sendMonitorUpdate(Number(monitorid),{
+  sendMonitorUpdate(Number(monitorid), {
     'payload': {
       'event_type': 'data_update',
       'settings': {
@@ -217,10 +217,10 @@ function updateDataForMonitors(monitorid: string) {
         'show_screen_id': settings.value.show_screen_id,
         'palette': settings.value.palette,
       },
-      'presentation' : {
+      'presentation': {
         'livePresentationActive': livePresentationState.value.active,
         'liveSlidesActive': liveSlidesActive.value,
-        'slide': whatYouSeeOnMonitors.value[Number(monitorid)-1]
+        'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
       }
     }
   })
@@ -267,11 +267,11 @@ function handleLiveparticipants() {
 
     <SplitterPanel :size="15" :minSize="15" class="menu-panel">
 
-      <div class="menu-header panel">
-        <div class="content-title">{{ $t('moderator.nav.dashboard') }}</div>
-        <Button @click="router.push('/')" text style="color: white;">
+      <div class="dashboard-header">
+        <div >{{ $t('moderator.nav.dashboard') }}</div>
+        <Button  @click="router.push('/')" text>
           <template #icon>
-            <span class="material-symbols-outlined">home</span>
+            <span style="color: white" class="material-symbols-outlined">home</span>
           </template>
         </Button>
       </div>
@@ -372,11 +372,6 @@ function handleLiveparticipants() {
   }
 }
 
-.content-title {
-  font-size: var(--fs-medium);
-  font-weight: 600;
-}
-
 .main-panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -439,15 +434,14 @@ function handleLiveparticipants() {
   color: var(--p-primary-50);
 }
 
-.menu-header {
-  padding: var(--space-medium);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+.dashboard-header {
   background-color: var(--p-primary-500);
   color: white;
-  font-size: var(--fs-xlarge);
+  margin-bottom: 0;
+  font-weight: bold;
+
+  justify-content: space-between;
+  padding: var(--space-small) var(--space-medium);
 }
 
 .menu-panel {

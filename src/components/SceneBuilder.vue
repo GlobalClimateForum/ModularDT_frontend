@@ -3,7 +3,6 @@
 import { ref, onMounted } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
@@ -171,88 +170,125 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </script>
 
 <template>
-    <Splitter :gutter-size="2" class="dashboard">
-        <!-- Available Slides -->
-        <SplitterPanel :size="25" class="sub-panel">
-            <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
-        </SplitterPanel>
-        <!-- Scene Builder -->
-        <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-            <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
-            <Toolbar class="scene-toolbar">
-                <template #start>
-                    <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
-                        <Message info size="small">
-                            <span style="display: flex; align-items: center; gap: 0.25rem;">
-                                <i class="material-symbols-outlined">desktop_windows</i>
-                                {{ settings.number_of_screens }}
-                            </span>
-                        </Message>
-                        <Message v-if="duplicates()" severity="warn" size="small">
-                            {{ $t('moderator.duplicate_slides') }}
-                        </Message>
-                        <Message severity="warn" v-if="emptyScreens()" size="small">
-                            {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens') }}
-                        </Message>
-                    </div>
-                </template>
-                <template #end>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" />
-                        <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene"
-                            :disabled="scenename === ''" />
-                        <Button icon="pi pi-play" :disabled="selectedSlide == null"
-                            :label="$t('moderator.send_to_multiple_monitors')"
-                            @click="onSendSlideToMultipleMonitors(selectedSlide)" />
-                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
-                    </div>
-                </template>
-            </Toolbar>
 
-            <div class="monitor_container">
+    <div class="scene-builder">
+        <div class="dashboard-header">
 
-                <!-- For each slide in the scene, render a monitor item -->
-                <div v-for="(slot, index) in scene" :key="index" class="monitor-item inset-control" @dragover.prevent
-                    @drop="onDrop($event, index)">
+            <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')"
+                :disabled="scenename != ''" />
 
-                    <!-- Monitor Info: Name, Index, and Clear Button -->
-                    <div class="monitor-info">
-                        <div class="monitor-label-container">
-                            <h3 class="monitor-label">
-                                <i class="material-symbols-outlined">desktop_windows</i>
-                                {{ index + 1 }}
-                            </h3>
-                            <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
-                        </div>
-                        <Button size="small" text round @click="scene[index] = null">
-                            <template #icon>
-                                <i class="material-symbols-outlined">close</i>
-                            </template>
-                        </Button>
-                    </div>
+            <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
 
-                    <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                    <div v-if="slot" style="width: 100%; height:90%;">
-                        <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
-                            :showFrame="false">
-                        </SlideView>
-                    </div>
-                    <div v-else class="monitor-symbol">
-                        <i class="pi pi-desktop"></i>
-                    </div>
+            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
 
-                </div>
+            <div class="dashboard-header-messages">
+
+                <Message info size="small">
+                    <template #icon>
+                        <i style="font-size: var(--fs-medium)" class="material-symbols-outlined">desktop_windows</i>
+                    </template>
+                    <template #default>
+                        {{ settings.number_of_screens }}
+                    </template>
+                </Message>
+
+                <Message v-if="duplicates()" severity="warn" size="small">
+                    {{ $t('moderator.duplicate_slides') }}
+                </Message>
+                <Message severity="warn" v-if="emptyScreens()" size="small">
+                    {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens')
+                    }}
+                </Message>
             </div>
-        </SplitterPanel>
-    </Splitter>
+
+        </div>
+
+        <Splitter :gutter-size="2" class="dashboard">
+            <!-- Available Slides -->
+            <SplitterPanel :size="25" class="sub-panel">
+                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlide"
+                    @slide-drag-start="handleDragStart" />
+            </SplitterPanel>
+            <!-- Scene Builder -->
+            <SplitterPanel :size="75" :minSize="15" class="sub-panel">
+
+                <div class="scenebuilder-header">
+                    <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
+                    <Button :disabled="selectedSlide == null" size="small"
+                        :label="$t('moderator.send_to_multiple_monitors')"
+                        @click="onSendSlideToMultipleMonitors(selectedSlide)">
+                        <template #icon>
+                            <i class="material-symbols-outlined">queue_play_next</i>
+                        </template>
+
+                    </Button>
+                </div>
+
+                <div class="monitor_container">
+
+                    <!-- For each slide in the scene, render a monitor item -->
+                    <div v-for="(slot, index) in scene" :key="index" class="monitor-item inset-control"
+                        @dragover.prevent @drop="onDrop($event, index)">
+
+                        <!-- Monitor Info: Name, Index, and Clear Button -->
+                        <div class="monitor-info">
+                            <div class="monitor-label-container">
+                                <h3 class="monitor-label">
+                                    <i class="material-symbols-outlined">desktop_windows</i>
+                                    {{ index + 1 }}
+                                </h3>
+                                <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
+                            </div>
+                            <Button size="small" text round @click="scene[index] = null">
+                                <template #icon>
+                                    <i class="material-symbols-outlined">close</i>
+                                </template>
+                            </Button>
+                        </div>
+
+                        <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
+                        <div v-if="slot" style="width: 100%; height:90%;">
+                            <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
+                                :showFrame="false">
+                            </SlideView>
+                        </div>
+                        <div v-else class="monitor-symbol">
+                            <i class="pi pi-desktop"></i>
+                        </div>
+
+                    </div>
+                </div>
+            </SplitterPanel>
+        </Splitter>
+    </div>
+
+
 </template>
 
 <style scoped>
+.scene-builder {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
 
-.scene-toolbar {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    flex-shrink: 0;
+.scenebuilder-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dashboard-header .p-inputtext {
+    width: 30%;
+}
+
+.dashboard-header-messages {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    margin-left: auto;
 }
 
 .monitor_container {
