@@ -3,6 +3,7 @@ import { slides } from '@/globals/slides';
 import { getParameters } from "@/services/parameter_service";
 
 export interface SlideParameter {
+    id?: number,
     name: string
     type: string
     default: string
@@ -17,6 +18,7 @@ export async function fetchSlideParameters() {
         response.data.forEach((parameter_set) => {
             Object.entries(parameter_set.parameters).forEach(([name, settings]) => {
                 const sp: SlideParameter = {
+                    id: settings.id,
                     name: name,
                     type: settings.type,
                     default: settings.default,

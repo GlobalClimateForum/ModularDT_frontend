@@ -62,7 +62,9 @@
       "global_parameter_type_config": "Type configuration of global parameter",
       "global_parameter_connection": "Connect to slide parameters",
       "auto_parameter_connection": "Automatic connection (with slide parameters with same name)",
-      "global_parameter_connect": "Connected slide parameters"
+      "global_parameter_connect": "Connected slide parameters",
+      "select_type": "Select type",
+      "select_parameter": "Select parameter"
     },
     "scene": "Scene",
     "slide": "Slide",

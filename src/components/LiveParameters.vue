@@ -8,13 +8,17 @@ import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import InputText from 'primevue/inputtext';
 import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
-import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
+import { globalParameters, fetchGlobalParameter } from '@/globals/global_parameters';
+import Select from 'primevue/select'; 
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 import MultiSelect from 'primevue/multiselect';
+import { saveGlobalParameter } from '@/services/global_parameter_service'
+import { useToast } from 'primevue/usetoast'
 
+const toast = useToast()
 const { t } = useI18n();
 const confirm = useConfirm();
 
@@ -33,19 +37,21 @@ const parameterTypeOptions = ref<{ label: string; value: string }[]>([
 
 const parameterValueOption = ref<string>("");
 const parameterValueOptions = ref<string[]>([]);
-const selectedParameterValueOption = ref<string | null>(null);
 
 const selectedSlideParameters = ref<{ label: string, value: string; }[]>([]);
 const slideParameterArray = ref<{ label: string; value: string }[]>([]);
 
 onMounted(async () => {
+    fetchGlobalParameter()
     await fetchSlideParameters()
     const stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
     onUnmounted(() => {
         stop()
     })
     //console.log("slideParameters: ", slideParameters.value)
-    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: "" }))
+    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: "" })).sort((x,y) => x.label.localeCompare(y.label))
+    console.log("globalParameters: ",globalParameters.value)
+    console.log("slideParameters: ",slideParameters.value)
 })
 
 function onAddParameter() {
@@ -57,7 +63,29 @@ function onCancelAddParameter() {
 }
 
 function onSaveParameter() {
+    console.log("parameterName: ", parameterName.value)
+    console.log("selectedParameterType", selectedParameterType.value)
+    console.log("parameterValueOptions", parameterValueOptions.value)
+    console.log("autoConnection", autoConnection.value)
+    console.log("selectedSlideParameters", selectedSlideParameters.value)
+    addParameterActive.value=false
 
+    const global_parameter_ = {
+        name: parameterName.value,
+        description: "",
+        ptype: selectedParameterType.value,
+        parameterValueOptions: parameterValueOptions.value,
+        connect_all: autoConnection.value,
+        connected_slide_parameters: []
+    };
+
+    saveGlobalParameter(global_parameter_).then(_response => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramter saved successfully', life: 3000 })
+        fetchGlobalParameter()
+    }).catch(error => {
+        console.error("Error saving scene:", error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save global paramter', life: 3000 })
+    });
 }
 
 function onConfirmedClearParameters() {
@@ -88,8 +116,6 @@ function onDeleteParameterValueOption(item) {
         parameterValueOptions.value.splice(index, 1);
     }
 }
-
-// experimental stuff
 </script>
 
 
@@ -130,7 +156,7 @@ function onDeleteParameterValueOption(item) {
                         <label for="inputParameterType" class="form-label">{{
                             $t('moderator.parameter.global_parameter_type') }}</label>
                         <Select id="inputParameterType" v-model="selectedParameterType" :options="parameterTypeOptions"
-                            optionLabel="label" optionValue="value" placeholder="Select type" fluid />
+                            optionLabel="label" optionValue="value" :placeholder="t('moderator.parameter.select_type')" fluid />
                     </div>
                     <div v-if="selectedParameterType === 'Selection'" class="label-container">
                         <label for="inputParameterType" class="form-label">{{
@@ -138,7 +164,7 @@ function onDeleteParameterValueOption(item) {
                         <div class="flexbox">
                             <InputText id="inputParameterValueOptionName" v-model.trim="parameterValueOption"
                                 type="text" fluid />
-                            <Button type="button" :label="$t('moderator.add')" class="save-btn"
+                            <Button type="button" :label="$t('moderator.add')" class="save-btn" :disabled="parameterValueOption == null || parameterValueOption.length == 0"
                                 @click="onAddParameterValueOption" />
                         </div>
 
@@ -168,20 +194,20 @@ function onDeleteParameterValueOption(item) {
                         <label for="connectedParameters" class="form-label">{{
                             $t('moderator.parameter.global_parameter_connect') }}</label>
                         <MultiSelect v-model="selectedSlideParameters" :options="slideParameterArray"
-                            optionLabel="label" placeholder="Select paramters" display="chip" :showClear="true"
+                            optionLabel="label" :placeholder="t('moderator.parameter.select_parameter')" display="chip" :showClear="true"
                             :maxSelectedLabels="1" selectedItemsLabel="{0} (+{1})" fluid>
                             <template #value="slotProps">
                                 <div v-if="slotProps.value && slotProps.value.length > 0">
-                                    <!-- Erstes ausgewähltes Element anzeigen -->
+                                    <!-- first selected element-->
                                     <span>{{ slotProps.value[0].label }}</span>
 
-                                    <!-- Wenn mehr als ein Element ausgewählt ist, (+X) anhängen -->
+                                    <!-- if more than one elements selected, attach (+X) -->
                                     <span v-if="slotProps.value.length > 1">
                                         (+{{ slotProps.value.length - 1 }})
                                     </span>
                                 </div>
 
-                                <!-- Falls nichts ausgewählt ist, zeige den normalen Platzhalter -->
+                                <!-- usual placeholder if nothing is selected -->
                                 <span v-else>
                                     {{ slotProps.placeholder }}
                                 </span>

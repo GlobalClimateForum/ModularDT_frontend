@@ -62,7 +62,9 @@
       "global_parameter_type_config": "Typ-Konfiguration des globalen Parameters",
       "global_parameter_connection": "Mit Folien-Parametern verbinden",
       "auto_parameter_connection": "Automatisch verbinden (mit Folien-Parametern gleichen Namens)",
-      "global_parameter_connect": "Verbundene Folien-Parameter"
+      "global_parameter_connect": "Verbundene Folien-Parameter",
+      "select_type": "Typ auswählen",
+      "select_parameter": "Parameter auswählen"
     },
     "scene": "Szene",
     "slide": "Folie",
