@@ -32,6 +32,8 @@ import SlideView from '@/components/SlideView.vue'
 
 import { formatDate } from '@/utils/date_utils'
 
+type EditorSection = SlideSection & { _key: string } // Add a unique key to each section to guard section content
+
 const { t } = useI18n();
 const confirm = useConfirm();
 const edited = ref<boolean>(false)
@@ -56,7 +58,7 @@ const props = defineProps<{ slide?: Slide | null }>()
 const currentSlide = ref<Slide>(props.slide ?? DEFAULT_SLIDE) // Init a new slide if no slide is passed as prop
 const currentSectionIndex = ref<number>(0) // Track the index of the currently selected section
 
-const slideSections = ref<SlideSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
+const slideSections = ref<EditorSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
@@ -68,6 +70,8 @@ const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega 
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 const slideSaved = ref<boolean>(false) // Track whether the slide has been saved to the server
+
+const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: crypto.randomUUID() })
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -84,7 +88,7 @@ const toast = useToast()
 
 // 
 async function confirmedUpdateSlide() {
-    const sections = slideSections.value.map((section, index) => ({
+    const sections = slideSections.value.map(({ _key, ...section }, index) => ({
         ...section,
         width_fraction: sectionWidths.value[index],
         parameters: section.parameters ?? {},
@@ -122,7 +126,7 @@ async function confirmedUpdateSlide() {
 function applySavedSlide(saved: Slide) {
     ready = false // stop the watcher from marking this as "edited"
     currentSlide.value = { ...saved }
-    slideSections.value = (saved.sections ?? []).map(s => ({ ...s }))
+    slideSections.value = (saved.sections ?? []).map(withKey)
     sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
     selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
     edited.value = false
@@ -145,7 +149,7 @@ function confirmUpdateSlide() {
 
 // Save a slide handler
 function storeSlide() {
-    const sections = slideSections.value.map((section, index) => ({
+    const sections = slideSections.value.map(({ _key, ...section }, index) => ({
         ...section,
         width_fraction: sectionWidths.value[index],
         parameters: section.parameters ?? {},
@@ -213,7 +217,7 @@ function addSection() {
         return
     }
 
-    slideSections.value.push(DEFAULT_SECTION) // Push a new defaultt section
+    slideSections.value.push(withKey(DEFAULT_SECTION)) // Push a new defaultt section
     selectedTypes.value.push(getSlideSectionType(DEFAULT_SECTION.view_type)) // Push the default view type
     // Make all section widths equal (1 / number of sections)
     sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length)
@@ -223,16 +227,20 @@ function addSection() {
 
 // Handler to remove a section from the slide (by index)
 function removeSection(index: number) {
-
-    // Ensure at least one section remains
     if (slideSections.value.length <= 1) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'At least one section is required', life: 3000 })
         return
     }
-    slideSections.value.splice(index, 1) // Remove the section at the specified index
-    sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length) // Recalculate widths
-    layout.value = getLayoutType(sectionWidths.value) // Update layout type
 
+    slideSections.value.splice(index, 1)
+    selectedTypes.value.splice(index, 1)   // keep in sync
+    sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length)
+    layout.value = getLayoutType(sectionWidths.value)
+
+    // keep the active tab valid
+    if (currentSectionIndex.value >= slideSections.value.length) {
+        currentSectionIndex.value = slideSections.value.length - 1
+    }
 }
 
 // Handler to update the content of a section when the CodeEditor emits a contentUpdated event
@@ -315,11 +323,11 @@ watch(() => props.slide, (newSlide) => {
     // Update the currentSlide and slideSections based on the new slide prop
     if (newSlide) {
         currentSlide.value = { ...newSlide }
-        slideSections.value = newSlide.sections?.map(section => ({ ...section })) ?? []
+        slideSections.value = newSlide.sections?.map(withKey) ?? []
         sectionWidths.value = newSlide.sections?.map(section => section.width_fraction ?? 1.0) ?? [1.0]
         layout.value = getLayoutType(sectionWidths.value)
     } else { // If no slide is passed, initialize a new slide with default values
-        slideSections.value = [{ view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 }]
+        slideSections.value = [withKey({ view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 })]
         sectionWidths.value = [1.0]
         layout.value = 'fullscreen'
     }
@@ -416,12 +424,13 @@ onMounted(() => {
 
                 <h1 class="dashboard_label">Slide Editor</h1>
 
-                <Tabs value="0" style="height: 100%;" scrollable>
+                <Tabs :value="String(currentSectionIndex)" @update:value="currentSectionIndex = Number($event)"
+                    style="height: 100%;" scrollable>
 
                     <!-- For every section in the slide, create a tab with an editor -->
                     <TabList class="tab-header">
-                        <Tab v-for="(section, index) in slideSections" :key="index" :value="String(index)" class="tab"
-                            @click="currentSectionIndex = index">
+                        <Tab v-for="(section, index) in slideSections" :key="section._key" :value="String(index)"
+                            class="tab" @click="currentSectionIndex = index">
                             <div class="tab-title">
                                 <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
                                     <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
@@ -442,7 +451,7 @@ onMounted(() => {
                                                 <div>
                                                     <p style="margin: 0; font-size: var(--fs-medium)"> {{
                                                         slotProps.option.label
-                                                    }}</p>
+                                                        }}</p>
                                                     <p style="margin: 0; font-size: var(--fs-small)">{{
                                                         slotProps.option.description }}</p>
                                                 </div>
@@ -460,7 +469,7 @@ onMounted(() => {
 
                     <!-- For every section in the slide, create a tab panel with a CodeMirror editor -->
                     <TabPanels class="tab-panel">
-                        <TabPanel v-for="(section, index) in slideSections" :key="index" :value="String(index)"
+                        <TabPanel v-for="(section, index) in slideSections" :key="section._key" :value="String(index)"
                             style="height: 100%;">
 
                             <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
@@ -498,8 +507,8 @@ onMounted(() => {
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                         @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                        @autosize="autosizeVega = $event" @bgcolor="setSectionBgColor" :backgroundColor="sectionBgColor" :slide="currentSlide"
-                        :bgPicker="sectionBgColorEditable" />
+                        @autosize="autosizeVega = $event" @bgcolor="setSectionBgColor" :backgroundColor="sectionBgColor"
+                        :slide="currentSlide" :bgPicker="sectionBgColorEditable" />
                 </div>
             </SplitterPanel>
         </Splitter>
