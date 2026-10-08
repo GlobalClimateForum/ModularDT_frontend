@@ -18,15 +18,15 @@ const props = defineProps({
 })
 
 const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
-const filterLogic = defineModel<'and' | 'or'>('filterLogic', { default: 'and' });
+const filterLogic = defineModel<'and' | 'or'> ('filterLogic', { default: 'and' });
 
 const filters = defineModel<SearchFilters>('filters', {
-    default: () => ({
-        global: {
-            value: null,
-            matchMode: FilterMatchMode.CONTAINS,
-        },
-    }),
+  default: () => ({
+    global: {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+  }),
 })
 
 const existingTags = ref<string[]>([]);
@@ -41,12 +41,20 @@ async function fetchTags() {
     });
 }
 
+function toggleFilter() {
+    if (doFilter.value) {
+        filters.value.global.value = null;
+        selectedTags.value = [];
+    }
+    doFilter.value = !doFilter.value;
+}
+
 onMounted(() => {
     fetchTags()
 });
 
 defineExpose({
-    fetchTags
+  fetchTags
 })
 </script>
 
@@ -55,7 +63,7 @@ defineExpose({
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <h2 class="dashboard_label">{{ title }}</h2>
             <OverlayBadge :value="activeFilterCount ? String(activeFilterCount) : undefined" severity="warn">
-                <Button @click="doFilter = !doFilter" label="Filter"
+                <Button @click="toggleFilter" label="Filter"
                     :badge="activeFilterCount ? String(activeFilterCount) : undefined">
                     <template #icon>
                         <i class="pi" :class="doFilter ? 'pi-filter-slash' : 'pi-filter'"></i>
