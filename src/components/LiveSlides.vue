@@ -69,7 +69,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
+                <SlideGallery style="flex: 1; min-height: 0;"  v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Current view -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -126,10 +126,28 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </template>
 
 <style scoped>
+.dashboard {
+    flex: 1;
+    min-height: 0;
+}
+
+.sub-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .scene-toolbar {
     margin-bottom: 0.5rem;
     padding: 0.5rem;
     flex-shrink: 0;
+}
+
+.live-slides-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .monitor_container {
