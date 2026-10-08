@@ -184,13 +184,16 @@ function storeSlide() {
 }
 
 function updateOrStoreSlide() {
-    if (!currentSlide.value.name?.trim()) {
+    const name = currentSlide.value.name?.trim()
+    if (!name) {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'Slide name cannot be empty', life: 3000 })
         return
     }
 
-    if (slides.value.some(item => item.name === currentSlide.value.name)) {
+    if (currentSlide.value.id) {
         confirmUpdateSlide()
+    } else if (slides.value.some(s => s.name === name)) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: `A slide named "${name}" already exists`, life: 3000 })
     } else {
         storeSlide()
     }
@@ -428,7 +431,7 @@ onMounted(() => {
                 <h1 class="dashboard_label">Slide Editor</h1>
 
                 <Tabs :value="String(currentSectionIndex)" @update:value="currentSectionIndex = Number($event)"
-                    style="height: 100%;" scrollable>
+                    style="flex: 1; min-height: 0;" scrollable>
 
                     <!-- For every section in the slide, create a tab with an editor -->
                     <TabList class="tab-header">
@@ -663,7 +666,7 @@ onMounted(() => {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
     padding: 0;
