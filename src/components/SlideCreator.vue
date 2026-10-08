@@ -197,9 +197,12 @@ function updateOrStoreSlide() {
 }
 
 function clearCurrentSlide() {
-    // Problem: default slide is a singleton
-    currentSlide.value = DEFAULT_SLIDE
-    slideSections.value = []
+    currentSlide.value = { ...DEFAULT_SLIDE, tags: [] }   // fresh copy, not the shared object
+    slideSections.value = [withKey(DEFAULT_SECTION)] // fresh copy, not the shared object
+    selectedTypes.value = [getSlideSectionType(DEFAULT_SECTION.view_type)] // fresh copy, not the shared object
+    sectionWidths.value = [1.0] // Reset to a single section with full width
+    layout.value = 'fullscreen' // Reset layout to fullscreen
+    currentSectionIndex.value = 0 // Reset to the first section
 }
 
 // Small Helper to identify the layout type based on the section widths (fullscreen, golden, reversegolden, custom)
