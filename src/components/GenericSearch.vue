@@ -18,15 +18,15 @@ const props = defineProps({
 })
 
 const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
-const filterLogic = defineModel<'and' | 'or'> ('filterLogic', { default: 'and' });
+const filterLogic = defineModel<'and' | 'or'>('filterLogic', { default: 'and' });
 
 const filters = defineModel<SearchFilters>('filters', {
-  default: () => ({
-    global: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-  }),
+    default: () => ({
+        global: {
+            value: null,
+            matchMode: FilterMatchMode.CONTAINS,
+        },
+    }),
 })
 
 const existingTags = ref<string[]>([]);
@@ -46,7 +46,7 @@ onMounted(() => {
 });
 
 defineExpose({
-  fetchTags
+    fetchTags
 })
 </script>
 
@@ -65,7 +65,7 @@ defineExpose({
         </div>
 
         <transition name="rolldown">
-            <div v-if="doFilter" class="filter-container">
+            <div class="search-row" v-if="doFilter">
                 <InputText v-model="filters.global.value" :placeholder="$t('moderator.search')" :showClear="true"
                     class="filter-field" />
                 <SelectButton :options="['and', 'or']" v-model="filterLogic">
@@ -80,3 +80,39 @@ defineExpose({
         </transition>
     </div>
 </template>
+
+<style scoped>
+.search-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-small);
+}
+
+.search-row>.filter-field {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.search-row :deep(.p-inputtext),
+.search-row :deep(.p-multiselect),
+.search-row :deep(.p-select) {
+    width: 100% !important;
+}
+
+:deep(.p-multiselect-label) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+:deep(.p-multiselect-label)::-webkit-scrollbar {
+    display: none;
+}
+
+:deep(.p-multiselect-label) {
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+</style>
