@@ -424,15 +424,18 @@ watch(savedPositions, () => saveSection(), { deep: true });
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    height: 100%;
+    min-height: 0;
 }
 
 .saved_positions {
     display: flex;
     flex-direction: column;
     gap: var(--space-small);
-    height: 100%;
-    padding: var(--space-small);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    padding: var(--space-small);
 }
 
 .position-item {

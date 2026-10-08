@@ -262,22 +262,6 @@ function onTagAdded(addedTag: string) {
     padding: var(--space-small) var(--space-medium);
 }
 
-:deep(.p-multiselect-label) {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    max-width: 100%;
-}
-
-:deep(.p-multiselect-label)::-webkit-scrollbar {
-    display: none;
-}
-
-:deep(.p-multiselect-label) {
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-    mask-image: linear-gradient(to right, black 85%, transparent 100%);
-}
-
 :deep(.p-datatable-header) {
     padding: 0.5em 0em;
     display: flex;

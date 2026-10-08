@@ -55,80 +55,99 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 </script>
 
 <template>
-    <Splitter :gutter-size="2" class="dashboard">
-        <!-- Available Slides -->
-        <SplitterPanel :size="25" class="sub-panel">
-            <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
-        </SplitterPanel>
-        <!-- Current view -->
-        <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-            <h2 class="dashboard_label">{{ $t('moderator.live_monitors') }}</h2>
-            <Toolbar class="scene-toolbar">
-                <template #start>
-                    <div style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
-                        <Message info size="small">
-                            <span style="display: flex; align-items: center; gap: 0.25rem;">
-                                <i class="material-symbols-outlined">desktop_windows</i>
-                                {{ settings.number_of_screens }}
-                            </span>
-                        </Message>
-                    </div>
-                </template>
-                <template #end>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <Button icon="pi pi-play" :disabled="selectedSlide == null"
-                            :label="$t('moderator.send_to_multiple_monitors')"
-                            @click="onSendSlideToMultipleMonitors(selectedSlide)" />
-                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
-                            @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
-                    </div>
-                </template>
-            </Toolbar>
+    <div class="live-slides-container">
+        <div class="dashboard-header">
+            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
+                @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
+            <Message info size="small" style="margin-left: auto">
+                <span style="display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="material-symbols-outlined">desktop_windows</i>
+                    {{ settings.number_of_screens }}
+                </span>
+            </Message>
+        </div>
+        <Splitter :gutter-size="2" class="dashboard">
+            <!-- Available Slides -->
+            <SplitterPanel :size="25" class="sub-panel">
+                <SlideGallery style="flex: 1; min-height: 0;"  v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
+            </SplitterPanel>
+            <!-- Current view -->
+            <SplitterPanel :size="75" :minSize="15" class="sub-panel">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <h2 class="dashboard_label">{{ $t('moderator.live_monitors') }}</h2>
+                    <Button size="small" :disabled="selectedSlide == null"
+                        :label="$t('moderator.send_to_multiple_monitors')"
+                        @click="onSendSlideToMultipleMonitors(selectedSlide)">
 
-            <div class="monitor_container">
-                <!-- For each slide in the scene, render a monitor item -->
-                <div v-for="(slot, index) in whatYouSeeOnMonitors" :key="index" class="monitor-item inset-control"
-                    @dragover.prevent @drop="onDrop($event, index)">
+                        <template #icon>
+                            <i class="material-symbols-outlined">queue_play_next</i>
+                        </template>
+                    </Button>
+                </div>
 
-                    <!-- Monitor Info: Name, Index, and Clear Button -->
-                    <div class="monitor-info">
-                        <div class="monitor-label-container">
-                            <h3 class="monitor-label">
-                                <i class="material-symbols-outlined">desktop_windows</i>
-                                {{ index + 1 }}
-                            </h3>
-                            <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
+                <div class="monitor_container">
+                    <!-- For each slide in the scene, render a monitor item -->
+                    <div v-for="(slot, index) in whatYouSeeOnMonitors" :key="index" class="monitor-item inset-control"
+                        @dragover.prevent @drop="onDrop($event, index)">
+
+                        <!-- Monitor Info: Name, Index, and Clear Button -->
+                        <div class="monitor-info">
+                            <div class="monitor-label-container">
+                                <h3 class="monitor-label">
+                                    <i class="material-symbols-outlined">desktop_windows</i>
+                                    {{ index + 1 }}
+                                </h3>
+                                <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
+                            </div>
+
+                            <Button size="small" text round
+                                @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
+                                <template #icon>
+                                    <i class="material-symbols-outlined">close</i>
+                                </template>
+                            </Button>
                         </div>
 
-                        <Button size="small" text round
-                            @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
-                            <template #icon>
-                                <i class="material-symbols-outlined">close</i>
-                            </template>
-                        </Button>
-                    </div>
+                        <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
+                        <div v-if="slot" style="width: 100%; height:90%; pointer-events: none">
+                            <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
+                                :showFrame="false">
+                            </SlideView>
+                        </div>
+                        <div v-else class="monitor-symbol">
+                            <i class="pi pi-desktop"></i>
+                        </div>
 
-                    <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                    <div v-if="slot" style="width: 100%; height:90%; pointer-events: none">
-                        <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
-                            :showFrame="false">
-                        </SlideView>
                     </div>
-                    <div v-else class="monitor-symbol">
-                        <i class="pi pi-desktop"></i>
-                    </div>
-
                 </div>
-            </div>
-        </SplitterPanel>
-    </Splitter>
+            </SplitterPanel>
+        </Splitter>
+    </div>
 </template>
 
 <style scoped>
+.dashboard {
+    flex: 1;
+    min-height: 0;
+}
+
+.sub-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .scene-toolbar {
     margin-bottom: 0.5rem;
     padding: 0.5rem;
     flex-shrink: 0;
+}
+
+.live-slides-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .monitor_container {

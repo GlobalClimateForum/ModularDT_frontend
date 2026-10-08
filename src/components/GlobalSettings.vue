@@ -160,17 +160,12 @@ function updateSettingsForMonitors() {
 <template>
   <form @submit.prevent="saveSettings" class="settings-form">
 
-    <Toolbar fluid>
-      <template #start>
-        <h1 class="dashboard_label">
-          {{ $t('moderator.settings.global_settings') }}
-        </h1>
-      </template>
-
-      <template #end>
-        <Button type="button" :label="$t('moderator.save')" class="save-btn" @click="saveSettings" />
-      </template>
-    </Toolbar>
+    <div class="dashboard-header" style="justify-content: space-between; align-items: center; width: 100%;">
+      <h1 class="dashboard_label">
+        {{ $t('moderator.settings.global_settings') }}
+      </h1>
+      <Button type="button" :label="$t('moderator.save')" class="save-btn" @click="saveSettings" />
+    </div>
 
     <div class="settings-container">
 
@@ -378,8 +373,6 @@ function updateSettingsForMonitors() {
 .settings-form {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-large);
-
   height: 100%;
   min-height: 0;
 }
@@ -398,6 +391,8 @@ function updateSettingsForMonitors() {
   padding: var(--space-small);
 
   mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to top, black calc(100% - 0.5rem), transparent);
+
   padding-bottom: 2.5rem;
 }
 

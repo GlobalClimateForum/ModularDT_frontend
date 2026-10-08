@@ -90,9 +90,18 @@ function onDragEnd(e: DragEvent) {
 </template>
 
 <style scoped>
+
+.slide-table {
+    height: 100%;
+}
+
 .slide-table :deep(.p-datatable tbody tr) {
     flex: 1;
     min-height: 0;
+}
+
+.slide-table :deep(.p-datatable-header) {
+    flex-wrap: wrap;
 }
 
 .slide-card {

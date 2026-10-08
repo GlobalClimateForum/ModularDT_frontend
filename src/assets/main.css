@@ -225,6 +225,20 @@ body,
   box-sizing: border-box;
 }
 
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+  padding: var(--space-small);
+
+  background-color: var(--surface);
+  border-radius: var(--br-medium);
+  box-shadow: var(--shadow-light);
+  margin-bottom: var(--space-small);
+  height: calc(var(--space-large) * 2 + var(--space-small));
+  box-sizing: border-box;
+}
+
 .label-container {
   display: flex;
   flex-direction: column;
@@ -302,8 +316,8 @@ h6 {
 }
 
 .labeled-checkbox {
-  display: flex; 
-  align-items: center; 
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
