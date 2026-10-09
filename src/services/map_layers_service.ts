@@ -1,6 +1,7 @@
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import { readGeoJSON, type Layer, type DotStyle, type Marker } from '@/services/map_service';
 import type { ExpressionSpecification } from 'maplibre-gl';
+import { API_BASE_URL } from '@/config'
 
 const PREFIX = 'userlayer-' // a prefix for user-defined map layers
 
@@ -41,7 +42,7 @@ const asHex = (v: string) => (v.startsWith('#') ? v : '#' + v); // Helper to ens
 
 // Small Helper to generate a URL for a given layer's path, ensuring it is absolute and correctly formatted.
 export function layerUrl(path: string): string {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, ''); // Get the API base URL from environment variables and remove any trailing slashes
+    const API_BASE = API_BASE_URL.replace(/\/+$/, ''); // Get the API base URL from environment variables and remove any trailing slashes
     return /^(blob:|https?:)/.test(path) ? path : `${API_BASE}/${path.replace(/^\//, '')}`;
 }
 
@@ -72,7 +73,7 @@ function addUserLayer(map: MaplibreMap, layer: Layer) {
     const id = layerKey(layer); // Get the unique key for the layer
     const marker = layer.marker ?? DEFAULT_MARKER; // Use the default marker if none is specified
 
-    const base = import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
+    const base = API_BASE_URL.replace(/\/+$/, '');
     const path = layer.path.replace(/^\/+/, '');
 
     map.addSource(id, { type: 'geojson', data: `${base}/${path}` }); // Add new geojson source to the map using the layer's path

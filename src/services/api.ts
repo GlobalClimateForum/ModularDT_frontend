@@ -1,24 +1,23 @@
 import axios from "axios";
+import { API_BASE_URL, MARP_API_BASE_URL } from '@/config'
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/',
+    baseURL: API_BASE_URL,
     headers: {
         "Content-Type": "application/json",
     },
 })
 
 const uploadApi = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/',
+    baseURL: API_BASE_URL,
 });
 
 const marpApi = axios.create({
-    baseURL: import.meta.env.VITE_MARP_API_BASE_URL || 'http://localhost:3000/',
+    baseURL: MARP_API_BASE_URL,
     headers: {
         "Content-Type": "application/json",
     },
 })
-
-
 
 export default api;
 export { api, uploadApi, marpApi };

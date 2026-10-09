@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue'
 import { useWebsocketService } from '@/services/websocket_service'
+import { API_BASE_URL } from '@/config'
 
 export interface ParameterChange {
     section: number
@@ -17,7 +18,7 @@ function createParameterStore() {
     
     // Setup
     const channelId = 'parameters/'
-    const wsUrlParameter = new URL('/ws/parameters/', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/')
+    const wsUrlParameter = new URL('/ws/parameters/', API_BASE_URL)
     wsUrlParameter.protocol = wsUrlParameter.protocol === 'https:' ? 'wss:' : 'ws:'
     const socketUrl = wsUrlParameter.toString()
     

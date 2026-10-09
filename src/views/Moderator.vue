@@ -19,6 +19,7 @@ import { updateParticipantParameters, participantParameters } from '@/globals/pa
 import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
+import { API_BASE_URL } from '@/config'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -46,7 +47,7 @@ const liveSlidesActive = useLiveSlidesActive()
 let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 const channelId = `moderator/`
-const wsUrlMonitor = new URL('/ws/moderator/', import.meta.env.VITE_API_BASE_URL  || 'http://localhost:8000/')
+const wsUrlMonitor = new URL('/ws/moderator/', API_BASE_URL)
 const socketUrl = wsUrlMonitor + ``
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');

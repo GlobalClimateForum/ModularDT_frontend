@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 //import { getIPanels } from '@/services/slide_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
+import { API_BASE_URL } from '@/config'
 // components
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
@@ -25,7 +26,7 @@ const wsService = useWebsocketService()
 const connectionStatus = ref('Connecting...')
 
 const channelId = `participant/${currentId.value}/`
-const wsUrlParticipant = new URL('/ws/participant/', import.meta.env.VITE_API_BASE_URL  || 'http://localhost:8000/')
+const wsUrlParticipant = new URL('/ws/participant/', API_BASE_URL)
 const socketUrl = wsUrlParticipant + `${currentId.value}/`
 
 const slideshowActive = ref<Boolean>(false)

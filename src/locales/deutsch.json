@@ -21,8 +21,8 @@
       "parameterchanges": "Parameteränderungen",
       "parameters": "Parameter",
       "control": "Steuerung",
-      "live_parameters": "Live Parameter",
-      "live_parameter_configuration": "Live Parameter Konfiguration"
+      "live_parameters": "Globale live parameter",
+      "live_parameter_configuration": "Globale live parameter Konfiguration"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",

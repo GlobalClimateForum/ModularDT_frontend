@@ -14,6 +14,8 @@ import { background_image, fetchBackgoundImage } from '@/globals/background_imag
 import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
+import { API_BASE_URL } from '@/config'
+
 // components
 import SlideView from '@/components/SlideView.vue';
 
@@ -23,7 +25,7 @@ const currentId = computed(() => route.params.id)
 const currentSlide = ref<Slide | null>(null)
 
 const channelId = `monitor/${currentId.value}/`
-const wsUrlMonitor = new URL('/ws/monitor/', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/')
+const wsUrlMonitor = new URL('/ws/monitor/', API_BASE_URL)
 const socketUrl = wsUrlMonitor + `${currentId.value}/`
 
 const wsService = useWebsocketService()
