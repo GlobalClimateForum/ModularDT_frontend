@@ -17,7 +17,7 @@ function createParameterStore() {
     
     // Setup
     const channelId = 'parameters/'
-    const wsUrlParameter = new URL('/ws/parameters/', import.meta.env.VITE_API_BASE_URL)
+    const wsUrlParameter = new URL('/ws/parameters/', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/')
     wsUrlParameter.protocol = wsUrlParameter.protocol === 'https:' ? 'wss:' : 'ws:'
     const socketUrl = wsUrlParameter.toString()
     

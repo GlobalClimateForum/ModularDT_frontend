@@ -122,7 +122,7 @@ function onTagAdded(addedTag: string) {
     <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
 
         <SplitterPanel class="sub-panel" :size="30">
-            <DataTable dataKey="id" editMode="row" scrollable scrollHeight="flex" :value="filteredSlides"
+            <DataTable  v-if="filteredSlides.length>0" dataKey="id" editMode="row" scrollable scrollHeight="flex" :value="filteredSlides"
                 @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
                 v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single">
 

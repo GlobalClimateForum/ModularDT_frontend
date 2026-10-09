@@ -25,7 +25,7 @@ const wsService = useWebsocketService()
 const connectionStatus = ref('Connecting...')
 
 const channelId = `participant/${currentId.value}/`
-const wsUrlParticipant = new URL('/ws/participant/', import.meta.env.VITE_API_BASE_URL)
+const wsUrlParticipant = new URL('/ws/participant/', import.meta.env.VITE_API_BASE_URL  || 'http://localhost:8000/')
 const socketUrl = wsUrlParticipant + `${currentId.value}/`
 
 const slideshowActive = ref<Boolean>(false)

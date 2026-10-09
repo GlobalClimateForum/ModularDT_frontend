@@ -10,10 +10,12 @@ export interface GlobalParameter {
   connected_slide_parameters: number[];
 }
 
-export const getGlobalParameter = async () => await api.get("/globalparameters/");
+export const getGlobalParameters = async () => await api.get("/globalparameters/");
 export const saveGlobalParameter = (globalparameter: Omit<GlobalParameter, "id">) => {
-    console.log("globalparameter: ", globalparameter)
-    api.post("/globalparameters/", { ...globalparameter });
+    console.log("globalparameter: ",globalparameter)
+    return api.post("/globalparameters/", { ...globalparameter });
 }
 
+export const deleteGlobalParameter = (id: number) => api.delete(`/globalparameters/${id}/`);
+export const deleteGlobalParameters = async () => await api.delete("/globalparameters/");
 

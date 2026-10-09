@@ -15,7 +15,7 @@ import Column from 'primevue/column';
 import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 import MultiSelect from 'primevue/multiselect';
-import { saveGlobalParameter } from '@/services/global_parameter_service'
+import { deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
 import { useToast } from 'primevue/usetoast'
 
 const toast = useToast()
@@ -38,8 +38,11 @@ const parameterTypeOptions = ref<{ label: string; value: string }[]>([
 const parameterValueOption = ref<string>("");
 const parameterValueOptions = ref<string[]>([]);
 
-const selectedSlideParameters = ref<{ label: string, value: string; }[]>([]);
-const slideParameterArray = ref<{ label: string; value: string }[]>([]);
+const selectedSlideParameters = ref<number[]>([]);
+const slideParameterArray = ref<{ label: string; value: number }[]>([]);
+
+const selectedGlobalParameter = ref<GlobalParameter | null>(null);
+const editingRows = ref<GlobalParameter[]>([]);
 
 onMounted(async () => {
     fetchGlobalParameter()
@@ -49,7 +52,7 @@ onMounted(async () => {
         stop()
     })
     //console.log("slideParameters: ", slideParameters.value)
-    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: "" })).sort((x,y) => x.label.localeCompare(y.label))
+    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: p.id ? p.id : -1})).sort((x,y) => x.label.localeCompare(y.label))
     console.log("globalParameters: ",globalParameters.value)
     console.log("slideParameters: ",slideParameters.value)
 })
@@ -73,10 +76,10 @@ function onSaveParameter() {
     const global_parameter_ = {
         name: parameterName.value,
         description: "",
-        ptype: selectedParameterType.value,
-        parameterValueOptions: parameterValueOptions.value,
+        ptype: selectedParameterType.value ? selectedParameterType.value : "",
+        pvalues: (parameterValueOptions.value.length===0) ? [] : parameterValueOptions.value,
         connect_all: autoConnection.value,
-        connected_slide_parameters: []
+        connected_slide_parameters: ((selectedSlideParameters.value.length===0) ? [] : selectedSlideParameters.value)
     };
 
     saveGlobalParameter(global_parameter_).then(_response => {
@@ -95,7 +98,9 @@ function onConfirmedClearParameters() {
         acceptLabel: `${t('moderator.confirmation-ok')}`,
         rejectLabel: t('moderator.confirmation-cancel'),
         accept: async () => {
-            // await onClearParameters();
+            deleteGlobalParameters();
+            globalParameters.value = []    
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramters deleted successfully', life: 3000 })   
         }, reject: () => {
             // nothing to do    
         },
@@ -133,6 +138,38 @@ function onDeleteParameterValueOption(item) {
                                 @click="onAddParameter" />
                         </div>
                     </div>
+
+                    <DataTable v-if="globalParameters.length>0" :value="globalParameters" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                        responsiveLayout="scroll" v-model:editingRows="editingRows" v-model:selection="selectedGlobalParameter"
+                        selectionMode="single">
+
+                        <Column field="name" header="" style="text-align: left">
+                            <template #editor="slotProps">
+                                <InputText v-model="slotProps.data.name" />
+                            </template>
+                            <template #body="slotProps">
+                                <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                                <!--<span style="font-size: 0.875rem; color: #64748b;">Updated
+                                    {{ formatDate(slotProps.data.updated_at) }}</span> -->
+                            </template>
+                        </Column>
+
+                        <!-- bodyClass="flex justify-content-end white-space-nowrap"
+                            editorClass="flex justify-content-end white-space-nowrap" -->
+                        <Column style="width: 12rem; text-align: right">
+                            <template #body="slotProps">
+                                <Button size="small" rounded text icon="pi pi-clone"/>
+                                <Button size="small" rounded text icon="pi pi-pencil"/>
+                                <Button size="small" rounded text icon="pi pi-trash"/>
+                            </template>
+                            <template #editor="slotProps">
+                                <Button size="small" rounded text icon="pi pi-check"
+                                    @click="(e) => slotProps.editorSaveCallback(e)" />
+                                <Button size="small" rounded text icon="pi pi-times"
+                                    @click="(e) => slotProps.editorCancelCallback(e)" />
+                            </template>
+                        </Column>
+                    </DataTable>
                 </div>
             </SplitterPanel>
             <SplitterPanel :size="50" class="sub-panel">
@@ -193,13 +230,13 @@ function onDeleteParameterValueOption(item) {
                     <div v-if="!autoConnection" class="label-container">
                         <label for="connectedParameters" class="form-label">{{
                             $t('moderator.parameter.global_parameter_connect') }}</label>
-                        <MultiSelect v-model="selectedSlideParameters" :options="slideParameterArray"
-                            optionLabel="label" :placeholder="t('moderator.parameter.select_parameter')" display="chip" :showClear="true"
+                        <MultiSelect v-model="selectedSlideParameters" :options="slideParameterArray" optionLabel="label" optionValue="value" 
+                            :placeholder="t('moderator.parameter.select_parameter')" display="chip" :showClear="true"
                             :maxSelectedLabels="1" selectedItemsLabel="{0} (+{1})" fluid>
                             <template #value="slotProps">
                                 <div v-if="slotProps.value && slotProps.value.length > 0">
                                     <!-- first selected element-->
-                                    <span>{{ slotProps.value[0].label }}</span>
+                                    <span>{{ slideParameterArray.find(opt => opt.value === slotProps.value[0])?.label }}</span>
 
                                     <!-- if more than one elements selected, attach (+X) -->
                                     <span v-if="slotProps.value.length > 1">

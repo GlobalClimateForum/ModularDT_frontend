@@ -23,7 +23,7 @@ const currentId = computed(() => route.params.id)
 const currentSlide = ref<Slide | null>(null)
 
 const channelId = `monitor/${currentId.value}/`
-const wsUrlMonitor = new URL('/ws/monitor/', import.meta.env.VITE_API_BASE_URL)
+const wsUrlMonitor = new URL('/ws/monitor/', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/')
 const socketUrl = wsUrlMonitor + `${currentId.value}/`
 
 const wsService = useWebsocketService()

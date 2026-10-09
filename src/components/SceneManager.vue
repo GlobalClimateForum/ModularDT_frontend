@@ -323,7 +323,7 @@ const removeItem = (index: number) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%; ">                    
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <DataTable :value="filteredScenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                    <DataTable v-if="filteredScenes.length>0" :value="filteredScenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                         @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll" class="my-table"
                         v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single">
 
