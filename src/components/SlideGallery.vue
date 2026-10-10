@@ -55,7 +55,7 @@ function onDragEnd(e: DragEvent) {
 </script>
 
 <template>
-    <DataTable :value="filteredSlides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+    <DataTable  v-if="filteredSlides.length>0" :value="filteredSlides" dataKey="id" editMode="row" scrollable scrollHeight="flex"
         responsiveLayout="scroll" class="slide-table" v-model:selection="selectedSlide" selectionMode="single">
 
         <Column field="name" header="">

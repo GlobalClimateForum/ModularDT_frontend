@@ -134,7 +134,7 @@ async function onPlayPresentation(presentation: Presentation) {
                     @click="onAddPresentation" />
             </div>
             <div>
-                <DataTable :value="presentations" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                <DataTable  v-if="presentations.length>0" :value="presentations" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                     @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="presentation-table"
                     v-model:editingRows="editingRows" v-model:selection="selectedPresentation" selectionMode="single">
 

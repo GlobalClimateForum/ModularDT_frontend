@@ -171,7 +171,7 @@ function onHandsOff() {
     <Splitter class="dashboard">
       <SplitterPanel class="participants-container">
 
-        <DataTable :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" scrollHeight="flex"
+        <DataTable v-if="rows.length>0" :value="rows" v-model:editingRows="editingRows" editMode="row" dataKey="id" scrollHeight="flex"
           tableLayout="fixed" @row-edit-save="onRowEditSave" @row-edit-cancel="onRowEditCancel"
           :rowClass="(data: DraftParticipant) => (data.seat == null ? 'row-unseated' : '')" class="participants-table"
           :filters="filters" filterDisplay="menu" :globalFilterFields="['name', 'seat']"

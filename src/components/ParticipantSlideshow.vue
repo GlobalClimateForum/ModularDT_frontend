@@ -288,7 +288,7 @@ const handleDragStart = (item) => {
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <h2 class="dashboard_label">{{ $t('moderator.nav.participants_slideshow') }}</h2>
-                    <DataTable :value="slideshows" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                    <DataTable  v-if="slideshows.length>0"  :value="slideshows" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                         @row-edit-save="onRowEditSaveSlideshow" @row-click="onRowClick" responsiveLayout="scroll"
                         class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedSlideshow"
                         selectionMode="single">
