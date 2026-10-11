@@ -20,7 +20,10 @@ import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
 import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
 import GenericSearch from '@/components/GenericSearch.vue';
+import { useItemDeletion } from '@/generics/deleteItem'
 
+
+const { onConfirmDeleteItem } = useItemDeletion();
 const confirm = useConfirm();
 const { t } = useI18n();
 const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
@@ -32,10 +35,10 @@ const filterLogic = ref<'and' | 'or'>('and');
 const toast = useToast();
 
 const filters = ref<SearchFilters>({
-  global: {
-    value: null,
-    matchMode: FilterMatchMode.CONTAINS,
-  },
+    global: {
+        value: null,
+        matchMode: FilterMatchMode.CONTAINS,
+    },
 })
 
 const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
@@ -61,38 +64,16 @@ function onEditSlide(slide: Slide) {
     emit('edit-slide', { ...slide, sections: slide.sections || [] });
 }
 
-function onDeleteSlide(slide: Slide) {
-    if (slide.id) {
-        deleteSlide(slide.id).then(() => {
-            fetchSlides();
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide deleted successfully', life: 3000 });
-            slides.value = slides.value.filter(s => s.id !== slide.id);
-            if (selectedSlide.value?.id === slide.id) {
-                selectedSlide.value = null;
-            }
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slide', life: 3000 });
-            console.error("Error deleting slide:", error);
-        })
-    }
-    else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Slide ID is missing', life: 3000 });
-        console.error("Error deleting slide: no valid slide.id");
-    }
-}
 
-function onConfirmDeleteSlide(slide: Slide) {
-    confirm.require({
-        header: t('moderator.confirmation'),
-        message: t('moderator.confirmation-message-head') + t('moderator.slide') + " (" + slide.name + ")" + t('moderator.confirmation-message-tail'),
-        acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'),
-        accept: async () => {
-            await onDeleteSlide(slide);
-        }, reject: () => {
-            // nothing to do    
-        },
-    });
+async function onConfirmDeleteSlide(slide: Slide) {
+    const deleted = await onConfirmDeleteItem(slide, "slide", deleteSlide)
+
+    if (deleted) {
+        slides.value = slides.value.filter(s => s.id !== slide.id);
+        if (selectedSlide.value?.id === slide.id) {
+            selectedSlide.value = null;
+        }
+    }
 }
 
 function onDuplicateEditSlide(slide: Slide) {
@@ -122,8 +103,8 @@ function onTagAdded(addedTag: string) {
     <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
 
         <SplitterPanel class="sub-panel" :size="30">
-            <DataTable  v-if="filteredSlides.length>0" dataKey="id" editMode="row" scrollable scrollHeight="flex" :value="filteredSlides"
-                @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
+            <DataTable v-if="filteredSlides.length > 0" dataKey="id" editMode="row" scrollable scrollHeight="flex"
+                :value="filteredSlides" @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
                 v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single">
 
                 <Column field="name" header="">
@@ -165,7 +146,8 @@ function onTagAdded(addedTag: string) {
                 </Column>
 
                 <template #header>
-                    <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters"/> 
+                    <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags"
+                        v-model:filterLogic="filterLogic" v-model:filters="filters" />
                 </template>
             </DataTable>
         </SplitterPanel>
@@ -177,12 +159,13 @@ function onTagAdded(addedTag: string) {
             <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" v-if="selectedSlide"
                 :onRemoveTagApi="removeTagFromSlide" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
 
-            <div v-else class="slide-preview" style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: var(--space-small); color: var(--p-primary-300);">
+            <div v-else class="slide-preview"
+                style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: var(--space-small); color: var(--p-primary-300);">
                 <i class="material-symbols-outlined">photo_frame</i>
                 <span>Select a slide in the table to view it here</span>
             </div>
 
-     
+
         </SplitterPanel>
     </Splitter>
 </template>

@@ -56,7 +56,7 @@
       "no_presentation_showing_short": "No presentation active",
       "new_slideshow": "New slideshow"
     },
-    "parameter": {
+    "parameters": {
       "global_parameter_name": "Name of global parameter",
       "global_parameter_type": "Type of global parameter",
       "global_parameter_type_config": "Type configuration of global parameter",
@@ -68,6 +68,8 @@
     },
     "scene": "Scene",
     "slide": "Slide",
+    "parameter":  "Parameter",
+    "participants_slideshow": "Participant slideshow",
     "available_scenes": "Available Scenes",
     "available_slides": "Available Slides",
     "duplicate_slides": "Duplicate Slides",

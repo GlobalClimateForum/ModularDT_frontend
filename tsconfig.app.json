@@ -22,5 +22,5 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue"
-  ]
+, "src/generics/deleteItem.Vue"  ]
 }

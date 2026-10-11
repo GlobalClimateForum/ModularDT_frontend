@@ -21,6 +21,7 @@ import '@/assets/main.css'
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
 
+
 const { t } = useI18n();
 const confirm = useConfirm();
 

@@ -24,6 +24,7 @@ import { slides, fetchSlides } from '@/globals/slides';
 import { dialogService } from '@/services/dialog_service';
 import { participants } from '@/globals/participants';
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+import { useItemDeletion } from '@/generics/deleteItem'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -36,6 +37,7 @@ interface SelectedSlide {
     description: string;
 }
 
+const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 const confirm = useConfirm();
 
@@ -105,38 +107,16 @@ function onRowEditSaveSlideshow(event: any) {
         });
 }
 
-function onDeleteSlideshow(slideshow: Slideshow) {
-    if (slideshow.id) {
-        deleteSlideshow(slideshow.id).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slideshow deleted successfully', life: 3000 });
+
+async function onConfirmDeleteSlideshow(slideshow: Slideshow) {
+    const deleted = await onConfirmDeleteItem(slideshow, "participants_slideshow", deleteSlideshow)
+
+    if (deleted) {
             slideshows.value = slideshows.value.filter(s => s.id !== slideshow.id);
             if (selectedSlideshow.value?.id === slideshow.id) {
                 selectedSlideshow.value = null;
             }
-            fetchSlideshows();
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete slideshow', life: 3000 });
-            console.error("Error deleting slideshow:", error);
-        })
     }
-    else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Slideshow ID is missing', life: 3000 });
-        console.error("Error deleting slideshow: no valid slideshow.id");
-    }
-}
-
-function onConfirmDeleteSlideshow(slideshow: Slideshow) {
-    confirm.require({
-        header: t('moderator.confirmation'),
-        message: t('moderator.confirmation-message-head') + t('moderator.participants_slideshow') + " (" + slideshow.name + ")" + t('moderator.confirmation-message-tail'),
-        acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'),
-        accept: async () => {
-            await onDeleteSlideshow(slideshow);
-        }, reject: () => {
-            // nothing to do    
-        },
-    });
 }
 
 function onDuplicateSlideshow(slideshow: Slideshow) {

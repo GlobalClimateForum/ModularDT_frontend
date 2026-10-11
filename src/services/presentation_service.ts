@@ -2,7 +2,7 @@ import { api, marpApi } from "./api";
 import type { Scene } from "./scene_service";
 
 export interface Presentation {
-    id?: number;
+    id: number;
     name: string;
     description: string;
     created_at?: string | null;

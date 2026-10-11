@@ -26,8 +26,10 @@ import type { Presentation } from "@/services/presentation_service"
 import { startPresentation } from "@/services/live_presentation_service";
 import GenericSearch from '@/components/GenericSearch.vue';
 import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
+import { useItemDeletion } from '@/generics/deleteItem'
 
 
+const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 const confirm = useConfirm();
 const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
@@ -37,20 +39,11 @@ const selectedTags = ref<string[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
 
 const filters = ref<SearchFilters>({
-  global: {
-    value: null,
-    matchMode: FilterMatchMode.CONTAINS,
-  },
+    global: {
+        value: null,
+        matchMode: FilterMatchMode.CONTAINS,
+    },
 })
-
-const filteredScenes = useFilteredScenes(filters, selectedTags, filterLogic)
-
-const editingRows = ref<Scene[]>([]);
-
-const selectedPresentation = ref<Presentation | null>(null);
-const presentationName = ref<string>("");
-
-const toast = useToast();
 
 interface SelectedScene {
     id: string;
@@ -59,7 +52,22 @@ interface SelectedScene {
     description: string;
 }
 
+const filteredScenes = useFilteredScenes(filters, selectedTags, filterLogic)
+const editingRows = ref<Scene[]>([]);
+const selectedPresentation = ref<Presentation | null>(null);
+const presentationName = ref<string>("");
+
+const toast = useToast();
+
+const colLeftSize = ref(35);
+const colRightSize = ref(65);
+
 const selectedOrder = ref<SelectedScene[]>([]);
+
+const emit = defineEmits<{
+    'edit-scene': [scene: Scene];
+    'live': [];
+}>();
 
 
 function onRowEditSaveScene(event: any) {
@@ -114,47 +122,19 @@ function onRowEditSavePresentation(event: any) {
     }
 }
 
-const emit = defineEmits<{
-    'edit-scene': [scene: Scene];
-    'live': [];
-}>();
-
 function onEditScene(scene: Scene) {
     emit('edit-scene', { ...scene });
 }
 
-function onDeleteScene(scene: Scene) {
-    if (scene.id) {
-        deleteScene(scene.id).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene deleted successfully', life: 3000 });
-            scenes.value = scenes.value.filter(s => s.id !== scene.id);
-            if (selectedScene.value?.id === scene.id) {
-                selectedScene.value = null;
-            }
-            fetchScenes();
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete scene', life: 3000 });
-            console.error("Error deleting scene:", error);
-        })
-    }
-    else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Scene ID is missing', life: 3000 });
-        console.error("Error deleting scene: no valid scene.id");
-    }
-}
+async function onConfirmDeleteScene(scene: Scene) {
+    const deleted = await onConfirmDeleteItem(scene, "scene", deleteScene)
 
-function onConfirmDeleteScene(scene: Scene) {
-    confirm.require({
-        header: t('moderator.confirmation'),
-        message: t('moderator.confirmation-message-head') + t('moderator.scene') + " (" + scene.name + ")" + t('moderator.confirmation-message-tail'),
-        acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'),
-        accept: async () => {
-            await onDeleteScene(scene);
-        }, reject: () => {
-            // nothing to do    
-        },
-    });
+    if (deleted) {
+        scenes.value = scenes.value.filter(s => s.id !== scene.id);
+        if (selectedScene.value?.id === scene.id) {
+            selectedScene.value = null;
+        }
+    }
 }
 
 function onDuplicateEditScene(scene: Scene) {
@@ -176,26 +156,14 @@ function onTagAdded(addedTag: string) {
     }
 }
 
-const colLeftSize = ref(35);
-const colRightSize = ref(65);
+async function onConfirmedDeletePresentation(presentation: Presentation) {
+    const deleted = await onConfirmDeleteItem(presentation, "presentation", deletePresentation)
 
-function onDeletePresentation(presentation: Presentation) {
-    if (presentation.id) {
-        deletePresentation(presentation.id).then(() => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation deleted successfully', life: 3000 });
-            presentations.value = presentations.value.filter(s => s.id !== presentation.id);
-            if (selectedPresentation.value?.id === presentation.id) {
-                selectedPresentation.value = null;
-            }
-            fetchPresentations();
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete presentation', life: 3000 });
-            console.error("Error deleting presentation:", error);
-        })
-    }
-    else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Presentation ID is missing', life: 3000 });
-        console.error("Error deleting presentation: no valid presentation.id");
+    if (deleted) {
+        presentations.value = presentations.value.filter(s => s.id !== presentation.id);
+        if (selectedPresentation.value?.id === presentation.id) {
+            selectedPresentation.value = null;
+        }
     }
 }
 
@@ -320,12 +288,13 @@ const removeItem = (index: number) => {
 
 <template>
     <div style="display: flex; flex-direction: column; height: 100vh; gap: var(--space-small);"> <!-- Obere Reihe -->
-        <div style="height: 300px; flex: 1; display: flex; width: 100%; ">                    
+        <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <DataTable v-if="filteredScenes.length>0" :value="filteredScenes" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                        @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll" class="my-table"
-                        v-model:editingRows="editingRows" v-model:selection="selectedScene" selectionMode="single">
+                    <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
+                        scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"
+                        class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedScene"
+                        selectionMode="single">
 
                         <Column field="name" header="" style="text-align: left">
                             <template #editor="slotProps">
@@ -340,7 +309,8 @@ const removeItem = (index: number) => {
                             </template>
                         </Column>
 
-                        <Column style="width: 10rem; text-align: right" bodyClass="flex justify-content-end white-space-nowrap"
+                        <Column style="width: 10rem; text-align: right"
+                            bodyClass="flex justify-content-end white-space-nowrap"
                             editorClass="flex justify-content-end white-space-nowrap">
                             <template #body="slotProps">
                                 <Button size="small" rounded text icon="pi pi-code"
@@ -361,7 +331,9 @@ const removeItem = (index: number) => {
                         </Column>
 
                         <template #header>
-                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags" v-model:filterLogic="filterLogic" v-model:filters="filters" :title="$t('moderator.available_scenes')"/> 
+                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags"
+                                v-model:filterLogic="filterLogic" v-model:filters="filters"
+                                :title="$t('moderator.available_scenes')" />
                         </template>
 
                     </DataTable>
@@ -406,7 +378,7 @@ const removeItem = (index: number) => {
                                 <Button size="small" rounded text icon="pi pi-pencil"
                                     @click="(e) => slotProps.editorInitCallback(e)" />
                                 <Button size="small" rounded text icon="pi pi-trash"
-                                    @click="onDeletePresentation(slotProps.data)" />
+                                    @click="onConfirmedDeletePresentation(slotProps.data)" />
                                 <Button size="small" rounded text icon="pi pi-play-circle"
                                     @click="onPlayPresentation(slotProps.data)" />
                             </template>

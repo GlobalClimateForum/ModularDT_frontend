@@ -9,7 +9,7 @@ import parameterStore from '@/services/parameterstore_service'
 import InputText from 'primevue/inputtext';
 import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
 import { globalParameters, fetchGlobalParameter } from '@/globals/global_parameters';
-import Select from 'primevue/select'; 
+import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import { useConfirm } from "primevue/useconfirm";
@@ -17,16 +17,30 @@ import { useI18n } from 'vue-i18n';
 import MultiSelect from 'primevue/multiselect';
 import { deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
 import { useToast } from 'primevue/usetoast'
+import { useItemDeletion } from '@/generics/deleteItem'
 
-const toast = useToast()
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
+
+import { useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+
+
+const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 const confirm = useConfirm();
+const toast = useToast();
 
 const parameterChanges = ref<ParameterChange[]>([])
 const addParameterActive = ref<Boolean>(false)
 const parameterName = ref<string>("");
 const autoConnection = ref<Boolean>(false);
 const selectedParameterType = ref<string | null>(null);
+
+let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
+
 
 const parameterTypeOptions = ref<{ label: string; value: string }[]>([
     { label: 'Boolean', value: 'Boolean' },
@@ -52,9 +66,9 @@ onMounted(async () => {
         stop()
     })
     //console.log("slideParameters: ", slideParameters.value)
-    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: p.id ? p.id : -1})).sort((x,y) => x.label.localeCompare(y.label))
-    console.log("globalParameters: ",globalParameters.value)
-    console.log("slideParameters: ",slideParameters.value)
+    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: p.id ? p.id : -1 })).sort((x, y) => x.label.localeCompare(y.label))
+    console.log("globalParameters: ", globalParameters.value)
+    console.log("slideParameters: ", slideParameters.value)
 })
 
 function onAddParameter() {
@@ -66,20 +80,15 @@ function onCancelAddParameter() {
 }
 
 function onSaveParameter() {
-    console.log("parameterName: ", parameterName.value)
-    console.log("selectedParameterType", selectedParameterType.value)
-    console.log("parameterValueOptions", parameterValueOptions.value)
-    console.log("autoConnection", autoConnection.value)
-    console.log("selectedSlideParameters", selectedSlideParameters.value)
-    addParameterActive.value=false
+    addParameterActive.value = false
 
     const global_parameter_ = {
         name: parameterName.value,
         description: "",
         ptype: selectedParameterType.value ? selectedParameterType.value : "",
-        pvalues: (parameterValueOptions.value.length===0) ? [] : parameterValueOptions.value,
+        pvalues: (parameterValueOptions.value.length === 0) ? [] : parameterValueOptions.value,
         connect_all: autoConnection.value,
-        connected_slide_parameters: ((selectedSlideParameters.value.length===0) ? [] : selectedSlideParameters.value)
+        connected_slide_parameters: ((selectedSlideParameters.value.length === 0) ? [] : selectedSlideParameters.value)
     };
 
     saveGlobalParameter(global_parameter_).then(_response => {
@@ -99,12 +108,23 @@ function onConfirmedClearParameters() {
         rejectLabel: t('moderator.confirmation-cancel'),
         accept: async () => {
             deleteGlobalParameters();
-            globalParameters.value = []    
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramters deleted successfully', life: 3000 })   
+            globalParameters.value = []
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramters deleted successfully', life: 3000 })
         }, reject: () => {
             // nothing to do    
         },
     });
+}
+
+async function onConfirmedDeleteParameter(glob: GlobalParameter) {
+    const deleted = await onConfirmDeleteItem(glob, "parameter", deleteGlobalParameter)
+
+    if (deleted) {
+        globalParameters.value = globalParameters.value.filter(gp => gp.id !== glob.id);
+        if (selectedGlobalParameter.value?.id === glob.id) {
+            selectedGlobalParameter.value = null;
+        }
+    }
 }
 
 function onAddParameterValueOption() {
@@ -123,137 +143,69 @@ function onDeleteParameterValueOption(item) {
 }
 </script>
 
-
 <template>
     <div class="dashboard">
-        <Splitter :gutter-size="2" class="dashboard" layout="vertical">
-            <SplitterPanel :size="50" class="sub-panel">
-                <div class="panel-content" style="padding: var(--space-large);">
-                    <div class="header-row">
-                        <h1 class="dashboard_label">{{ $t('moderator.nav.live_parameters') }}</h1>
-                        <div class="header-row-actions">
-                            <Button type="button" :label="$t('moderator.clear')" class="save-btn"
-                                @click="onConfirmedClearParameters" />
-                            <Button type="button" :label="$t('moderator.add')" class="save-btn"
-                                @click="onAddParameter" />
+        <Tabs value="0" scrollable class="flexbox">
+            <TabList>
+                <Tab value="global_parameters">Global</Tab>
+                <Tab v-for="(slot, index) in whatYouSeeOnMonitors" :key="'monitor' + (index + 1)"
+                    :value="'monitor' + (index + 1)">Monitor {{ (index + 1) }}</Tab>
+            </TabList>
+            <TabPanels class="dashboard">
+                <TabPanel value="global_parameters" style="width: 100%; min-width: 0;">
+                    <div class="panel-content">
+                        <div class="header-row">
+                            <h1 class="dashboard_label">{{ $t('moderator.nav.live_parameters') }}</h1>
+                            <div class="header-row-actions">
+                                <Button type="button" :label="$t('moderator.clear')" class="save-btn"
+                                    @click="onConfirmedClearParameters" />
+                                <Button type="button" :label="$t('moderator.add')" class="save-btn"
+                                    @click="onAddParameter" />
+                            </div>
                         </div>
-                    </div>
 
-                    <DataTable v-if="globalParameters.length>0" :value="globalParameters" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                        responsiveLayout="scroll" v-model:editingRows="editingRows" v-model:selection="selectedGlobalParameter"
-                        selectionMode="single">
+                        <DataTable v-if="globalParameters.length > 0" :value="globalParameters" dataKey="id"
+                            editMode="row" scrollable scrollHeight="flex" responsiveLayout="scroll"
+                            v-model:editingRows="editingRows" v-model:selection="selectedGlobalParameter"
+                            selectionMode="single">
 
-                        <Column field="name" header="" style="text-align: left">
-                            <template #editor="slotProps">
-                                <InputText v-model="slotProps.data.name" />
-                            </template>
-                            <template #body="slotProps">
-                                <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
-                                <!--<span style="font-size: 0.875rem; color: #64748b;">Updated
+                            <Column field="name" header="" style="text-align: left">
+                                <template #editor="slotProps">
+                                    <InputText v-model="slotProps.data.name" />
+                                </template>
+                                <template #body="slotProps">
+                                    <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                                    <!--<span style="font-size: 0.875rem; color: #64748b;">Updated
                                     {{ formatDate(slotProps.data.updated_at) }}</span> -->
-                            </template>
-                        </Column>
-
-                        <!-- bodyClass="flex justify-content-end white-space-nowrap"
-                            editorClass="flex justify-content-end white-space-nowrap" -->
-                        <Column style="width: 12rem; text-align: right">
-                            <template #body="slotProps">
-                                <Button size="small" rounded text icon="pi pi-clone"/>
-                                <Button size="small" rounded text icon="pi pi-pencil"/>
-                                <Button size="small" rounded text icon="pi pi-trash"/>
-                            </template>
-                            <template #editor="slotProps">
-                                <Button size="small" rounded text icon="pi pi-check"
-                                    @click="(e) => slotProps.editorSaveCallback(e)" />
-                                <Button size="small" rounded text icon="pi pi-times"
-                                    @click="(e) => slotProps.editorCancelCallback(e)" />
-                            </template>
-                        </Column>
-                    </DataTable>
-                </div>
-            </SplitterPanel>
-            <SplitterPanel :size="50" class="sub-panel">
-                <div v-if="addParameterActive" class="panel-content" style="padding: var(--space-large);">
-                    <div class="header-row">
-                        <h1 class="dashboard_label">Add Live Parameter</h1>
-                        <div class="header-row-actions">
-                            <Button type="button" :label="$t('moderator.confirmation-cancel')" class="save-btn"
-                                @click="onCancelAddParameter" />
-                            <Button type="button" :label="$t('moderator.save')" class="save-btn"
-                                @click="onSaveParameter"
-                                :disabled="selectedParameterType == null || parameterName.length == 0" />
-                        </div>
-                    </div>
-                    <div class="label-container">
-                        <label for="inputParameterName" class="form-label">{{
-                            $t('moderator.parameter.global_parameter_name') }}</label>
-                        <InputText id="inputParameterName" v-model.trim="parameterName" type="text" fluid />
-                    </div>
-                    <div class="label-container">
-                        <label for="inputParameterType" class="form-label">{{
-                            $t('moderator.parameter.global_parameter_type') }}</label>
-                        <Select id="inputParameterType" v-model="selectedParameterType" :options="parameterTypeOptions"
-                            optionLabel="label" optionValue="value" :placeholder="t('moderator.parameter.select_type')" fluid />
-                    </div>
-                    <div v-if="selectedParameterType === 'Selection'" class="label-container">
-                        <label for="inputParameterType" class="form-label">{{
-                            $t('moderator.parameter.global_parameter_type_config') }}</label>
-                        <div class="flexbox">
-                            <InputText id="inputParameterValueOptionName" v-model.trim="parameterValueOption"
-                                type="text" fluid />
-                            <Button type="button" :label="$t('moderator.add')" class="save-btn" :disabled="parameterValueOption == null || parameterValueOption.length == 0"
-                                @click="onAddParameterValueOption" />
-                        </div>
-
-                        <DataTable v-if="parameterValueOptions.length > 0" :value="parameterValueOptions"
-                            :rowClass="() => 'custom-row'" style="width: 100%">
-                            <Column style="text-align: left">
-                                <template #body="slotProps">{{ slotProps.data }}</template>
+                                </template>
                             </Column>
+
+                            <!-- bodyClass="flex justify-content-end white-space-nowrap"
+                            editorClass="flex justify-content-end white-space-nowrap" -->
                             <Column style="width: 12rem; text-align: right">
                                 <template #body="slotProps">
+                                    <Button size="small" rounded text icon="pi pi-clone" />
+                                    <Button size="small" rounded text icon="pi pi-pencil" />
                                     <Button size="small" rounded text icon="pi pi-trash"
-                                        @click="onDeleteParameterValueOption(slotProps.data)" />
+                                        @click="onConfirmedDeleteParameter(slotProps.data)" />
+                                </template>
+                                <template #editor="slotProps">
+                                    <Button size="small" rounded text icon="pi pi-check"
+                                        @click="(e) => slotProps.editorSaveCallback(e)" />
+                                    <Button size="small" rounded text icon="pi pi-times"
+                                        @click="(e) => slotProps.editorCancelCallback(e)" />
                                 </template>
                             </Column>
                         </DataTable>
                     </div>
-                    <div class="label-container">
-                        <label for="inputParameterType" class="form-label">{{
-                            $t('moderator.parameter.global_parameter_connection') }}</label>
-                        <div class="labeled-checkbox">
-                            <Checkbox v-model="autoConnection" binary inputId="auto_connection-checkbox" />
-                            <Label for="auto_connection-checkbox"> {{
-                                $t('moderator.parameter.auto_parameter_connection') }} </Label>
-                        </div>
-                    </div>
-                    <div v-if="!autoConnection" class="label-container">
-                        <label for="connectedParameters" class="form-label">{{
-                            $t('moderator.parameter.global_parameter_connect') }}</label>
-                        <MultiSelect v-model="selectedSlideParameters" :options="slideParameterArray" optionLabel="label" optionValue="value" 
-                            :placeholder="t('moderator.parameter.select_parameter')" display="chip" :showClear="true"
-                            :maxSelectedLabels="1" selectedItemsLabel="{0} (+{1})" fluid>
-                            <template #value="slotProps">
-                                <div v-if="slotProps.value && slotProps.value.length > 0">
-                                    <!-- first selected element-->
-                                    <span>{{ slideParameterArray.find(opt => opt.value === slotProps.value[0])?.label }}</span>
 
-                                    <!-- if more than one elements selected, attach (+X) -->
-                                    <span v-if="slotProps.value.length > 1">
-                                        (+{{ slotProps.value.length - 1 }})
-                                    </span>
-                                </div>
-
-                                <!-- usual placeholder if nothing is selected -->
-                                <span v-else>
-                                    {{ slotProps.placeholder }}
-                                </span>
-                            </template>
-                        </MultiSelect>
-                    </div>
-                </div>
-            </SplitterPanel>
-        </Splitter>
+                </TabPanel>
+                <TabPanel v-for="(slot, index) in whatYouSeeOnMonitors" :key="'monitor' + (index + 1)"
+                    :value="'monitor' + (index + 1)">
+                    <h2 class="text-lg font-bold">Tab for Monitor {{ index + 1 }}</h2>
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
     </div>
 </template>
 
@@ -265,6 +217,7 @@ function onDeleteParameterValueOption(item) {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-medium);
+    min-width:0; 
 }
 
 .header-row h1 {
@@ -273,7 +226,7 @@ function onDeleteParameterValueOption(item) {
 
 .header-row-actions {
     display: flex;
-    align-items: center;
+    /*align-items: center;*/
     gap: var(--space-medium);
 }
 
@@ -288,28 +241,6 @@ function onDeleteParameterValueOption(item) {
     overflow-y: auto;
 }
 
-.parameter-change {
-    display: flex;
-    flex-direction: row;
-    gap: var(--space-medium);
-}
-
-.section-indicator {
-    font-weight: bold;
-    color: var(--p-primary-500);
-    width: 50px;
-    font-family: "Fira Code", monospace;
-    font-size: var(--fs-large);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.parameter-change-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
 
 .scrollable-table {
     /*overflow: auto;*/
@@ -327,42 +258,8 @@ function onDeleteParameterValueOption(item) {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-}
-
-.participant-table {
     width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
+    align-items: stretch; 
 }
 
-.participant-column {
-    width: 25%;
-}
-
-.content-column {
-    width: 75%;
-}
-
-.header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-shrink: 0;
-}
-
-
-:deep(.custom-row > td) {
-    padding-top: 0px;
-    padding-bottom: 0px;
-}
-
-
-.tight-btn {
-    /* Erster Wert = Oben/Unten, Zweiter Wert = Links/Rechts */
-    padding: 0.25rem 0.5rem !important;
-
-    /* Optional: Falls das Icon zu nah am Text klebt */
-    gap: 0.25rem;
-}
 </style>

@@ -2,7 +2,7 @@ import { api } from "./api";
 import type { Slide } from "@/services/slide_service"
 
 export interface Scene {
-  id?: number;
+  id: number;
   name: string;
   description: string;
   created_at?: string | null;
