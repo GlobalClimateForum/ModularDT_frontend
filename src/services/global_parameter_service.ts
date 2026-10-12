@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 export interface GlobalParameter {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   ptype: string;
