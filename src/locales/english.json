@@ -57,6 +57,7 @@
       "new_slideshow": "New slideshow"
     },
     "parameters": {
+      "global": "Global",
       "global_parameter_name": "Name of global parameter",
       "global_parameter_type": "Type of global parameter",
       "global_parameter_type_config": "Type configuration of global parameter",

@@ -57,6 +57,7 @@
       "new_slideshow": "Neue Teilnehmer-Folien"
     },
     "parameters": {
+      "global": "Global",
       "global_parameter_name": "Name des globalen Parameters",
       "global_parameter_type": "Typ des globalen Parameters",
       "global_parameter_type_config": "Typ-Konfiguration des globalen Parameters",
