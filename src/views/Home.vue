@@ -2,6 +2,7 @@
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import Checkbox from 'primevue/checkbox'
 
 import { ref, onMounted, computed } from 'vue'
 import router from '@/router'
@@ -21,6 +22,7 @@ const pin = ref<any>(null)
 const pinError = ref(false)
 const participants = ref<Participant[]>([])
 const seatedParticipants = computed(() => participants.value.filter(p => p.seat !== null));
+const selectedMonitors = ref<number[]>([])
 
 import '@/assets/main.css'
 import { useSessionStorage } from '@vueuse/core'
@@ -67,6 +69,37 @@ async function submitPin() {
   }
 }
 
+function openMonitorInWindow(i: number) {
+  const { href } = router.resolve('/monitor/' + String(i))
+  window.open(href, '_blank', 'popup')
+}
+
+function openSelectedMonitorsInWindows() {
+  let blocked = false
+  for (const i of selectedMonitors.value) {
+    const { href } = router.resolve('/monitor/' + String(i))
+    const win = window.open(href, 'monitor-' + String(i), 'popup')
+    if (!win) blocked = true
+  }
+  if (blocked) {
+    alert('Some windows were blocked. Please allow pop-ups for this site.')
+  }
+
+  selectedMonitors.value = [];
+}
+
+function openAllMonitorsInWindows() {
+  let blocked = false
+  for (let i = 1; i <= settings.value.number_of_screens; i++) {
+    const { href } = router.resolve('/monitor/' + i)
+    const win = window.open(href, 'monitor-' + i, 'popup')
+    if (!win) blocked = true
+  }
+  if (blocked) {
+    alert('Some windows were blocked. Please allow pop-ups for this site.')
+  }
+}
+
 function logout() {
   sessionStorage.removeItem('pin_ok')
   pinOk.value = '0'
@@ -90,7 +123,7 @@ function logout() {
     </Message>
 
     <h1 v-if="!event" class="welcome-title">{{ this.$APP_NAME }}</h1>
-    <div v-if="event" class="event-info">
+    <div v-if="event && !selectedRole" class="event-info">
       <p class="event-date">{{ event.date && new Date(event.date).toLocaleDateString() }}</p>
       <h2>{{ event.name }}</h2>
 
@@ -147,7 +180,70 @@ function logout() {
         </div>
       </div>
     </div>
+
+    <!-- Monitor Menu  -->
+    <div v-if="selectedRole !== null && selectedRole === 'monitor'">
+
+      <!-- <p style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+        <i class="material-symbols-outlined">screenshot_monitor</i>
+      </p> -->
+
+
+
+      <div class="monitor-select-wrapper">
+        <h1>{{ t('open_monitor') }}</h1>
+        <div class="monitor-select-container">
+
+          <div v-for="i in settings.number_of_screens" class="monitor-select glass">
+
+            <div class="monitor-checkbox">
+              <Checkbox v-model="selectedMonitors" :value="i" />
+            </div>
+
+            <div style="display: flex; flex-direction: row; align-items: center; gap: var(--space-small);">
+              <span class=" material-symbols-outlined ">monitor</span>
+              <h2>Monitor {{ i }}</h2>
+            </div>
+
+            <div class=" monitor-action">
+
+              <Button small outlined @click="openMonitorInWindow(i)">
+                <template #icon>
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </template>
+              </Button>
+
+              <Button small outlined @click="router.push('/monitor/' + String(i))">
+                <template #icon>
+                  <span class="material-symbols-outlined">open_in_browser</span>
+                </template>
+              </Button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display: flex; flex-direction: row; gap: var(--space-medium); justify-content: center; margin-top: var(--space-medium);">
+        <Button label="Open selected in new window" @click="openSelectedMonitorsInWindows()">
+          <template #icon>
+            <i class="material-symbols-outlined">open_in_new</i>
+          </template>
+        </Button>
+
+        <Button label="Open all in new window" @click="openAllMonitorsInWindows()">
+          <template #icon>
+            <i class="material-symbols-outlined">move_group</i>
+          </template>
+        </Button>
+      </div>
+
+
+    </div>
+
   </div>
+
 
 </template>
 
@@ -295,9 +391,50 @@ function logout() {
   color: white !important;
 }
 
-.monitor_select {
-  font-size: 1.2rem;
-  padding: 0.5rem 0.75rem;
-  min-width: 14rem;
+
+.monitor-select {
+  padding: var(--space-medium);
+  border-radius: var(--br-medium);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-small);
+}
+
+.monitor-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-medium);
+  margin-bottom: var(--space-large);
+}
+
+.monitor-select-container {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-medium);
+  flex-wrap: wrap;
+  max-width: 550px;
+  overflow-y: auto;
+  max-height: 550px;
+  padding: var(--space-medium);
+}
+
+.monitor-checkbox {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: left;
+  margin-bottom: var(--space-small);
+}
+
+.monitor-action {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-small);
+}
+
+.monitor-action :deep(.p-button) {
+  color: var(--text);
 }
 </style>
