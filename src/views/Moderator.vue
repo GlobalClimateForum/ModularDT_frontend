@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, onUnmounted, ref, computed, Transition, provide } from 'vue';
+import { onMounted, onUnmounted, onBeforeUnmount, ref, computed, Transition, provide, watch } from 'vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
@@ -20,6 +20,7 @@ import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_pre
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
 import { API_BASE_URL } from '@/config'
+import { saveDraft } from '@/services/draft_service'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -261,6 +262,11 @@ function handleScenes() {
 function handleLiveparticipants() {
   currentDashboard.value = 'live_participants'
 }
+
+watch(() => currentView.value, (newView, oldView) => {
+  if (oldView === dashboardViews.slidecreate) currentSlide.value = null
+})
+
 </script>
 
 <template>

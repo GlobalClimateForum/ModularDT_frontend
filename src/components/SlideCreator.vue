@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, watch, defineAsyncComponent, nextTick, onMounted, computed } from 'vue'
+import { ref, watch, defineAsyncComponent, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import InputText from 'primevue/inputtext'
@@ -21,6 +21,7 @@ import Select from 'primevue/select';
 import type { Slide, SlideSection } from '@/services/slide_service'
 import { SlideSectionTypes, validateFilename, renameSlide } from '@/services/slide_service'
 import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_service'
+import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_service'
 import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
@@ -42,6 +43,7 @@ const edited = ref<boolean>(false)
 const validFilename = ref<boolean>(false)
 const nameEditing = ref<boolean>(false) // Track whether the user is currently editing the slide name
 const nameEditTimer = ref<number | undefined>(undefined) // Timer for debouncing filename validation
+const draftExists = ref<boolean>(false) // Track whether a draft exists for the current slide
 let ready = false
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
@@ -352,6 +354,21 @@ function cancelRename() {
     currentSlide.value.name = props.slide?.name ?? ''
 }
 
+// Get Draft from local storage and apply it to the current slide and sections
+function getDraft() {
+    const draft = loadDraft(currentSlide.value.id)
+    if (!draft) return
+    ready = false
+    currentSlide.value = { ...draft }
+    slideSections.value = (draft.sections ?? []).map(withKey)
+    sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
+    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+    layout.value = getLayoutType(sectionWidths.value)
+    currentSectionIndex.value = 0
+    draftExists.value = false
+    clearDraft(currentSlide.value.id); 
+    nextTick(() => { ready = true; edited.value = true })
+}
 
 // Watch for changes in the filename (debounced) 
 watch(() => currentSlide.value.name, (name) => {
@@ -433,10 +450,14 @@ watch(() => currentSlide.value.name, (name) => {
 })
 
 onMounted(() => {
-    // if the slide is injected we want to set saved to true
-    if (props.slide) {
-        slideSaved.value = true
-    }
+    draftExists.value = hasDraft(currentSlide.value.id)
+});
+
+onBeforeUnmount(() => {
+    if (!edited.value) return
+    saveDraft(currentSlide.value, slideSections.value.map(({ _key, ...s }, i) => ({
+        ...s, width_fraction: sectionWidths.value[i],
+    })))
 })
 
 </script>
@@ -478,10 +499,16 @@ onMounted(() => {
                 </template>
             </Button>
 
-            <Button :disabled="currentSlide.name !== '' || nameEditing" size="small" label="Save"
+            <Button :disabled="!currentSlide.name?.trim() || nameEditing || validFilename" size="small" label="Save"
                 @click="updateOrStoreSlide">
                 <template #icon>
                     <i class="material-symbols-outlined">save</i>
+                </template>
+            </Button>
+
+            <Button @click="getDraft()" label="Load Draft" size="small" v-if="draftExists" >
+                <template #icon>
+                    <i class="material-symbols-outlined">edit_note</i>
                 </template>
             </Button>
 

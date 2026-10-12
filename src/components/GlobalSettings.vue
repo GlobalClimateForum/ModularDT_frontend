@@ -118,7 +118,7 @@ function onEventChange(eventID: number) {
 }
 
 function onLogout() {
-  clearModerator(); 
+  clearModerator();
   router.push('/home');
 }
 
@@ -155,6 +155,17 @@ function updateSettingsForMonitors() {
     }
   })
 }
+
+function clearDrafts() {
+  const item_keys = Object.keys(localStorage);
+  item_keys.forEach(key => {
+    if (key.startsWith('draft_')) {
+      localStorage.removeItem(key);
+    }
+  });
+  toast.add({ severity: 'success', summary: 'Drafts Cleared', detail: 'All drafts have been cleared.', life: 3000 });
+} 
+
 </script>
 
 <template>
@@ -285,6 +296,17 @@ function updateSettingsForMonitors() {
               </template>
             </Button>
           </div>
+
+
+        </div>
+
+        <div class="label-container">
+          <label>Drafts</label>
+          <Button label="Clear Drafts" size="small" @click="clearDrafts()"">
+            <template #icon>
+              <i class="material-symbols-outlined">scan_delete</i>
+            </template>
+          </Button>
         </div>
       </div>
 
