@@ -43,7 +43,7 @@
       "server": "Server",
       "moderator_logout": "Moderator logout"
     },
-    "presentation": {
+    "presentation_control": {
       "presentation": "Presentation",
       "presentation_szenes": "Presentation scenes",
       "presentation_control": "Presentation control",
@@ -69,6 +69,7 @@
     },
     "scene": "Scene",
     "slide": "Slide",
+    "presentation": "Presentation",
     "parameter":  "Parameter",
     "participants_slideshow": "Participant slideshow",
     "available_scenes": "Available Scenes",

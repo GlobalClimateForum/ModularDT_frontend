@@ -197,7 +197,7 @@ function onDuplicatePresentation(presentation: Presentation) {
 function onAddPresentation() {
 
     const presenation_ = {
-        name: presentationName.value || `${t('moderator.presentation.new_presentation')} ${presentations.value.length + 1}`,
+        name: presentationName.value || `${t('moderator.presentation_control.new_presentation')} ${presentations.value.length + 1}`,
         description: "",
         scenes: []
     };
@@ -394,8 +394,8 @@ const removeItem = (index: number) => {
 
                         <template #header>
                             <InputText class="input-field" v-model="presentationName"
-                                :placeholder="$t('moderator.presentation.new_presentation')" type="text" />
-                            <Button :label="$t('moderator.presentation.create')" icon="pi pi-save"
+                                :placeholder="$t('moderator.presentation_control.new_presentation')" type="text" />
+                            <Button :label="$t('moderator.presentation_control.create')" icon="pi pi-save"
                                 @click="onAddPresentation" />
                         </template>
                     </DataTable>

@@ -43,7 +43,7 @@
       "server": "Server",
       "moderator_logout": "Moderator abmelden"
     },
-    "presentation": {
+    "presentation_control": {
       "presentation": "Präsentation",
       "presentation_szenes": "Präsentationsszenen",
       "presentation_control": "Präsentationssteuerung",
@@ -69,6 +69,7 @@
     },
     "scene": "Szene",
     "slide": "Folie",
+    "presentation": "Präsentation",
     "parameter": "Parameter",
     "participants_slideshow": "Teilnehmer-Folien",
     "available_scenes": "Verfügbare Szenen",

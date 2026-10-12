@@ -302,7 +302,7 @@ function handleLiveparticipants() {
         </ul>
         <ul>
           <li class="label-container">
-            <label>{{ $t('moderator.presentation.presentation') }}</label>
+            <label>{{ $t('moderator.presentation') }}</label>
             <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
               <Badge :severity="livePresentationState.active ? 'success' : 'danger'"
                 style="align-self: center; flex-shrink: 0;" />
@@ -313,7 +313,7 @@ function handleLiveparticipants() {
               </div>
               <div v-else>
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
-                font-size: var(--fs-small); ">{{ t('moderator.presentation.no_presentation_showing_short') }}</p>
+                font-size: var(--fs-small); ">{{ t('moderator.presentation_control.no_presentation_showing_short') }}</p>
               </div>
             </div>
           </li>

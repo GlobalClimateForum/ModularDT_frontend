@@ -95,7 +95,7 @@ function onDuplicatePresentation(presentation: Presentation) {
 function onAddPresentation() {
 
     const presenation_ = {
-        name: presentationName.value || `${t('moderator.presentation.new_presentation')} ${presentations.value.length + 1}`,
+        name: presentationName.value || `${t('moderator.presentation_control.new_presentation')} ${presentations.value.length + 1}`,
         description: "",
         scenes: []
     };
@@ -129,8 +129,8 @@ async function onPlayPresentation(presentation: Presentation) {
         <SplitterPanel class="sub-panel" :size="40" :minSize="40" :maxSize="40">
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; ">
                 <InputText class="name-input" v-model="presentationName"
-                    :placeholder="$t('moderator.presentation.new_presentation')" type="text" />
-                <Button class="button-add-presentation" :label="$t('moderator.presentation.create')" icon="pi pi-save"
+                    :placeholder="$t('moderator.presentation_control.new_presentation')" type="text" />
+                <Button class="button-add-presentation" :label="$t('moderator.presentation_control.create')" icon="pi pi-save"
                     @click="onAddPresentation" />
             </div>
             <div>

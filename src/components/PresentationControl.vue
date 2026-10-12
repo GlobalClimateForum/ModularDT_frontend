@@ -157,7 +157,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
   <Splitter :gutter-size="2" class="dashboard">
     <!-- Available Slides -->
     <SplitterPanel :size="25" class="sub-panel">
-      <h2 class="dashboard_label">{{ $t('moderator.presentation.presentation_szenes') }}</h2>
+      <h2 class="dashboard_label">{{ $t('moderator.presentation_control.presentation_szenes') }}</h2>
       <div class="slide_gallery_container">
         <div v-if="currentPresentation && livePresentationState.active">
           <div v-for="(scene, index) in currentPresentation.scenes" :key="scene.id" class="scene-card"
@@ -179,7 +179,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 
     <!-- Zweites Panel -->
     <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-      <h2 class="dashboard_label">{{ t('moderator.presentation.presentation_control') }}</h2>
+      <h2 class="dashboard_label">{{ t('moderator.presentation_control.presentation_control') }}</h2>
       <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
 
         <div v-if="livePresentationState.active" class="scene-container">
@@ -188,7 +188,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
         </div>
 
         <div v-else class="fallback-container">
-          <span class="center-text">{{ t('moderator.presentation.no_presentation_showing') }} </span>
+          <span class="center-text">{{ t('moderator.presentation_control.no_presentation_showing') }} </span>
         </div>
 
         <div class="controls glass">
@@ -206,7 +206,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
             </template>
           </Button>
 
-          <Button :label="$t('moderator.presentation.stop')" @click="abortPresentation" rounded>
+          <Button :label="$t('moderator.presentation_control.stop')" @click="abortPresentation" rounded>
             <template #icon>
               <i class="material-symbols-outlined">stop_circle</i>
             </template>

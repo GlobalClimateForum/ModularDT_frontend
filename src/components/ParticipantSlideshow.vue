@@ -306,8 +306,8 @@ const handleDragStart = (item) => {
 
                         <template #header>
                             <InputText class="input-field" v-model="slideshowName"
-                                :placeholder="$t('moderator.presentation.new_slideshow')" type="text" />
-                            <Button :label="$t('moderator.presentation.create')" icon="pi pi-save"
+                                :placeholder="$t('moderator.presentation_control.new_slideshow')" type="text" />
+                            <Button :label="$t('moderator.presentation_control.create')" icon="pi pi-save"
                                 @click="onAddSlideshow" />
                         </template>
                     </DataTable>
