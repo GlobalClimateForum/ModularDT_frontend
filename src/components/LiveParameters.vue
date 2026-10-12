@@ -1,31 +1,33 @@
 <script lang="ts" setup>
+// Vue stuff
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import DataTable from 'primevue/datatable';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button';
-import { type ParameterChange } from '@/services/parameterstore_service'
-import parameterStore from '@/services/parameterstore_service'
 import InputText from 'primevue/inputtext';
-import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
-import { globalParameters, fetchGlobalParameter } from '@/globals/global_parameters';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 import MultiSelect from 'primevue/multiselect';
-import { deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
 import { useToast } from 'primevue/usetoast'
-import { useItemDeletion } from '@/generics/deleteItem'
-
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
-
+// globals and services
+import { type ParameterChange } from '@/services/parameterstore_service'
+import parameterStore from '@/services/parameterstore_service'
+import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
+import { globalParameters, fetchGlobalParameter } from '@/globals/global_parameters';
 import { useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
+import { useItemDeletion } from '@/generics/deleteItem'
+// components
+import LiveParametersGlobal from '@/components/LiveParametersGlobal.vue';
 
 
 const { onConfirmDeleteItem } = useItemDeletion();
@@ -57,90 +59,6 @@ const slideParameterArray = ref<{ label: string; value: number }[]>([]);
 
 const selectedGlobalParameter = ref<GlobalParameter | null>(null);
 const editingRows = ref<GlobalParameter[]>([]);
-
-onMounted(async () => {
-    fetchGlobalParameter()
-    await fetchSlideParameters()
-    const stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
-    onUnmounted(() => {
-        stop()
-    })
-    //console.log("slideParameters: ", slideParameters.value)
-    slideParameterArray.value = slideParameters.value.map((p) => ({ label: p.name + " of type " + p.type + " on section " + p.slide_seciton, value: p.id ? p.id : -1 })).sort((x, y) => x.label.localeCompare(y.label))
-    console.log("globalParameters: ", globalParameters.value)
-    console.log("slideParameters: ", slideParameters.value)
-})
-
-function onAddParameter() {
-    addParameterActive.value = true
-}
-
-function onCancelAddParameter() {
-    addParameterActive.value = false
-}
-
-function onSaveParameter() {
-    addParameterActive.value = false
-
-    const global_parameter_ = {
-        name: parameterName.value,
-        description: "",
-        ptype: selectedParameterType.value ? selectedParameterType.value : "",
-        pvalues: (parameterValueOptions.value.length === 0) ? [] : parameterValueOptions.value,
-        connect_all: autoConnection.value,
-        connected_slide_parameters: ((selectedSlideParameters.value.length === 0) ? [] : selectedSlideParameters.value)
-    };
-
-    saveGlobalParameter(global_parameter_).then(_response => {
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramter saved successfully', life: 3000 })
-        fetchGlobalParameter()
-    }).catch(error => {
-        console.error("Error saving scene:", error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save global paramter', life: 3000 })
-    });
-}
-
-function onConfirmedClearParameters() {
-    confirm.require({
-        header: t('moderator.confirmation'),
-        message: t('moderator.confirmation-message-all-parameters'),
-        acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'),
-        accept: async () => {
-            deleteGlobalParameters();
-            globalParameters.value = []
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Global paramters deleted successfully', life: 3000 })
-        }, reject: () => {
-            // nothing to do    
-        },
-    });
-}
-
-async function onConfirmedDeleteParameter(glob: GlobalParameter) {
-    const deleted = await onConfirmDeleteItem(glob, "parameter", deleteGlobalParameter)
-
-    if (deleted) {
-        globalParameters.value = globalParameters.value.filter(gp => gp.id !== glob.id);
-        if (selectedGlobalParameter.value?.id === glob.id) {
-            selectedGlobalParameter.value = null;
-        }
-    }
-}
-
-function onAddParameterValueOption() {
-    if (!parameterValueOptions.value.includes(parameterValueOption.value)) {
-        parameterValueOptions.value.push(parameterValueOption.value)
-    } else {
-        // Do an alert here?
-    }
-}
-
-function onDeleteParameterValueOption(item) {
-    var index = parameterValueOptions.value.indexOf(item);
-    if (index !== -1) {
-        parameterValueOptions.value.splice(index, 1);
-    }
-}
 </script>
 
 <template>
@@ -153,52 +71,7 @@ function onDeleteParameterValueOption(item) {
             </TabList>
             <TabPanels class="dashboard">
                 <TabPanel value="global_parameters" style="width: 100%; min-width: 0;">
-                    <div class="panel-content">
-                        <div class="header-row">
-                            <h1 class="dashboard_label">{{ $t('moderator.nav.live_parameters') }}</h1>
-                            <div class="header-row-actions">
-                                <Button type="button" :label="$t('moderator.clear')" class="save-btn"
-                                    @click="onConfirmedClearParameters" />
-                                <Button type="button" :label="$t('moderator.add')" class="save-btn"
-                                    @click="onAddParameter" />
-                            </div>
-                        </div>
-
-                        <DataTable v-if="globalParameters.length > 0" :value="globalParameters" dataKey="id"
-                            editMode="row" scrollable scrollHeight="flex" responsiveLayout="scroll"
-                            v-model:editingRows="editingRows" v-model:selection="selectedGlobalParameter"
-                            selectionMode="single">
-
-                            <Column field="name" header="" style="text-align: left">
-                                <template #editor="slotProps">
-                                    <InputText v-model="slotProps.data.name" />
-                                </template>
-                                <template #body="slotProps">
-                                    <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
-                                    <!--<span style="font-size: 0.875rem; color: #64748b;">Updated
-                                    {{ formatDate(slotProps.data.updated_at) }}</span> -->
-                                </template>
-                            </Column>
-
-                            <!-- bodyClass="flex justify-content-end white-space-nowrap"
-                            editorClass="flex justify-content-end white-space-nowrap" -->
-                            <Column style="width: 12rem; text-align: right">
-                                <template #body="slotProps">
-                                    <Button size="small" rounded text icon="pi pi-clone" />
-                                    <Button size="small" rounded text icon="pi pi-pencil" />
-                                    <Button size="small" rounded text icon="pi pi-trash"
-                                        @click="onConfirmedDeleteParameter(slotProps.data)" />
-                                </template>
-                                <template #editor="slotProps">
-                                    <Button size="small" rounded text icon="pi pi-check"
-                                        @click="(e) => slotProps.editorSaveCallback(e)" />
-                                    <Button size="small" rounded text icon="pi pi-times"
-                                        @click="(e) => slotProps.editorCancelCallback(e)" />
-                                </template>
-                            </Column>
-                        </DataTable>
-                    </div>
-
+                    <LiveParametersGlobal/>
                 </TabPanel>
                 <TabPanel v-for="(slot, index) in whatYouSeeOnMonitors" :key="'monitor' + (index + 1)"
                     :value="'monitor' + (index + 1)">
