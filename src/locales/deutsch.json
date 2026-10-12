@@ -114,6 +114,7 @@
     "name": "Monitor"
   },
   "submit": "absenden",
+  "open_monitor": "Monitor öffnen",
   "select_monitor": "Monitor wählen:",
   "select_monitors": "Monitore auswählen:",
   "select_participants": "Teilnehmer auswählen:",
