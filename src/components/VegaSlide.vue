@@ -101,7 +101,7 @@ watch(() => props.section.properties, renderContent, { deep: true })
 
 
 onBeforeUnmount(() => {
-  view?.finalize()
+  view?.finalize();
 })
 
 onMounted(() => {

@@ -2,7 +2,9 @@
 // Vue-stuff
 import { ref, watch, defineAsyncComponent, nextTick, onMounted, computed } from 'vue'
 import Button from 'primevue/button'
+import ButtonGroup from 'primevue/buttongroup'
 import InputText from 'primevue/inputtext'
+import FloatLabel from 'primevue/floatlabel'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Message from 'primevue/message'
@@ -17,7 +19,7 @@ import { useI18n } from 'vue-i18n';
 import Select from 'primevue/select';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service'
-import { SlideSectionTypes } from '@/services/slide_service'
+import { SlideSectionTypes, validateFilename, renameSlide } from '@/services/slide_service'
 import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_service'
 import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
@@ -37,6 +39,9 @@ type EditorSection = SlideSection & { _key: string } // Add a unique key to each
 const { t } = useI18n();
 const confirm = useConfirm();
 const edited = ref<boolean>(false)
+const validFilename = ref<boolean>(false)
+const nameEditing = ref<boolean>(false) // Track whether the user is currently editing the slide name
+const nameEditTimer = ref<number | undefined>(undefined) // Timer for debouncing filename validation
 let ready = false
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
@@ -323,6 +328,43 @@ function setSectionBgColor(color: string) {
     edited.value = true // Mark the slide as edited since the background color has changed
 }
 
+// Handles for renaming the slide
+function startRename() {
+    nameEditing.value = true
+}
+
+function acceptRename() {
+    nameEditing.value = false
+    if (currentSlide.value.name?.trim() === props.slide?.name || !currentSlide.value.id) return
+    renameSlide(currentSlide.value.id, currentSlide.value.name).then(() => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
+        fetchSlides()
+    }).catch((error) => {
+        console.error('Error renaming slide:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename slide', life: 3000 })
+    }).finally(() => {
+        nameEditing.value = false
+    });
+}
+
+function cancelRename() {
+    nameEditing.value = false
+    currentSlide.value.name = props.slide?.name ?? ''
+}
+
+
+// Watch for changes in the filename (debounced) 
+watch(() => currentSlide.value.name, (name) => {
+    clearTimeout(nameEditTimer.value)
+    const trimmed = name?.trim()
+    if (!trimmed || trimmed === props.slide?.name) { validFilename.value = false; return }
+    nameEditTimer.value = setTimeout(async () => {
+        const res = await validateFilename(trimmed)
+        validFilename.value = res.data.exists
+        console.log(res.data)
+    }, 300)
+})
+
 // Watch for changes in the slide prop and update the currentSlide and slideSections accordingly
 watch(() => props.slide, (newSlide) => {
 
@@ -378,6 +420,18 @@ watch(
     { deep: true }
 )
 
+watch(() => currentSlide.value.name, (name) => {
+
+    clearTimeout(nameEditTimer.value) // Clear any existing timer to debounce the filename validation
+    const trimmed = name?.trim() // Remove any leading or trailing whitespace from the slide name
+    if (!trimmed || trimmed === props.slide?.name) { validFilename.value = false; return }
+    nameEditTimer.value = setTimeout(async () => {
+        const res = await validateFilename(trimmed)
+        validFilename.value = res.data.exists
+        console.log(res.data)
+    }, 300)
+})
+
 onMounted(() => {
     // if the slide is injected we want to set saved to true
     if (props.slide) {
@@ -392,18 +446,42 @@ onMounted(() => {
 
         <div class="dashboard-header">
 
-            <InputText v-model="currentSlide.name" :placeholder="$t('moderator.enter_slide_name')"
-                :disabled="slideSaved" />
+            <FloatLabel variant="on">
+                <InputText id="filename_input" v-model="currentSlide.name" :disabled="!!currentSlide.id && !nameEditing"
+                    :placeholder="$t('moderator.enter_slide_name')" :invalid="validFilename" />
+                <label v-if="validFilename" for="filename_input">Filename already exists</label>
+            </FloatLabel>
 
-            <Button :disabled="currentSlide.name === ''" size="small" label="Save" @click="updateOrStoreSlide">
-                <template #icon>
-                    <i class="material-symbols-outlined">save</i>
-                </template>
-            </Button>
+            <Transition name="fade" mode="out-in">
+                <div v-if="!nameEditing">
+                    <Button outlined v-if="props.slide" size="small" class="renaname-btn" @click="startRename"
+                        label="Rename">
+                        <template #icon><i class="material-symbols-outlined">edit</i></template>
+                    </Button>
+                </div>
+
+                <div v-else key="edit">
+                    <ButtonGroup>
+                        <Button text @click="acceptRename" :disabled="!currentSlide.name?.trim() || validFilename">
+                            <template #icon><i class="material-symbols-outlined">check</i></template>
+                        </Button>
+                        <Button text @click="cancelRename">
+                            <template #icon><i class="material-symbols-outlined">close</i></template>
+                        </Button>
+                    </ButtonGroup>
+                </div>
+            </Transition>
 
             <Button outlined :label="$t('moderator.clear')" @click="clearCurrentSlide()" size="small">
                 <template #icon>
                     <i class="material-symbols-outlined">delete</i>
+                </template>
+            </Button>
+
+            <Button :disabled="currentSlide.name !== '' || nameEditing" size="small" label="Save"
+                @click="updateOrStoreSlide">
+                <template #icon>
+                    <i class="material-symbols-outlined">save</i>
                 </template>
             </Button>
 
@@ -457,7 +535,7 @@ onMounted(() => {
                                                 <div>
                                                     <p style="margin: 0; font-size: var(--fs-medium)"> {{
                                                         slotProps.option.label
-                                                        }}</p>
+                                                    }}</p>
                                                     <p style="margin: 0; font-size: var(--fs-small)">{{
                                                         slotProps.option.description }}</p>
                                                 </div>
@@ -536,7 +614,21 @@ onMounted(() => {
     margin-left: auto;
 }
 
+.dashboard-header .p-inputtext.p-invalid:enabled:focus {
+    border-color: var(--p-inputtext-invalid-border-color);
+}
 
+.dashboard-header .p-floatlabel {
+    width: 30%;
+}
+
+.dashboard-header .p-inputtext {
+    width: 100%;
+}
+
+.dashboard-header .p-floatlabel label {
+    color: var(--p-floatlabel-invalid-color) !important;
+}
 
 .p-toolbar {
     margin: 0;
