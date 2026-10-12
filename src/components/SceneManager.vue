@@ -17,7 +17,7 @@ import draggable from 'vuedraggable';
 import { scenes, fetchScenes } from '@/globals/scenes';
 import { presentations, fetchPresentations } from '@/globals/presentations';
 import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
-import { onMounted, ref, nextTick } from 'vue';
+import { onMounted, ref, nextTick, toRaw } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
@@ -139,8 +139,10 @@ async function onConfirmDeleteScene(scene: Scene) {
 
 function onDuplicateEditScene(scene: Scene) {
     if (scene.id) {
-        scene.name = `${scene.name} (${t('moderator.copy')})`
-        emit('edit-scene', { ...scene });
+        const new_scene = structuredClone(toRaw(scene))
+        new_scene.name = `${scene.name} (${t('moderator.copy')})`
+        new_scene.id = undefined
+        emit('edit-scene', { ...new_scene });
     }
 }
 

@@ -30,25 +30,29 @@ export function useItemDeletion() {
             return false;
         }
 
-        try {
-            await deleteFunction(item.id);
-            toast.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: `${itemTypeString} deleted successfully`,
-                life: 3000
-            });
-        } catch (error) {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: `Failed to delete ${itemTypeString}`,
-                life: 3000
-            });
-            console.error(`Error deleting ${itemTypeString}:`, error);
+        if (item.id) {
+            try {
+                await deleteFunction(item.id);
+                toast.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: `${itemTypeString} deleted successfully`,
+                    life: 3000
+                });
+            } catch (error) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `Failed to delete ${itemTypeString}`,
+                    life: 3000
+                });
+                console.error(`Error deleting ${itemTypeString}:`, error);
+                return false
+            }
+            return true
+        } else {
             return false
         }
-        return true
     }
 
     function onConfirmDeleteItem<T extends ItemInterface>(

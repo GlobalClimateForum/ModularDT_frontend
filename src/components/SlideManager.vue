@@ -14,7 +14,7 @@ import { formatDate } from '@/utils/date_utils';
 import Chip from 'primevue/chip';
 import { slides, fetchSlides } from '@/globals/slides';
 import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
-import { ref } from 'vue';
+import { ref, toRaw } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
@@ -78,8 +78,10 @@ async function onConfirmDeleteSlide(slide: Slide) {
 
 function onDuplicateEditSlide(slide: Slide) {
     if (slide.id) {
-        slide.name = `${slide.name} (${t('moderator.copy')})`
-        emit('edit-slide', { ...slide, sections: slide.sections || [] });
+        const new_slide = structuredClone(toRaw(slide))
+        new_slide.name = `${slide.name} (${t('moderator.copy')})`
+        new_slide.id = undefined
+        emit('edit-slide', { ...new_slide, sections: new_slide.sections || [] });
     }
 }
 
