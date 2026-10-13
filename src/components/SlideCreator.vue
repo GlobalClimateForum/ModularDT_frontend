@@ -370,6 +370,14 @@ function getDraft() {
     nextTick(() => { ready = true; edited.value = true })
 }
 
+function resetSection(index: number) {
+    slideSections.value[index].content = DEFAULT_CONTENT
+    slideSections.value[index].content_path = ''
+    slideSections.value[index].parameters = {}
+    slideSections.value[index].properties = {}
+    slideSections.value[index].mode = 'static'
+}
+
 // Watch for changes in the filename (debounced) 
 watch(() => currentSlide.value.name, (name) => {
     clearTimeout(nameEditTimer.value)
@@ -547,7 +555,8 @@ onBeforeUnmount(() => {
                                     <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
                                 </Button>
                                 <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
-                                    optionLabel="label" scrollHeight="auto" class="tab-type-select">
+                                    optionLabel="label" scrollHeight="auto" class="tab-type-select"
+                                @change="resetSection(index)">
                                     <template #value="slotProps">
                                         <div class="tab-type-selected" v-if="slotProps.value">
                                             <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
