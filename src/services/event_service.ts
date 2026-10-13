@@ -10,7 +10,7 @@ export interface Event {
 
 export interface EventOption {
     label: string;
-    value: number | null;
+    value: number;
 }
 
 export const getEvents = () => api.get("/events/");
@@ -18,6 +18,7 @@ export const getEvents = () => api.get("/events/");
 export const getEventById = (id: number) => api.get(`/events/${id}/`);
 
 export const saveEvent = (event: Event) => api.post("/events/", event);
+export const deleteEvent = (id: number) => api.delete(`/events/${id}/`);
 
 export const getEventOptions = () => api.get("/events/").then(response => {
     const events: Event[] = response.data;
