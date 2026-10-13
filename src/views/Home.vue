@@ -12,7 +12,7 @@ import { type Event, getEventById } from '@/services/event_service'
 import { authorizeModerator } from '@/services/settings_service' // adjust path
 
 import { type Participant, getParticipants } from '@/services/participant_service'
-import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, } from '@/services/avatar_service';
+import { avatarUri as buildAvatarUri, makeStyle, type StyleName} from '@/services/avatar_service';
 
 const { t } = useI18n();
 const event = ref<Event | null>(null)
@@ -50,7 +50,7 @@ onMounted(() => {
 })
 
 function avatarUri(seed: string) {
-  return buildAvatarUri(makeStyle('glyphs'), seed);
+  return buildAvatarUri(makeStyle(settings.value.avatar_style as StyleName), seed);
 }
 
 async function submitPin() {
