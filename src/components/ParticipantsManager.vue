@@ -11,10 +11,12 @@ import { useToast } from 'primevue/usetoast';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+
 // globals and services
 import "@/assets/main.css";
+import { settings } from '@/globals/settings';
 import { type Participant, updateParticipant, createParticipant, deleteParticipant } from "@/services/participant_service";
-import { type StyleName, styleNames, makeStyle, avatarUri as buildAvatarUri, previewUri, prettyName, changeAvatarStyleSetting } from '@/services/avatar_service';
+import { type StyleName, makeStyle, avatarUri as buildAvatarUri } from '@/services/avatar_service';
 import { participants, fetchParticipants } from '@/globals/participants';
 
 const toast = useToast();
@@ -38,8 +40,9 @@ watch(() => participants.value, v => { rows.value = [...v]; }, { deep: false });
 const editingRows = ref<DraftParticipant[]>([]);
 
 /* ---------- avatar styles ---------- */
-const selectedStyle = ref<StyleName>('glyphs');
-const avatarStyle = computed(() => makeStyle(selectedStyle.value));
+const avatarStyle = computed(() =>
+  makeStyle((settings.value.avatar_style ?? 'glyphs') as StyleName)
+);
 
 function avatarUri(seed: string) {
   return buildAvatarUri(avatarStyle.value, seed);
@@ -130,23 +133,6 @@ function onHandsOff() {
       <InputText style="width: 400px" v-model="filters.global.value" placeholder="Search participant ..."></InputText>
       
       <div class="participant-actions">
-        <Select v-model="selectedStyle" :options="styleNames" placeholder="Avatar Style" class="style-select"
-          @change="changeAvatarStyleSetting(selectedStyle)">
-          <template #option="{ option }">
-            <div class="style-option">
-              <img :src="previewUri(option)" width="28" height="28" />
-              <span>{{ prettyName(option) }}</span>
-            </div>
-          </template>
-          <template #value="{ value, placeholder }">
-            <div class="style-option" v-if="value">
-              <img :src="previewUri(value)" width="24" height="24" />
-              <span>{{ prettyName(value) }}</span>
-            </div>
-            <span v-else>{{ placeholder }}</span>
-          </template>
-        </Select>
-
         <Button  @click="onHandsOff">
           <template #icon>
             <i class="material-symbols-outlined">do_not_touch</i>
@@ -281,17 +267,6 @@ function onHandsOff() {
 
 .participants-table {
   min-height: 0;
-}
-
-.style-option {
-  display: flex;
-  align-items: center;
-  gap: var(--space-small);
-}
-
-.style-option img {
-  border-radius: 4px;
-  flex-shrink: 0;
 }
 
 .avatar {

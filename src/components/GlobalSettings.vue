@@ -23,6 +23,7 @@ import { updateSettings, isModerator, clearModerator } from "@/services/settings
 import { saveEvent, deleteEvent } from "@/services/event_service";
 import { sendMonitorsUpdate } from "@/services/monitor_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
+import { styleNames, previewUri, prettyName } from '@/services/avatar_service';
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
 import palettes from '@/assets/palettes.json'
@@ -76,7 +77,8 @@ const saveSettings = async () => {
     theme: settings.value.theme,
     carto_api_key: settings.value.carto_api_key,
     event_id: selectedEvent.value ? selectedEvent.value.id : null,
-    dev_mode: settings.value.dev_mode
+    dev_mode: settings.value.dev_mode,
+    avatar_style: settings.value.avatar_style
   };
 
   await updateSettings(current_settings).then(response => {
@@ -87,7 +89,7 @@ const saveSettings = async () => {
   });
   await fetchSettings()
   await saveEventSettings()
-  eventOptions.value = await getEventOptions() as EventOption[];  
+  eventOptions.value = await getEventOptions() as EventOption[];
 }
 
 function saveEventSettings() {
@@ -109,7 +111,7 @@ async function removeEvent(eventID: number) {
   try {
     await deleteEvent(eventID);
     toast.add({ severity: 'success', summary: 'Success', detail: 'Event deleted', life: 3000 });
-    eventOptions.value = await getEventOptions() as EventOption[]; 
+    eventOptions.value = await getEventOptions() as EventOption[];
     selectedEvent.value = null; // Clear the selected event if it was deleted
   } catch (error) {
     console.error("Error deleting event:", error);
@@ -284,6 +286,24 @@ function selectActiveEvent(eventID: number) {
             <label>{{ $t('moderator.settings.theme') }}</label>
             <SelectButton fluid v-model="settings.theme" :options="themeOptions" optionLabel="label"
               optionValue="value" />
+          </div>
+
+          <div class="label-container">
+            <label>Avatar Style</label>
+            <Select v-model="settings.avatar_style" :options="styleNames" fluid>
+              <template #option="{ option }">
+                <div class="style-option">
+                  <img :src="previewUri(option)" width="28" height="28" />
+                  <span>{{ prettyName(option) }}</span>
+                </div>
+              </template>
+              <template #value="{ value }">
+                <div class="style-option" v-if="value">
+                  <img :src="previewUri(value)" width="24" height="24" />
+                  <span>{{ prettyName(value) }}</span>
+                </div>
+              </template>
+            </Select>
           </div>
         </div>
 
@@ -524,5 +544,16 @@ function selectActiveEvent(eventID: number) {
 
 .label-container :deep(.p-password) {
   width: 100%;
+}
+
+.style-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+}
+
+.style-option img {
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 </style>
