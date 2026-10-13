@@ -94,6 +94,8 @@ const saveSettings = async () => {
 
 function saveEventSettings() {
 
+  if (!selectedEvent.value?.id) return Promise.resolve();
+
   const updatedEvent = {
     ...selectedEvent.value,
     name: selectedEvent.value?.name,
@@ -402,7 +404,7 @@ function selectActiveEvent(eventID: number) {
                     </div>
                     <div></div>
                   </div>
-                  <Button small @click="removeEvent(event.value)">
+                  <Button small @click.stop="removeEvent(event.value)">
                     <template #icon>
                       <i class="material-symbols-outlined">delete</i>
                     </template>
