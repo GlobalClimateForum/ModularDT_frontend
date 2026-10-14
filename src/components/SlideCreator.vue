@@ -445,18 +445,6 @@ watch(
     { deep: true }
 )
 
-watch(() => currentSlide.value.name, (name) => {
-
-    clearTimeout(nameEditTimer.value) // Clear any existing timer to debounce the filename validation
-    const trimmed = name?.trim() // Remove any leading or trailing whitespace from the slide name
-    if (!trimmed || trimmed === props.slide?.name) { validFilename.value = false; return }
-    nameEditTimer.value = setTimeout(async () => {
-        const res = await validateFilename(trimmed)
-        validFilename.value = res.data.exists
-        console.log(res.data)
-    }, 300)
-})
-
 onMounted(() => {
     draftExists.value = hasDraft(currentSlide.value.id)
 });
