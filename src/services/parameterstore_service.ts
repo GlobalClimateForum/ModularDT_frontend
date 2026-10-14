@@ -3,7 +3,7 @@ import { useWebsocketService } from '@/services/websocket_service'
 import { API_BASE_URL } from '@/config'
 
 export interface ParameterChange {
-    section: number
+    section: number | number[] | "global"
     parameter: string
     value: any
 }
