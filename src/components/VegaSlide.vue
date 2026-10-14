@@ -5,6 +5,7 @@ import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
 import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
 import parameterStore from '@/services/parameterstore_service'
+import { type ParameterChange, hit } from '@/services/parameterstore_service'
 
 const props = defineProps<{
   slide: Slide,
@@ -60,6 +61,15 @@ function seedValues(): Record<string, unknown> {
   return seeded
 }
 
+async function parameterChangeHandler(change: ParameterChange) {
+
+  if (props.section.id && hit(props.section.id, change)) {
+    paramValues.value[change.parameter] = change.value
+    if (isInteractive.value) fetchSpec()
+  }
+
+}
+
 // Function to render the Vega spec in the container. We use a token to ensure that we only update the view if this is the latest render request.
 async function renderContent() {
   if (!container.value || !spec.value) return
@@ -105,16 +115,15 @@ onBeforeUnmount(() => {
   view?.finalize();
 })
 
-onUnmounted(() => unsubscribe?.()) // Unsubscribe from parameter store updates when the component is unmounted
-
 onMounted(() => {
   renderContent()
   unsubscribe = parameterStore.subscribe((change) => {
-    if (change.section === props.section.id) {
-      console.log(change);
-    }
+    parameterChangeHandler(change)
   })
 })
+
+onUnmounted(() => unsubscribe?.()) // Unsubscribe from parameter store updates when the component is unmounted
+
 </script>
 
 <template>
