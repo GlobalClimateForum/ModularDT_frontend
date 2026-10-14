@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount, watch, onMounted, computed } from 'vue'
+import { ref, onBeforeUnmount, watch, onMounted, onUnmounted, computed } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
@@ -11,6 +11,8 @@ const props = defineProps<{
   section: SlideSection,
   progress?: number | null,
 }>()
+
+let unsubscribe: (() => void) | null = null // Unsubscribe function for parameter store updates
 
 // Containter for the Vega chart. We use a ref so that we can pass it to vega-embed.
 const container = ref<HTMLElement | null>(null)
@@ -103,9 +105,11 @@ onBeforeUnmount(() => {
   view?.finalize();
 })
 
+onUnmounted(() => unsubscribe?.()) // Unsubscribe from parameter store updates when the component is unmounted
+
 onMounted(() => {
   renderContent()
-  const unsubscribe = parameterStore.subscribe((change) => {
+  unsubscribe = parameterStore.subscribe((change) => {
     if (change.section === props.section.id) {
       console.log(change);
     }
