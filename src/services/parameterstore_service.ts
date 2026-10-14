@@ -80,3 +80,9 @@ export function useParameterStore() {
 
 // For backward compatibility with default export
 export default useParameterStore()
+
+// Small utility function to check if a parameter change affects a given section
+export function hit(sectionID : number, parameterChange : ParameterChange) {
+    const s = parameterChange.section
+    return s === "global" || s === sectionID || (Array.isArray(s) && s.includes(sectionID))
+}
