@@ -13,7 +13,6 @@ const props = defineProps<{
     slide: Slide,
     section: SlideSection,
     sectionWidth: number,
-    showframe?: boolean,
     shadow?: boolean,
     basemap?: string,
     targetSlide?: Slide | null,

@@ -15,7 +15,6 @@ const props = defineProps<{
     section: SlideSection,
     sectionWidth: number,
     basemap?: keyof typeof basemaps,
-    showframe?: boolean,
     shadow?: boolean
 }>()
 

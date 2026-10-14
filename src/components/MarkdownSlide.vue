@@ -8,7 +8,6 @@ const props = defineProps<{
     slide: Slide,
     section: SlideSection,
     sectionWidth: number
-    showframe?: boolean
     shadow?: boolean
 }>()
 
@@ -68,7 +67,6 @@ watch(
     <div class="section-wrapper" :style="{
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
-        border: props.showframe ? '3px solid var(--accent)' : 'none',
         boxShadow: props.shadow ? '-2px 5px 32px -1px rgba(0,0,0,0.48)' : 'none',
 
     }">

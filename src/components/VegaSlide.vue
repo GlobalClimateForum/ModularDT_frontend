@@ -9,7 +9,6 @@ import parameterStore from '@/services/parameterstore_service'
 const props = defineProps<{
   slide: Slide,
   section: SlideSection,
-  showframe?: boolean,
   progress?: number | null,
 }>()
 
@@ -116,7 +115,6 @@ onMounted(() => {
 
 <template>
   <div class="vega-layout" :style="{
-    border: props.showframe ? '3px solid var(--accent)' : 'none',
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
     backgroundColor: '#' + bgColor,
