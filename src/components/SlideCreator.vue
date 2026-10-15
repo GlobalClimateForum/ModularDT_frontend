@@ -540,14 +540,20 @@ onBeforeUnmount(() => {
                             style="height: 100%;">
 
                             <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
-                            <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
-                                :slideSection="serializeSectionAt(index)"
-                                :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                                @contentUpdated="updateSectionContentAt(index, $event)"
-                                @sectionUpdated="updateSectionAt(index, $event)" @basemapUpdated="basemap = $event"
-                                @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
-                                :sectionIdx="index" :autosize="autosizeVega" :slide="currentSlide">
-                            </component>
+
+                            <Transition name="editor-fade" mode="out-in">
+                                <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
+                                    :key="`${section._key}-${selectedTypes[index]?.value ?? 'markdown'}`"
+                                    :slideSection="serializeSectionAt(index)"
+                                    :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
+                                    @contentUpdated="updateSectionContentAt(index, $event)"
+                                    @sectionUpdated="updateSectionAt(index, $event)" @basemapUpdated="basemap = $event"
+                                    @targetSlideUpdated="targetSlide = $event" :basemap="basemap"
+                                    :progress="vegaProgress" :sectionIdx="index" :autosize="autosizeVega"
+                                    :slide="currentSlide">
+                                </component>
+                            </Transition>
+
                         </TabPanel>
                     </TabPanels>
                 </Tabs>
@@ -759,5 +765,22 @@ onBeforeUnmount(() => {
     border-radius: 0.75rem;
     cursor: pointer;
     margin: 0;
+}
+
+.editor-fade-enter-active,
+.editor-fade-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.editor-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.editor-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>
