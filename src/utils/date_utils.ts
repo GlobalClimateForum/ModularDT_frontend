@@ -1,4 +1,8 @@
-export function formatDate(iso: string): string {
+export function formatDate(iso: string | null | undefined): string {
+
+    if (!iso) {
+        return "unknown";
+    }
 
     // calculate how long ago the date is from now
     const min_ago = (Date.now() - new Date(iso).getTime()) / (1000 * 60);
