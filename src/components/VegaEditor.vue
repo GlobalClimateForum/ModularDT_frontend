@@ -56,7 +56,6 @@ const urlPattern = computed(() => baseUrl.value ? buildPattern(baseUrl.value, pa
 
 watch(() => props.slideSection, (section) => {
     if (!section) return
-    console.log('SYNC incoming:', JSON.stringify(section.parameters))
 
     const incoming = section.parameters
         ? structuredClone(toRaw(section.parameters))
@@ -65,10 +64,10 @@ watch(() => props.slideSection, (section) => {
     // Only overwrite local params if they actually changed.
     if (JSON.stringify(incoming) !== JSON.stringify(toRaw(parameters.value))) {
         parameters.value = incoming
-        console.log('SYNC applied')
+
 
     } else {
-        console.log('SYNC skipped (equal)')
+   
     }
 
     const modeOption = modeOptions.find(o => o.value === section.mode)
@@ -93,7 +92,6 @@ function emitSection(patch: Partial<SlideSection>) {
         url_pattern: urlPattern.value,
         ...patch,
     }
-    console.log('EMIT parameters:', JSON.stringify(payload.parameters))
     emit('sectionUpdated', payload)
 }
 
