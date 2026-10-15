@@ -53,22 +53,6 @@ function avatarUri(seed: string) {
   return buildAvatarUri(makeStyle(settings.value.avatar_style as StyleName), seed);
 }
 
-async function submitPin() {
-  try {
-    const valid = await authorizeModerator(pin.value ?? '')
-    if (!valid) {
-      pinError.value = true
-      pin.value = ''
-      return
-    }
-    sessionStorage.setItem('pin_ok', '1')
-    router.push('/moderator')
-  } catch (e) {
-    console.error('PIN check failed:', e)
-    pinError.value = true
-  }
-}
-
 function openMonitorInWindow(i: number) {
   const { href } = router.resolve('/monitor/' + String(i))
   window.open(href, '_blank', 'popup')
