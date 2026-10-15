@@ -80,7 +80,14 @@ export interface Parameters {
     [key: string]: Parameter
 }
 
-export const SlideSectionTypes = [
+export interface SlideSectionType {
+    value: string;
+    icon: string;
+    label: string;
+    description: string;
+}
+
+export const SlideSectionTypes: SlideSectionType[] = [
     { value: "markdown", icon: "markdown", label: "Markdown", description: "Create a slide section using Markdown MARP flavour." },
     { value: "map", icon: "map", label: "Map", description: "Create an interactive map section." },
     { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "Create an interactive panel section for a defined slide." },

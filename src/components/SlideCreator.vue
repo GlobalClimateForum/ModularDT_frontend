@@ -14,19 +14,20 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import { useConfirm } from "primevue/useconfirm";
-import { useI18n } from 'vue-i18n';
 import Select from 'primevue/select';
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service'
-import { SlideSectionTypes, validateFilename, renameSlide } from '@/services/slide_service'
-import { saveSlide, updateSlide, getSlideSectionType } from '@/services/slide_service'
+import { SlideSectionTypes, validateFilename, renameSlide, type SlideSectionType } from '@/services/slide_service'
+import { getSlideSectionType } from '@/services/slide_service'
+import { createDefaultSlide, createDefaultSection, updateSlideStore } from '@/globals/slides'
 import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_service'
-import { slides, fetchSlides } from '@/globals/slides';
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
 import { updateSlideOnMonitors } from '@/services/monitor_service'
 import { updateSlideViews } from '@/services/live_presentation_service';
+import { useSlide } from '@/globals/slides'
+import { identifyLayoutType } from '@/globals/slide_layout'
+
 import '@/assets/main.css'
 // components
 import LayoutEditor from '@/components/LayoutEditor.vue'
@@ -37,8 +38,6 @@ import { formatDate } from '@/utils/date_utils'
 
 type EditorSection = SlideSection & { _key: string } // Add a unique key to each section to guard section content
 
-const { t } = useI18n();
-const confirm = useConfirm();
 const edited = ref<boolean>(false)
 const validFilename = ref<boolean>(false)
 const nameEditing = ref<boolean>(false) // Track whether the user is currently editing the slide name
@@ -47,9 +46,6 @@ const draftExists = ref<boolean>(false) // Track whether a draft exists for the 
 let ready = false
 
 // Define the Default Markdown Content, and Default Slide structure for new slides
-const DEFAULT_CONTENT = ''
-const DEFAULT_SLIDE = { name: '', width: 1920, height: 1080, tags: [] }
-const DEFAULT_SECTION = { view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 }
 const SECTION_LIMIT = 3
 const SECTION_BG_COLOR_EDITING: Record<string, boolean> = {
     markdown: true,
@@ -62,7 +58,7 @@ const SECTION_BG_COLOR_EDITING: Record<string, boolean> = {
 const props = defineProps<{ slide?: Slide | null }>()
 
 // Define references
-const currentSlide = ref<Slide>(props.slide ?? DEFAULT_SLIDE) // Init a new slide if no slide is passed as prop
+const currentSlide = ref<Slide>(props.slide ?? createDefaultSlide()) // Init a new slide if no slide is passed as prop
 const currentSectionIndex = ref<number>(0) // Track the index of the currently selected section
 
 const slideSections = ref<EditorSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
@@ -71,12 +67,12 @@ const showFrame = ref<boolean>(false) // Track whether to show the frame around 
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const sectionBgColor = computed(() => slideSections.value[currentSectionIndex.value]?.properties?.bg ?? '#ffffff') // Track the background color of the current section
 const sectionBgColorEditable = computed(() => SECTION_BG_COLOR_EDITING[slideSections.value[currentSectionIndex.value]?.view_type ?? 'markdown'] ?? false) // Track whether background editing is allowed for current section
-const selectedTypes = ref<Object[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
+const selectedTypes = ref<SlideSectionType[]>([]) // Track the selected view types for each section (markdown, map, chart, etc.)
 const vegaProgress = ref<number | null>(null) // Track the progress of fetching Vega specs for sections in 'url' or 'interactive' mode
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
-const slideSaved = ref<boolean>(false) // Track whether the slide has been saved to the server
+const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
 
 const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: crypto.randomUUID() })
 
@@ -93,292 +89,296 @@ const editorMapping: Record<string, any> = {
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
 
-// 
-async function confirmedUpdateSlide() {
-    const sections = slideSections.value.map(({ _key, ...section }, index) => ({
-        ...section,
-        width_fraction: sectionWidths.value[index],
-        parameters: section.parameters ?? {},
-        mode: section.mode ?? 'static',
-        url_pattern: section.url_pattern ?? '',
-        properties: section.properties ?? {},
-    }));
+// --------------------- Slide Helpers ---------------------
 
-    const slide = {
-        id: currentSlide.value.id,
-        name: currentSlide.value.name,
-        width: currentSlide.value.width,
-        height: currentSlide.value.height,
-        tags: currentSlide.value.tags,
-    };
+// Helper function to load a slide into the editor (or create a new one), initializing the currentSlide, slideSections, sectionWidths, layout, and selectedTypes
+function loadSlide(slide?: Slide | null) {
 
-    try {
-        const response = await updateSlide(currentSlide.value.id, slide, sections)
-        applySavedSlide(response.data.slide)
-        await fetchSlides();
-        // here: refresh the updated slide on monitors
-        const newslide = slides.value.find(slide => slide.id === currentSlide.value.id);
-        if (newslide) {
-            updateSlideOnMonitors(newslide)
-            updateSlideViews(newslide)
-        }
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-        return response
-    } catch (error) {
-        console.error('Error saving slide:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-    }
-}
+    const source = slide ?? createDefaultSlide();
+    currentSlide.value = { ...source };
 
-function applySavedSlide(saved: Slide) {
-    ready = false // stop the watcher from marking this as "edited"
-    currentSlide.value = { ...saved }
-    slideSections.value = (saved.sections ?? []).map(withKey)
+    // Add a unique key to each section to guard section content
+    slideSections.value = (slide?.sections ?? [createDefaultSection()]).map(withKey)
+    // Set the section widths based on the slide sections
     sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
-    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
+
+    // Determine the layout type based on the section widths
+    layout.value = identifyLayoutType(sectionWidths.value)
+
+    // Set the selected  types for each section based on the slide sections
+    selectedTypes.value = slideSections.value.map(
+        section => getSlideSectionType(section.view_type))
+
+    currentSectionIndex.value = 0
+}
+
+// Helper function to apply a saved slide to the currentSlide and slideSections
+function applySavedSlide(slide: Slide) {
+    ready = false
+    loadSlide(slide)
     edited.value = false
-    nextTick(() => { ready = true })
-}
-
-function confirmUpdateSlide() {
-    confirm.require({
-        header: t('moderator.confirmation'),
-        message: t('moderator.update-slide-confirmation-message-head') + " " + currentSlide.value.name + " " + t('moderator.update-slide-confirmation-message-tail'),
-        acceptLabel: `${t('moderator.confirmation-ok')}`,
-        rejectLabel: t('moderator.confirmation-cancel'),
-        accept: async () => {
-            await confirmedUpdateSlide();
-        }, reject: () => {
-            // nothing to do    
-        },
-    });
-}
-
-// Save a slide handler
-function storeSlide() {
-    const sections = slideSections.value.map(({ _key, ...section }, index) => ({
-        ...section,
-        width_fraction: sectionWidths.value[index],
-        parameters: section.parameters ?? {},
-        mode: section.mode ?? 'static',
-        url_pattern: section.url_pattern ?? '',
-        properties: section.properties ?? {},
-    }));
-
-    const slide = {
-        id: currentSlide.value.id,
-        name: currentSlide.value.name,
-        width: currentSlide.value.width,
-        height: currentSlide.value.height,
-        tags: currentSlide.value.tags,
-    };
-
-    return saveSlide(slide, sections).then(response => {
-        const saved = response.data.slide
-
-        if (!saved || !saved.sections) {
-            console.error('Response has no nested slide/sections:', response.data)
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Server did not return sections', life: 3000 })
-            return
-        }
-
-        applySavedSlide(saved)
-
-        fetchSlides()
-        slideSaved.value = true;
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved', life: 3000 })
+    nextTick(() => {
+        ready = true
     })
 }
 
-function updateOrStoreSlide() {
-    const name = currentSlide.value.name?.trim()
-    if (!name) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Slide name cannot be empty', life: 3000 })
-        return
-    }
-
-    if (currentSlide.value.id) {
-        confirmUpdateSlide()
-    } else if (slides.value.some(s => s.name === name)) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: `A slide named "${name}" already exists`, life: 3000 })
-    } else {
-        storeSlide()
-    }
-}
-
-function clearCurrentSlide() {
-    currentSlide.value = { ...DEFAULT_SLIDE, tags: [] }   // fresh copy, not the shared object
-    slideSections.value = [withKey(DEFAULT_SECTION)] // fresh copy, not the shared object
-    selectedTypes.value = [getSlideSectionType(DEFAULT_SECTION.view_type)] // fresh copy, not the shared object
-    sectionWidths.value = [1.0] // Reset to a single section with full width
-    layout.value = 'fullscreen' // Reset layout to fullscreen
-    currentSectionIndex.value = 0 // Reset to the first section
-}
-
-// Small Helper to identify the layout type based on the section widths (fullscreen, golden, reversegolden, custom)
-function getLayoutType(widths: number[]): string {
-    if (widths.length === 1) return 'fullscreen'
-    if (widths.length === 2) return widths[0] > widths[1] ? 'golden' : 'reversegolden'
-    return 'custom'
-}
-
-// Handler to add a new section to the slide (up to a maximum of 3 sections)
-function addSection() {
-    // Limit to 3 sections
-    if (slideSections.value.length >= SECTION_LIMIT) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: `Maximum of ${SECTION_LIMIT} sections allowed`, life: 3000 })
-        return
-    }
-
-    slideSections.value.push(withKey(DEFAULT_SECTION)) // Push a new defaultt section
-    selectedTypes.value.push(getSlideSectionType(DEFAULT_SECTION.view_type)) // Push the default view type
-    // Make all section widths equal (1 / number of sections)
-    sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length)
-    // Update the layout type based on the new section widths
-    layout.value = getLayoutType(sectionWidths.value)
-}
-
-// Handler to remove a section from the slide (by index)
-function removeSection(index: number) {
-    if (slideSections.value.length <= 1) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'At least one section is required', life: 3000 })
-        return
-    }
-
-    slideSections.value.splice(index, 1)
-    selectedTypes.value.splice(index, 1)   // keep in sync
-    sectionWidths.value = slideSections.value.map(() => 1 / slideSections.value.length)
-    layout.value = getLayoutType(sectionWidths.value)
-
-    // keep the active tab valid
-    if (currentSectionIndex.value >= slideSections.value.length) {
-        currentSectionIndex.value = slideSections.value.length - 1
-    }
-}
-
-// Handler to update the content of a section when the CodeEditor emits a contentUpdated event
-function updateSectionContent(index: number, newContent: string) {
-
-    // console.log(`Updating content of section ${index} to:`, newContent)
-
-    const updatedSections = [...slideSections.value]
-    updatedSections[index] = { ...updatedSections[index], content: newContent }
-    slideSections.value = updatedSections
-
-    // Refresh current slide to trigger re-render of SlideView with updated content
-    currentSlide.value = { ...currentSlide.value }
-}
-
-// Handler to update the entire section (view_type, content, content_path, width_fraction) when the editor emits a sectionUpdated event
-function updateSection(index: number, updatedSection: SlideSection) {
-
-    const pathChanged = slideSections.value[index].content_path !== updatedSection.content_path
-    const updatedSections = [...slideSections.value]
-    updatedSections[index] = { ...updatedSections[index], ...updatedSection }
-    slideSections.value = updatedSections
-    currentSlide.value = { ...currentSlide.value }
-
-    if (pathChanged && (updatedSection.mode === 'url' || updatedSection.mode === 'interactive')) {
-        fetchVegaForSection(index)
-    }
-}
-function sectionWithWidth(index: number) {
-    const s = slideSections.value[index]
-    return s.width_fraction === sectionWidths.value[index]
-        ? s
-        : { ...s, width_fraction: sectionWidths.value[index] }
-}
-
-// Helper to fetch Vega specifications
-async function fetchVegaForSection(index: number) {
-    const section = slideSections.value[index]
-    // Guard-clause to ensure we only fetch Vega specs for sections that are of type 'vega'
-    // and are in 'url' or 'interactive' mode with a defined content_path.
-    if (section.view_type !== 'vega' ||
-        (section.mode !== 'url' && section.mode !== 'interactive') || !section.content_path ||
-        section.content_path.trim() === ''
-    ) {
-        return
-    }
-    // Try to fetch the Vega specification from the server using SSE
-    try {
-        const spec = await streamVegaSpec(section.content_path, (progress) => {
-            vegaProgress.value = progress
-        })
-
-        // Write the fetched spec to the section's content and update the section
-        const updatedSections = [...slideSections.value]
-        updatedSections[index] = { ...updatedSections[index], content: spec }
-        slideSections.value = updatedSections
-        currentSlide.value = { ...currentSlide.value }
-        vegaProgress.value = null
-    } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: `Failed to fetch Vega spec for section ${index + 1}`, life: 3000 })
-    }
-}
-
-// Handler to set the background color for the current section when the LayoutEditor emits a bgcolor event
-function setSectionBgColor(color: string) {
-    const i = currentSectionIndex.value
-    const updated = [...slideSections.value]
-    updated[i] = {
-        ...updated[i],
-        properties: { ...updated[i].properties, bg: color },
-    }
-    slideSections.value = updated
-    currentSlide.value = { ...currentSlide.value } // Trigger re-render of SlideView with updated Background Color
-    edited.value = true // Mark the slide as edited since the background color has changed
-}
-
-// Handles for renaming the slide
-function startRename() {
-    nameEditing.value = true
-}
-
-function acceptRename() {
+// Function to handle renaming the current slide, updating the slide store, and showing success/error toasts
+function onRenameSlide() {
     nameEditing.value = false
-    if (currentSlide.value.name?.trim() === props.slide?.name || !currentSlide.value.id) return
-    renameSlide(currentSlide.value.id, currentSlide.value.name).then(() => {
+    const slideID = currentSlide.value.id
+    const slideName = currentSlide.value.name?.trim()
+
+    // Guard to ensure that the slide name has changed and that the slide is a saved slide (has an ID)
+    const nameChanged = slideName !== props.slide?.name
+    const isSavedSlide = !!slideID
+    if (!nameChanged || !isSavedSlide) return
+
+    renameSlide(slideID, slideName).then(() => {
+        // If the server call is successful, update the slidestore locally
+        updateSlideStore({ ...currentSlide.value, name: slideName });
         toast.add({ severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
-        fetchSlides()
     }).catch((error) => {
-        console.error('Error renaming slide:', error)
+        // If the server call fails, log the error and show an error toast
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename slide', life: 3000 })
-    }).finally(() => {
-        nameEditing.value = false
     });
 }
 
+// Function to cancel renaming the current slide, resetting the nameEditing state and restoring the original slide name
 function cancelRename() {
     nameEditing.value = false
     currentSlide.value.name = props.slide?.name ?? ''
 }
 
-// Get Draft from local storage and apply it to the current slide and sections
-function getDraft() {
-    const draft = loadDraft(currentSlide.value.id)
-    if (!draft) return
+// Serializes the current slide into a format suitable for saving to the server
+function serializeCurrentSlide(): Omit<Slide, 'sections'> {
+    return {
+        id: currentSlide.value.id,
+        name: currentSlide.value.name,
+        width: currentSlide.value.width,
+        height: currentSlide.value.height,
+        tags: currentSlide.value.tags,
+    }
+}
+
+// --------------------- Sections  ---------------------
+
+// Serializes a section at a specific index into a format suitable for saving to the server
+function serializeSectionAt(index: number): Omit<SlideSection, '_key'> | undefined {
+    const section = slideSections.value[index]
+
+    if (!section) { return undefined } // Guard clause to ensure the section exists
+
+    const { _key, ...serializedSection } = {
+        ...createDefaultSection(),
+        ...section,
+        width_fraction: sectionWidths.value[index] ?? 1,
+        parameters: section.parameters ?? {},
+        mode: section.mode ?? 'static',
+        url_pattern: section.url_pattern ?? '',
+        properties: section.properties ?? {},
+    }
+
+    return serializedSection
+}
+
+// Serializes the sections of the current slide into a format suitable for saving to the server
+function serializeCurrentSections(): Omit<SlideSection, '_key'>[] {
+    return slideSections.value
+        .map((_, index) => serializeSectionAt(index)).filter((section): section is Omit<SlideSection, '_key'> => section !== undefined)
+}
+
+// Helper function to update a section at a specific index with new changes
+function updateSectionAt(index: number, changes: Partial<SlideSection>, refetch = true): EditorSection | undefined {
+
+    const oldSection = slideSections.value[index] // Save the old section for partial update and to ensure it exists
+    if (!oldSection) { return undefined } // Guard clause to ensure the section exists
+
+    const updatedSection = { ...oldSection, ...changes } // Create a new section object by merging the current section with the changes
+
+    slideSections.value[index] = updatedSection // Update the section at the specified index with the updated section
+    currentSlide.value = { ...currentSlide.value } // Trigger re-render of SlideView with updated section
+
+    // To ensure refetching of interactive content only when the content_path or view_type has changed, we check for changes in these properties
+    const pathChanged = oldSection.content_path !== updatedSection.content_path
+    const viewTypeChanged = oldSection.view_type !== updatedSection.view_type
+
+    const shouldRefetch = refetch && (pathChanged || viewTypeChanged)
+
+    if (shouldRefetch) {
+        // Fetch the Vega specification for the updated section if the content_path has changed
+        switch (updatedSection.view_type) {
+            case 'vega':
+                void fetchVegaSectionAt(index) // Dont await this
+                break
+
+            // Add more cases here for other interactive view types that require fetching content when the content_path changes
+        }
+    }
+
+    return updatedSection
+}
+
+// Helper to update the content of a section when the CodeEditor emits a contentUpdated event
+function updateSectionContentAt(index: number, newContent: string) {
+    updateSectionAt(index, { content: newContent })
+}
+
+// Helper to normalize the widths of all sections to be equal, after adding or removing a section
+// Changes layout to fullscreen, golden, reversegolden, or custom based on the new widths
+function normalizeSectionWidths() {
+    const nSections = slideSections.value.length // number of sections after adding the new section
+    const wSection = 1 / nSections // width fraction for each section after adding the new section
+    sectionWidths.value = [...Array(nSections).fill(wSection)] // Set all section widths to the new normalized width
+    layout.value = identifyLayoutType(sectionWidths.value)
+}
+
+// Handler to add a new section to the slide (up to a maximum of 3 sections)
+function addSectionAt(index: number) {
+
+    // Guard wether section limit is already reached
+    if (slideSections.value.length >= SECTION_LIMIT) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: `Maximum of ${SECTION_LIMIT} sections allowed`, life: 3000 })
+        return
+    }
+
+    // Create a new section with a unique key and add it to the slideSections array
+    const newSection = withKey(createDefaultSection()) // Instantiate a new default section with a unique key
+    const newSectionType = getSlideSectionType(newSection.view_type) // Get the default view type for the new section
+    slideSections.value.splice(index, 0, newSection)
+    selectedTypes.value.splice(index, 0, newSectionType)
+
+    normalizeSectionWidths() // Normalize the widths of all sections to be equal after adding the new section
+}
+
+// Helper to remove a section at a specific index, ensuring that at least one section remains
+function removeSectionAt(index: number) {
+
+    // Guard clause to ensure that at least one section remains after removal
+    if (slideSections.value.length <= 1) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'At least one section is required', life: 3000 })
+        return
+    }
+
+    // Remove the section at the specified index from slideSections and selectedTypes
+    slideSections.value.splice(index, 1)
+    selectedTypes.value.splice(index, 1)
+
+    normalizeSectionWidths(); // Normalize the widths of the remaining sections after removal
+
+    // Keep the active tab index within bounds after removing a section
+    if (currentSectionIndex.value >= slideSections.value.length) {
+        currentSectionIndex.value = slideSections.value.length - 1
+    }
+}
+
+// Helper to reset a section at a specific index while preserving its width fraction
+function resetSectionAt(index: number) {
+    updateSectionAt(index, { ...createDefaultSection(), width_fraction: slideSections.value[index].width_fraction })
+}
+
+// Helper to update the background color of a section when the LayoutEditor emits a bgcolor event
+function updateSectionBgColorAt(index: number, color: string) {
+    updateSectionAt(index, { properties: { ...slideSections.value[index].properties, bg: color } })
+    edited.value = true // Mark the slide as edited since the background color has changed
+}
+
+// Helper to refetch a Vega Section if required
+async function fetchVegaSectionAt(index: number) {
+
+    const section = slideSections.value[index]
+    if (!section) { return } // Guard clause to ensure the section exists
+
+    // Guard to ensure we only fetch Vega specs for sections that are of type 'vega' and are in 'url' or 'interactive' mode with a defined content_path.
+    const isVega = section.view_type === 'vega'
+    const isFetchable = section.mode === 'interactive' || section.mode === 'url'
+    const isValidPath = section.content_path && section.content_path.trim() !== ''
+    if (!isVega || !isFetchable || !isValidPath) return
+
+    // Try to fetch the Vega specification from the server using SSE
+    try {
+        const spec = await streamVegaSpec(section.content_path, (progress) => {
+            vegaProgress.value = progress
+        })
+        // Update the section with the fetched Vega specification and reset the progress indicator
+        // Do not refetch again to avoid infinite loops!
+        updateSectionAt(index, { content: spec }, false)
+    } catch {
+        toast.add({ severity: 'error', summary: 'Error', detail: `Failed to fetch Vega Specification for section ${index + 1}`, life: 3000 })
+    } finally {
+        vegaProgress.value = null // Reset the progress indicator after fetching is complete or if an error occurred
+    }
+}
+
+function onToggleAutoSize(autosize: boolean) {
+    autosizeVega.value = autosize
+    const properties = slideSections.value[currentSectionIndex.value].properties
+    updateSectionAt(currentSectionIndex.value, { properties: { ...properties, autosize } })
+}
+
+// --------------------- Slide Persistence ---------------------
+
+// Handles saves (new slide) and updates (existing slides) of the current slide in the editor
+async function persistCurrentSlide() {
+    try {
+        const savedSlide = await persist(serializeCurrentSlide(), serializeCurrentSections())
+
+        if (!savedSlide) {
+            return
+        }
+
+        applySavedSlide(savedSlide)
+        updateSlideOnMonitors(savedSlide)
+        updateSlideViews(savedSlide)
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
+    }
+}
+
+// --------------------- Editor ---------------------
+
+function clearEditor() {
+    currentSlide.value = { ...createDefaultSlide(), tags: [] }   // fresh copy, not the shared object
+    slideSections.value = [withKey(createDefaultSection())] // fresh copy, not the shared object
+    selectedTypes.value = [getSlideSectionType(createDefaultSection().view_type)] // fresh copy, not the shared object
+    sectionWidths.value = [1.0] // Reset to a single section with full width
+    layout.value = 'fullscreen' // Reset layout to fullscreen
+    currentSectionIndex.value = 0 // Reset to the first section
+}
+
+function loadDraftToEditor(slideID?: number | undefined | null) {
+    const draft = loadDraft(slideID); // Load the slide draft from local storage using the slide ID
+    if (!draft) return; // If no draft exists, exit the function
+    ready = false; // Set ready to false to indicate that the editor is not ready for interaction while loading the draft
+    loadSlide(draft); // Load the draft into the editor, initializing currentSlide, slideSections, sectionWidths, layout, and selectedTypes
+    clearDraft(slideID); // Clear the draft from local storage after loading it into the editor
+    draftExists.value = false; // Update the draftExists ref to indicate that no draft exists
+    nextTick(() => { ready = true; edited.value = true }); // After the next DOM update, set ready to true and mark the slide as edited
+}
+
+// Handler to update the view_type of a section and reset content to default when the user selects a new type from the dropdown
+function onChangeViewType(index: number, option: SlideSectionType) {
+    const oldSection = slideSections.value[index]
+    if (!oldSection) { return } // Guard clause to ensure the section exists
+    updateSectionAt(index, { ...createDefaultSection(), width_fraction: oldSection.width_fraction, view_type: option.value })
+}
+
+
+// --------------------- Watchers ---------------------
+
+// Watch for injected slide properties and load the new slide into the editor,
+// resetting the edited state and ensuring the editor is ready for interaction
+watch(() => props.slide, async (slide) => {
     ready = false
-    currentSlide.value = { ...draft }
-    slideSections.value = (draft.sections ?? []).map(withKey)
-    sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
-    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
-    layout.value = getLayoutType(sectionWidths.value)
-    currentSectionIndex.value = 0
-    draftExists.value = false
-    clearDraft(currentSlide.value.id); 
-    nextTick(() => { ready = true; edited.value = true })
-}
+    loadSlide(slide)
+    edited.value = false
+    await nextTick()
+    ready = true
+},
+    { immediate: true },
+)
 
-function resetSection(index: number) {
-    slideSections.value[index].content = DEFAULT_CONTENT
-    slideSections.value[index].content_path = ''
-    slideSections.value[index].parameters = {}
-    slideSections.value[index].properties = {}
-    slideSections.value[index].mode = 'static'
-}
-
-// Watch for changes in the filename (debounced) 
+// To validate a new slide name, we watch for changes in the currentSlide.name and debounce the validation
+// request to the server to avoid excessive requests. If the name is empty or unchanged, we mark it as invalid.
 watch(() => currentSlide.value.name, (name) => {
     clearTimeout(nameEditTimer.value)
     const trimmed = name?.trim()
@@ -386,74 +386,31 @@ watch(() => currentSlide.value.name, (name) => {
     nameEditTimer.value = setTimeout(async () => {
         const res = await validateFilename(trimmed)
         validFilename.value = res.data.exists
-        console.log(res.data)
     }, 300)
 })
 
-// Watch for changes in the slide prop and update the currentSlide and slideSections accordingly
-watch(() => props.slide, (newSlide) => {
-
-    // Update the currentSlide and slideSections based on the new slide prop
-    if (newSlide) {
-        currentSlide.value = { ...newSlide }
-        slideSections.value = newSlide.sections?.map(withKey) ?? []
-        sectionWidths.value = newSlide.sections?.map(section => section.width_fraction ?? 1.0) ?? [1.0]
-        layout.value = getLayoutType(sectionWidths.value)
-    } else { // If no slide is passed, initialize a new slide with default values
-        slideSections.value = [withKey({ view_type: 'markdown', content: DEFAULT_CONTENT, content_path: '', width_fraction: 1.0 })]
-        sectionWidths.value = [1.0]
-        layout.value = 'fullscreen'
-    }
-
-    selectedTypes.value = slideSections.value.map(s => getSlideSectionType(s.view_type))
-    edited.value = false // Reset the edited flag since we just loaded a new slide
-    nextTick(() => {
-        ready = true // Set the ready flag to true after the next DOM update cycle
-    })
-
-}, { immediate: true })
-
-watch(selectedTypes, (newTypes) => {
-    slideSections.value = slideSections.value.map((section, i) => ({
-        ...section,
-        view_type: newTypes[i]?.value ?? section.view_type
-    }))
-}, { deep: true })
-
-// Watch for changes in the autosizeVega ref and update the section's render properties
-watch(autosizeVega, (on) => {
-    const i = currentSectionIndex.value
-    const section = slideSections.value[i]
-    if (section.view_type !== 'vega') return
-
-    const updatedSections = [...slideSections.value]
-    updatedSections[i] = {
-        ...section,
-        properties: { ...section.properties, autosize: on },
-    }
-    slideSections.value = updatedSections
-    currentSlide.value = { ...currentSlide.value }
-})
-
-watch(currentSectionIndex, (i) => {
-    autosizeVega.value = !!slideSections.value[i]?.properties?.autosize
-})
-
+// Watch for changes in general to keep track of whether the slide has been edited, and set the edited state accordingly
 watch(
     [currentSlide, slideSections, sectionWidths, layout, selectedTypes, autosizeVega, basemap, targetSlide],
     () => { if (ready) edited.value = true },
     { deep: true }
 )
 
+// --------------------- Lifecycle Hooks ---------------------
+
 onMounted(() => {
+    // On mount, check whether a draft exists for the current slide and update the draftExists ref accordingly
     draftExists.value = hasDraft(currentSlide.value.id)
 });
 
 onBeforeUnmount(() => {
-    if (!edited.value) return
-    saveDraft(currentSlide.value, slideSections.value.map(({ _key, ...s }, i) => ({
-        ...s, width_fraction: sectionWidths.value[i],
-    })))
+    // If there are unsaved changes when the component is about to unmount, 
+    // we save serialize the current slide and sections and save a draft to local storage for later retrieval
+    if (edited.value) {
+        const draftSlide = serializeCurrentSlide()
+        const draftSections = serializeCurrentSections()
+        saveDraft(draftSlide, draftSections)
+    }
 })
 
 </script>
@@ -471,7 +428,7 @@ onBeforeUnmount(() => {
 
             <Transition name="fade" mode="out-in">
                 <div v-if="!nameEditing">
-                    <Button outlined v-if="props.slide" size="small" class="renaname-btn" @click="startRename"
+                    <Button outlined v-if="props.slide" size="small" class="renaname-btn" @click="nameEditing = true"
                         label="Rename">
                         <template #icon><i class="material-symbols-outlined">edit</i></template>
                     </Button>
@@ -479,7 +436,7 @@ onBeforeUnmount(() => {
 
                 <div v-else key="edit">
                     <ButtonGroup>
-                        <Button text @click="acceptRename" :disabled="!currentSlide.name?.trim() || validFilename">
+                        <Button text @click="onRenameSlide" :disabled="!currentSlide.name?.trim() || validFilename">
                             <template #icon><i class="material-symbols-outlined">check</i></template>
                         </Button>
                         <Button text @click="cancelRename">
@@ -489,20 +446,20 @@ onBeforeUnmount(() => {
                 </div>
             </Transition>
 
-            <Button outlined :label="$t('moderator.clear')" @click="clearCurrentSlide()" size="small">
+            <Button outlined :label="$t('moderator.clear')" @click="clearEditor()" size="small">
                 <template #icon>
                     <i class="material-symbols-outlined">delete</i>
                 </template>
             </Button>
 
-            <Button :disabled="!currentSlide.name?.trim() || nameEditing || validFilename" size="small" label="Save"
-                @click="updateOrStoreSlide">
+            <Button :disabled="!currentSlide.name?.trim() || nameEditing || validFilename" size="small"
+                :label="savingSlide ? 'Saving…' : 'Save'" @click="persistCurrentSlide()">
                 <template #icon>
                     <i class="material-symbols-outlined">save</i>
                 </template>
             </Button>
 
-            <Button @click="getDraft()" label="Load Draft" size="small" v-if="draftExists" >
+            <Button @click="loadDraftToEditor()" label="Load Draft" size="small" v-if="draftExists">
                 <template #icon>
                     <i class="material-symbols-outlined">edit_note</i>
                 </template>
@@ -527,6 +484,7 @@ onBeforeUnmount(() => {
         </div>
         <!-- Editor -->
         <Splitter :gutter-size="2" class="dashboard">
+
             <SplitterPanel :size="50" class="sub-panel">
 
                 <h1 class="dashboard_label">Slide Editor</h1>
@@ -539,12 +497,12 @@ onBeforeUnmount(() => {
                         <Tab v-for="(section, index) in slideSections" :key="section._key" :value="String(index)"
                             class="tab" @click="currentSectionIndex = index">
                             <div class="tab-title">
-                                <Button class="close-tab-btn" rounded text @click.stop="removeSection(index)">
+                                <Button class="close-tab-btn" rounded text @click.stop="removeSectionAt(index)">
                                     <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
                                 </Button>
                                 <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
                                     optionLabel="label" scrollHeight="auto" class="tab-type-select"
-                                @change="resetSection(index)">
+                                    @change="onChangeViewType(index, $event.value);">
                                     <template #value="slotProps">
                                         <div class="tab-type-selected" v-if="slotProps.value">
                                             <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
@@ -570,7 +528,7 @@ onBeforeUnmount(() => {
                             </div>
                         </Tab>
                         <Button text rounded v-if="slideSections.length < SECTION_LIMIT" class="add-tab-btn"
-                            @click="addSection()">
+                            @click="addSectionAt(currentSectionIndex + 1)">
                             <i class="material-symbols-outlined">add</i>
                         </Button>
                     </TabList>
@@ -582,10 +540,10 @@ onBeforeUnmount(() => {
 
                             <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
                             <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
-                                :slideSection="sectionWithWidth(index)"
+                                :slideSection="serializeSectionAt(index)"
                                 :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                                @contentUpdated="updateSectionContent(index, $event)"
-                                @sectionUpdated="updateSection(index, $event)" @basemapUpdated="basemap = $event"
+                                @contentUpdated="updateSectionContentAt(index, $event)"
+                                @sectionUpdated="updateSectionAt(index, $event)" @basemapUpdated="basemap = $event"
                                 @targetSlideUpdated="targetSlide = $event" :basemap="basemap" :progress="vegaProgress"
                                 :sectionIdx="index" :autosize="autosizeVega" :slide="currentSlide">
                             </component>
@@ -615,7 +573,8 @@ onBeforeUnmount(() => {
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
                         @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                        @autosize="autosizeVega = $event" @bgcolor="setSectionBgColor" :backgroundColor="sectionBgColor"
+                        @autosize="onToggleAutoSize($event)"
+                        @bgcolor="updateSectionBgColorAt(currentSectionIndex, $event)" :backgroundColor="sectionBgColor"
                         :slide="currentSlide" :bgPicker="sectionBgColorEditable" />
                 </div>
             </SplitterPanel>

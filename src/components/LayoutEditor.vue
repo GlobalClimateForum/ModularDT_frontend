@@ -8,6 +8,7 @@ import InputText from 'primevue/inputtext';
 import ColorPicker from 'primevue/colorpicker';
 import { useDialog } from 'primevue/usedialog'
 import type { Slide } from '@/services/slide_service'
+import { layouts, type Layout } from '@/globals/slide_layout'
 
 
 import CustomLayoutDialog from '@/components/CustomLayoutDialog.vue'
@@ -27,7 +28,6 @@ const dialog = useDialog();
 const props = defineProps<{
     layout?: string,
     widths?: number[],
-    showFrame?: boolean,
     autoSizeButton?: boolean
     bgPicker?: boolean
     slide?: Slide
@@ -37,24 +37,11 @@ const props = defineProps<{
 const hexBgColor = ref(props.backgroundColor ?? '')
 const currentLayout = ref<string>(props.layout || 'fullscreen');
 const currentWidths = ref<number[]>(props.widths || [0.5]);
-const showFrame = ref<boolean>(props.showFrame || false);
+const showFrame = ref<boolean>(false);
 const autoSize = ref<boolean>(props.autoSizeButton || false);
 const isCustom = ref<boolean>(false);
 
-interface Layout {
-    id: string;
-    label: string;
-    widths: number[];
-    fractions: number[];
-}
 
-const layouts = [
-    { id: 'fullscreen', label: 'fullscreen', widths: [1], fractions: [12] },
-    { id: 'fiftyfifty', label: '1:1', widths: [0.5, 0.5], fractions: [6, 6] },
-    { id: 'golden', label: '3:2', widths: [0.6, 0.4], fractions: [8, 4] },
-    { id: 'reversegolden', label: '2:3', widths: [0.4, 0.6], fractions: [4, 8] },
-    { id: 'thirds', label: '1|3 each', widths: [1 / 3, 1 / 3, 1 / 3], fractions: [4, 4, 4] },
-]
 
 function onCustomLayout() {
     dialog.open(CustomLayoutDialog, {
@@ -95,7 +82,6 @@ function activeLayout(): string {
 
 function onToggleSectionFrame() {
     emit('showframe', showFrame.value);
-    return showFrame.value;
 }
 
 function onHexInput(v: string | undefined) {
@@ -143,9 +129,16 @@ watch(hexBgColor, v => {
             </template>
             <template #end>
                 <div class="layout-btn-controls">
-                    <div class="label-container" center>
-                        <label for="showFrame">section frame</label>
-                        <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
+                    <div class="label-container" >
+                        <label for="showFrame">Show Meta</label>
+                        <div class="toggle-container">
+                            <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
+                            <label>Section Frames</label>
+                        </div>
+                        <div  class="toggle-container">
+                            <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
+                            <label>Section IDs</label>
+                        </div>
                         <!-- <Button small rounded text @click="showFrame = !showFrame; emit('showframe', showFrame)">
                             <template #icon>
                                 <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
@@ -196,6 +189,14 @@ watch(hexBgColor, v => {
     display: flex;
     align-items: flex-start;
     gap: 1.5rem;
+}
+
+.toggle-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-small); 
+    width: 100%; 
 }
 
 .disabled {
