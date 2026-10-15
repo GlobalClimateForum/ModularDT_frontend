@@ -12,8 +12,8 @@ import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import Chip from 'primevue/chip';
-import { slides, fetchSlides } from '@/globals/slides';
-import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
+import { slides, updateSlideStore } from '@/globals/slides'
+import { renameSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
 import { ref, toRaw } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
@@ -43,18 +43,23 @@ const filters = ref<SearchFilters>({
 
 const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
-function onRowEditSave(event: any) {
+async function onRowEditSave(event: any) {
+    
+    const oldSlide = event.data
     const { id, name } = event.newData
-    if (name === event.data.name) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
-    } else {
-        updateSlide(id, { name: name }, []).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Slide updated successfully', life: 3000 });
-            slides.value[event.index] = response.data;
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update slide', life: 3000 });
-            console.error("Error updating slide:", error)
-        })
+    const trimmedName = name.trim()
+
+    if (trimmedName === oldSlide.name) {
+        toast.add({ severity: 'warn', summary: 'Warning',  detail: 'New and old filenames are identical', life: 3000, })
+        return
+    }
+
+    try {
+        await renameSlide(id, trimmedName) // Wait for the backend to perform the rename operation
+        updateSlideStore({ ...oldSlide, name: trimmedName,}) // Rename the slide in the local store after successful backend operation
+        toast.add({severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
+    } catch {
+        toast.add({ severity: 'error', summary: 'Error',detail: 'Failed to rename slide',life: 3000})
     }
 }
 
