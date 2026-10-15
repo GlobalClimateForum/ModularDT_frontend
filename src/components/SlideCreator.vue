@@ -329,6 +329,7 @@ async function persistCurrentSlide() {
         applySavedSlide(savedSlide)
         updateSlideOnMonitors(savedSlide)
         updateSlideViews(savedSlide)
+        edited.value = false
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
     }
