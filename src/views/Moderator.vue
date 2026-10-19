@@ -177,6 +177,20 @@ const items = computed(() => [
   },
 ]);
 
+onMounted(() => {
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
+  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
+  currentDashboard.value = 'slides';
+  updateDataForMonitors();
+});
+
+// important: close the socket when the component is unmounted to avoid memory leaks
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
+})
+
 const handleMessage = (data) => {
   try {
     if (data.event_type === 'participant_slideshow_update' || data.message) {
@@ -190,7 +204,7 @@ const handleMessage = (data) => {
       updateParticipantParameters(data.parameter_name, data.participant, data.value)
     }
     if (data.event_type === 'monitor_request' || data.message) {
-      updateDataForMonitors(data.monitorid)
+      updateDataForMonitor(data.monitorid)
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -207,7 +221,7 @@ provide('updateParticipantParameter', updateParticipantParameter);
 provide('SlideLink', SlideLink)
 
 
-function updateDataForMonitors(monitorid: string) {
+function updateDataForMonitor(monitorid: string) {
   sendMonitorUpdate(Number(monitorid), {
     'payload': {
       'event_type': 'data_update',
@@ -228,18 +242,11 @@ function updateDataForMonitors(monitorid: string) {
   })
 }
 
-onMounted(() => {
-  wsService.connect(channelId, socketUrl)
-  wsService.on(channelId, 'message', handleMessage)
-  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-  currentDashboard.value = 'slides';
-});
-
-// important: close the socket when the component is unmounted to avoid memory leaks
-onUnmounted(() => {
-  wsService.off(channelId, 'message', handleMessage)
-  wsService.disconnect(channelId)
-})
+function updateDataForMonitors() {
+  for (let i=1; i<=settings.value.number_of_screens; ++i) {
+    updateDataForMonitor(i.toString())
+  }   
+}
 
 function handleSlideEdit(slide: Slide) {
   currentSlide.value = slide

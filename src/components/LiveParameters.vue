@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 // Vue stuff
 import { useI18n } from 'vue-i18n';
-import { useToast } from 'primevue/usetoast'
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';

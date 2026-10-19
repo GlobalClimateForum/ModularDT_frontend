@@ -32,7 +32,7 @@ const wsService = useWebsocketService()
 
 let livePresentationActive = ref<Boolean>(false)
 let liveSlidesActive = ref<Boolean>(false)
-let ready_to_render = ref<Boolean>(false) 
+let ready_to_render = ref<Boolean>(false)
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -40,8 +40,29 @@ const activeMonitor = computed(() => {
   return 1 <= idAsNumber && idAsNumber <= settings.value.number_of_screens
 })
 
-//let socket: WebSocket | null = null
-const connectionStatus = ref('Connecting...')
+onBeforeMount(() => {
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
+  sendModeratorAMonitorRequest(`${currentId.value}`)
+  fetchBackgoundImage(settings.value.background_image);
+})
+
+// important: close the socket when the component is unmounted to avoid memory leaks
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
+})
+
+// -- Parameter Changes --
+const parameterChanges = ref<ParameterChange[]>([])
+// Subscribe to parameter changes when the component is mounted
+onMounted(() => {
+  stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
+})
+// Function to stop the subscription to parameter changes
+let stop: (() => void) | undefined
+// Clean up the subscription when the component is unmounted
+onUnmounted(() => stop?.())
 
 function updateParticipantParameter(parameter_name: string, value: string) {
   // This is a Dummy for the Monitor view. In the Monitor view the interactive slides
@@ -64,16 +85,7 @@ function getSlideMode(sections: SlideSection[]): string {
   return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
 
-// -- Parameter Changes --
-const parameterChanges = ref<ParameterChange[]>([])
-// Subscribe to parameter changes when the component is mounted
-onMounted(() => {
-  stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
-})
-// Function to stop the subscription to parameter changes
-let stop: (() => void) | undefined
-// Clean up the subscription when the component is unmounted
-onUnmounted(() => stop?.())
+
 
 // Function to apply a parameter change to a slide, returning a new slide object with the updated parameters
 function applyParameterChange(slide: Slide, change: ParameterChange | undefined): Slide {
@@ -93,43 +105,43 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 function updateSettings(data) {
-      let need_to_rerender = false
+  let need_to_rerender = false
 
-      settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
+  settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
 
-      if (settings.value.number_of_screens != data.settings.number_of_screens) {
-        settings.value.number_of_screens = data.settings.number_of_screens
-        need_to_rerender = true
-      }
+  if (settings.value.number_of_screens != data.settings.number_of_screens) {
+    settings.value.number_of_screens = data.settings.number_of_screens
+    need_to_rerender = true
+  }
 
-      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
-        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
-        need_to_rerender = true
-      }
+  if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
+    settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
+    need_to_rerender = true
+  }
 
-      if (settings.value.show_screen_id != data.settings.show_screen_id) {
-        settings.value.show_screen_id = data.settings.show_screen_id
-        need_to_rerender = true
-      }
+  if (settings.value.show_screen_id != data.settings.show_screen_id) {
+    settings.value.show_screen_id = data.settings.show_screen_id
+    need_to_rerender = true
+  }
 
-      if (settings.value.palette != data.settings.palette) {
-        settings.value.palette = data.settings.palette
-        updatePrimaryPalette(palettes[settings.value.palette]);
-        //need_to_rerender = true
-      }
+  if (settings.value.palette != data.settings.palette) {
+    settings.value.palette = data.settings.palette
+    updatePrimaryPalette(palettes[settings.value.palette]);
+    //need_to_rerender = true
+  }
 
-      if (settings.value.background_image != data.settings.background_image) {
-        settings.value.background_image = data.settings.background_image
-        fetchBackgoundImage(settings.value.background_image);
-        //need_to_rerender = true
-      }
+  if (settings.value.background_image != data.settings.background_image) {
+    settings.value.background_image = data.settings.background_image
+    fetchBackgoundImage(settings.value.background_image);
+    //need_to_rerender = true
+  }
 
-      if (need_to_rerender) {
-        const instance = getCurrentInstance();
-        if (instance?.proxy) {
-          instance.proxy.$forceUpdate();
-        }
-      }
+  if (need_to_rerender) {
+    const instance = getCurrentInstance();
+    if (instance?.proxy) {
+      instance.proxy.$forceUpdate();
+    }
+  }
 }
 
 const handleMessage = (data) => {
@@ -197,59 +209,46 @@ const handleMessage = (data) => {
     console.error('Error processing WebSocket message:', e)
   }
 }
-
-onBeforeMount(() => {
-  wsService.connect(channelId, socketUrl)
-  wsService.on(channelId, 'message', handleMessage)
-  sendModeratorAMonitorRequest(`${currentId.value}`)
-  fetchBackgoundImage(settings.value.background_image);
-})
-
-// important: close the socket when the component is unmounted to avoid memory leaks
-onUnmounted(() => {
-  wsService.off(channelId, 'message', handleMessage)
-  wsService.disconnect(channelId)
-})
 </script>
 
 <template>
-  <div v-if="ready_to_render">
-  <div v-if="settings.show_screen_id" class="monitor_ID">
-    {{ currentId }}
-  </div>
-  <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
-    <div v-if="currentSlide === null && livePresentationActive">
-      <div v-if="settings.background_image_on_empty_screens && background_image">
+  <!-- <div v-if="ready_to_render"> -->
+    <div v-if="settings.show_screen_id" class="monitor_ID">
+      {{ currentId }}
+    </div>
+    <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
+      <div v-if="currentSlide === null && livePresentationActive">
+        <div v-if="settings.background_image_on_empty_screens && background_image">
+          <img class="bg_image" :src="background_image?.src || ''" alt="">
+        </div>
+      </div>
+      <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
+        style="width: 100vw; height: 100vh; overflow: hidden;">
+      </div>
+      <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
+        <SlideView :preview="false" :slide="displaySlide" :showframe="false"
+          :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
+      </div>
+    </div>
+    <div v-else>
+      <div v-if="settings.background_image_on_welcome_screens && background_image">
         <img class="bg_image" :src="background_image?.src || ''" alt="">
       </div>
-    </div>
-    <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
-      style="width: 100vw; height: 100vh; overflow: hidden;">
-    </div>
-    <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
-      <SlideView :preview="false" :slide="displaySlide" :showframe="false"
-        :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
-    </div>
-  </div>
-  <div v-else>
-    <div v-if="settings.background_image_on_welcome_screens && background_image">
-        <img class="bg_image" :src="background_image?.src || ''" alt="">
-    </div>
-    <div v-else class="welcome show-bg-text">
-    </div>
-    <div class="centered">
-      <h2 style="font-size: 2rem;">{{ t('monitor.greeting') }}</h2>
-      <!-- Monitor ID is between 1 and the number of screens -->
-      <div v-if="activeMonitor">
-        <p>{{ t('monitor.waiting') }}</p>
+      <div v-else class="welcome show-bg-text">
       </div>
-      <!-- Monitor ID is 0 or exceeds the number of screens -->
-      <div v-else>
-        <p>{{ t('monitor.invalid') }}</p>
+      <div class="centered">
+        <h2 style="font-size: 2rem;">{{ t('monitor.greeting') }}</h2>
+        <!-- Monitor ID is between 1 and the number of screens -->
+        <div v-if="activeMonitor">
+          <p>{{ t('monitor.waiting') }}</p>
+        </div>
+        <!-- Monitor ID is 0 or exceeds the number of screens -->
+        <div v-else>
+          <p>{{ t('monitor.invalid') }}</p>
+        </div>
       </div>
     </div>
-  </div>
-  </div>
+  <!-- </div> -->
 </template>
 
 
@@ -281,10 +280,10 @@ onUnmounted(() => {
 }
 
 .bg_image {
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-	
+  position: fixed;
+  top: 0;
+  left: 0;
+
   /* Preserve aspet ratio */
   min-width: 100%;
   min-height: 100%;
