@@ -1,3 +1,4 @@
+oldIndex
 <script setup lang="ts">
 // Vue-stuff
 import { ref, watch, defineAsyncComponent, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
@@ -10,11 +11,12 @@ import SplitterPanel from 'primevue/splitterpanel'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import Tabs from 'primevue/tabs'
-import TabList from 'primevue/tablist'
-import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
-import Select from 'primevue/select';
+import Popover from 'primevue/popover'
+import Draggable from 'vuedraggable'
+import Listbox from 'primevue/listbox'
+
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service'
 import { SlideSectionTypes, validateFilename, renameSlide, type SlideSectionType } from '@/services/slide_service'
@@ -73,6 +75,9 @@ const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega 
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
+const sectionPopover = ref<InstanceType<typeof Popover> | null>(null) // Reference to the Popover component for section type selection
+const popoverSection = ref<EditorSection | null>(null) // Reference to the section for which the Popover is currently open
+
 
 const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: crypto.randomUUID() })
 
@@ -315,6 +320,45 @@ function onToggleAutoSize(autosize: boolean) {
     updateSectionAt(currentSectionIndex.value, { properties: { ...properties, autosize } })
 }
 
+function onSectionTypePopover($event, section) {
+    popoverSection.value = section
+    sectionPopover.value?.toggle(event)
+}
+
+// Handler to reorder sections when the user drags and drops a section to a new position in the editor.
+// It updates the selectedTypes and sectionWidths arrays accordingly, and ensures that the currentSectionIndex is updated to maintain the correct selection after reordering.
+function onSectionReorder(event: { oldIndex?: number, newIndex?: number }) {
+
+    const { oldIndex, newIndex } = event // Get the old and new indices from the event object
+
+    // Guard clause to ensure that the old and new indices are defined and different before proceeding with the reordering
+    if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+
+    const [type] = selectedTypes.value.splice(oldIndex, 1) // Remove the selected type at the old index and store it in a variable
+    if (type) { selectedTypes.value.splice(newIndex, 0, type) } // Insert the removed type at the new index if it exists
+
+    const [width] = sectionWidths.value.splice(oldIndex, 1) // Remove the width fraction at the old index and store it in a variable
+    if (width) { sectionWidths.value.splice(newIndex, 0, width) } // Insert the removed width fraction at the new index if it exists
+
+    // Keep the selection
+    if (currentSectionIndex.value === oldIndex) {
+        // If the current section index is the same as the old index, update it to the new index
+        currentSectionIndex.value = newIndex
+    } else if (
+        // If the current section index is between the old and new indices, adjust it accordingly to maintain the correct selection after reordering
+        oldIndex < currentSectionIndex.value &&
+        newIndex >= currentSectionIndex.value
+    ) {
+        currentSectionIndex.value--
+    } else if (
+        // If the current section index is between the new and old indices, adjust it accordingly to maintain the correct selection after reordering
+        oldIndex > currentSectionIndex.value &&
+        newIndex <= currentSectionIndex.value
+    ) {
+        currentSectionIndex.value++
+    }
+}
+
 // --------------------- Slide Persistence ---------------------
 
 // Handles saves (new slide) and updates (existing slides) of the current slide in the editor
@@ -362,7 +406,6 @@ function onChangeViewType(index: number, option: SlideSectionType) {
     if (!oldSection) { return } // Guard clause to ensure the section exists
     updateSectionAt(index, { ...createDefaultSection(), width_fraction: oldSection.width_fraction, view_type: option.value })
 }
-
 
 // --------------------- Watchers ---------------------
 
@@ -417,6 +460,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+
     <div class="slide-creator-container">
 
         <div class="dashboard-header">
@@ -483,56 +527,87 @@ onBeforeUnmount(() => {
             </Message>
 
         </div>
+
+
         <!-- Editor -->
         <Splitter :gutter-size="2" class="dashboard">
 
             <SplitterPanel :size="50" class="sub-panel">
 
                 <h1 class="dashboard_label">Slide Editor</h1>
+                <div class="section-editor inset-control">
+
+                    <Draggable v-model="slideSections" item-key="_key" tag="div" class="section-selector"
+                        handle=".drag-handle" :animation="220" ghost-class="section-ghost" chosen-class="section-chosen"
+                        drag-class="section-dragging" @change="onSectionReorder">
+
+                        <template #item="{ element: section, index }">
+                            <div class="section-btn" :class="{ active: currentSectionIndex === index }"
+                                @click="currentSectionIndex = index">
+                                <i class="material-symbols-outlined drag-handle">
+                                    drag_indicator
+                                </i>
+
+                                <span class="section-label">
+                                    {{ selectedTypes[index]?.label }}
+                                </span>
+
+                                <i class="material-symbols-outlined section-icon">
+                                    {{ selectedTypes[index]?.icon }}
+                                </i>
+
+                                <Button class="section-action" size="small" rounded text aria-label="Section actions"
+                                    @click.stop="onSectionTypePopover($event, section)">
+                                    <i class="material-symbols-outlined">label</i>
+                                </Button>
+
+
+                                <Popover ref="sectionPopover">
+                                    <div class="popover-content">
+
+                                        <Listbox v-model="selectedTypes[index]" :options="SlideSectionTypes"
+                                             option-value="value" class="section-type-listbox">
+ 
+                                            <template #option="{ option }" >
+                                                <div class="listbox-option">
+                                                    <div class="listbox-option-name">
+                                                        <i class="material-symbols-outlined">{{ option.icon }}</i> <span>{{ option.label }}</span>
+                                                    </div>
+                                                    <div class="listbox-option-description">
+                                                        {{ option.description }}
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                        </Listbox>
+                                    </div>
+                                </Popover>
+
+
+                                <Button class="section-action" size="small" rounded text aria-label="Remove section"
+                                    @click.stop="removeSectionAt(index)">
+                                    <i class="material-symbols-outlined">close</i>
+                                </Button>
+                            </div>
+                        </template>
+
+                    </Draggable>
+
+                    <Button size="small" outlined class="add-section-btn"
+                        @click="addSectionAt(currentSectionIndex + 1)">
+                        <template #icon>
+                            <i class="material-symbols-outlined">add</i>
+                        </template>
+                    </Button>
+
+                </div>
 
                 <Tabs :value="String(currentSectionIndex)" @update:value="currentSectionIndex = Number($event)"
                     style="flex: 1; min-height: 0;" scrollable>
 
                     <!-- For every section in the slide, create a tab with an editor -->
-                    <TabList class="tab-header">
-                        <Tab v-for="(section, index) in slideSections" :key="section._key" :value="String(index)"
-                            class="tab" @click="currentSectionIndex = index">
-                            <div class="tab-title">
-                                <Button class="close-tab-btn" rounded text @click.stop="removeSectionAt(index)">
-                                    <i class="material-symbols-outlined" style="font-size: 1.25rem;">close</i>
-                                </Button>
-                                <Select v-model="selectedTypes[index]" :options="SlideSectionTypes" checkmark
-                                    optionLabel="label" scrollHeight="auto" class="tab-type-select"
-                                    @change="onChangeViewType(index, $event.value);">
-                                    <template #value="slotProps">
-                                        <div class="tab-type-selected" v-if="slotProps.value">
-                                            <i class="material-symbols-outlined">{{ slotProps.value.icon }}</i>
-                                            <span>{{ slotProps.value.label }}</span>
-                                        </div>
-                                    </template>
-                                    <template #option="slotProps">
-                                        <div>
-                                            <div class="tab-type-option"
-                                                style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center; border-radius: var(--br-medium); cursor: pointer;">
-                                                <i class="material-symbols-outlined">{{ slotProps.option.icon }}</i>
-                                                <div>
-                                                    <p style="margin: 0; font-size: var(--fs-medium)"> {{
-                                                        slotProps.option.label
-                                                    }}</p>
-                                                    <p style="margin: 0; font-size: var(--fs-small)">{{
-                                                        slotProps.option.description }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </Select>
-                            </div>
-                        </Tab>
-                        <Button text rounded v-if="slideSections.length < SECTION_LIMIT" class="add-tab-btn"
-                            @click="addSectionAt(currentSectionIndex + 1)">
-                            <i class="material-symbols-outlined">add</i>
-                        </Button>
-                    </TabList>
+
+
 
                     <!-- For every section in the slide, create a tab panel with a CodeMirror editor -->
                     <TabPanels class="tab-panel">
@@ -590,6 +665,119 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.section-editor {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+
+    border: 1px solid var(--p-primary-200);
+    border-radius: var(--br-medium);
+
+}
+
+.section-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+
+    padding: var(--space-small);
+    overflow-x: auto;
+}
+
+.section-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-small);
+
+    height: calc(var(--space-large) * 1.5);
+
+    padding: 0px var(--space-small) 0px var(--space-small);
+
+    border: 1px solid var(--p-primary-200);
+    border-radius: var(--br-small);
+    color: var(--p-primary-500);
+
+    cursor: default;
+
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.section-btn :deep(.p-button) {
+    padding: 0px;
+    margin: 0px;
+}
+
+.section-btn:hover :deep(.p-button) {
+    background: var(--p-primary-100);
+}
+
+.section-btn.active {
+    background: var(--p-primary-500);
+    border-color: var(--p-primary-600);
+    color: white;
+}
+
+.drag-handle {
+    cursor: grab;
+    opacity: 0.55;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.section-btn:hover .drag-handle {
+    opacity: 1;
+}
+
+
+:deep(.section-ghost) {
+    min-width: 7.5rem;
+    background: var(--p-primary-200);
+    border: 1px solid var(--p-primary-200);
+    opacity: 0.8;
+}
+
+.section-ghost>* {
+    visibility: hidden;
+}
+
+/* The item currently held by the pointer */
+.section-chosen {
+    box-shadow: var(--shadow-dark);
+}
+
+.section-type-listbox {
+    margin: 0;
+    padding: 0px; 
+    border: none;
+}
+
+.listbox-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.listbox-option-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    color: var(--p-primary-700);
+    font-weight: 600;
+}
+
+.listbox-option-description {
+    color: var(--p-primary-500);
+}
+
 .slide-creator-container {
     display: flex;
     flex-direction: column;
@@ -670,44 +858,6 @@ onBeforeUnmount(() => {
 }
 
 
-:deep(.p-tab:not([data-p-active="true"]):hover) {
-    background-color: var(--p-primary-100);
-    cursor: pointer;
-}
-
-:deep(.p-tab[data-p-active="true"]) {
-    background-color: var(--p-primary-500);
-    border-bottom: none;
-    color: var(--p-primary-50);
-}
-
-:deep(.p-tab[data-p-active="true"] .close-tab-btn) {
-    color: white;
-}
-
-:deep(.p-tab:not([data-p-active="true"]) .close-tab-btn) {
-    color: var(--p-primary-500);
-}
-
-/* Type select: purple fill only on active tab, transparent on inactive */
-:deep(.p-tab[data-p-active="true"] .tab-type-select) {
-    background-color: var(--p-primary-500);
-    border: none;
-}
-
-:deep(.p-tab:not([data-p-active="true"]) .tab-type-select) {
-    background-color: transparent;
-    border: none;
-}
-
-:deep(.p-tab[data-p-active="true"] .tab-type-selected) {
-    color: white;
-}
-
-:deep(.p-tab:not([data-p-active="true"]) .tab-type-selected) {
-    color: var(--p-primary-500);
-}
-
 .add-tab-btn {
     display: flex;
     align-items: center;
@@ -769,18 +919,18 @@ onBeforeUnmount(() => {
 
 .editor-fade-enter-active,
 .editor-fade-leave-active {
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
 }
 
 .editor-fade-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
+    opacity: 0;
+    transform: translateY(8px);
 }
 
 .editor-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
+    opacity: 0;
+    transform: translateY(-8px);
 }
 </style>
