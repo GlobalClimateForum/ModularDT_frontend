@@ -1,4 +1,3 @@
-oldIndex
 <script setup lang="ts">
 // Vue-stuff
 import { ref, watch, defineAsyncComponent, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
@@ -10,9 +9,6 @@ import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
-import Tabs from 'primevue/tabs'
-import TabPanels from 'primevue/tabpanels'
-import TabPanel from 'primevue/tabpanel'
 import Popover from 'primevue/popover'
 import Draggable from 'vuedraggable'
 import Listbox from 'primevue/listbox'
@@ -76,8 +72,6 @@ const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the se
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
 const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
 const sectionPopover = ref<InstanceType<typeof Popover> | null>(null) // Reference to the Popover component for section type selection
-const popoverSection = ref<EditorSection | null>(null) // Reference to the section for which the Popover is currently open
-
 
 const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: crypto.randomUUID() })
 
@@ -268,6 +262,9 @@ function removeSectionAt(index: number) {
     slideSections.value.splice(index, 1)
     selectedTypes.value.splice(index, 1)
 
+    // Adjust the currentSectionIndex if the removed section was before the currently selected section
+    if (index < currentSectionIndex.value) currentSectionIndex.value--
+
     normalizeSectionWidths(); // Normalize the widths of the remaining sections after removal
 
     // Keep the active tab index within bounds after removing a section
@@ -320,25 +317,34 @@ function onToggleAutoSize(autosize: boolean) {
     updateSectionAt(currentSectionIndex.value, { properties: { ...properties, autosize } })
 }
 
-function onSectionTypePopover($event, section) {
-    popoverSection.value = section
-    sectionPopover.value?.toggle(event)
+// Handler to show the popover for changing the view type of a section when the user clicks the dropdown button in the section selector
+function onSectionTypePopover(e: Event) {
+    sectionPopover.value?.toggle(e)
+}
+
+// Handler to change the view type of a section when the user selects a new type from the popover dropdown
+function onPopoverTypeChange(option: SlideSectionType | null) {
+    if (!option) return // Guard clause to ensure the option is not null
+
+    const index = currentSectionIndex.value
+    selectedTypes.value[index] = option
+    onChangeViewType(index, option)
+    // Update the unique key of the section to force re-rendering of the CodeEditor when the view type changes
+    slideSections.value[index]._key = crypto.randomUUID()
+    sectionPopover.value?.hide()
 }
 
 // Handler to reorder sections when the user drags and drops a section to a new position in the editor.
 // It updates the selectedTypes and sectionWidths arrays accordingly, and ensures that the currentSectionIndex is updated to maintain the correct selection after reordering.
-function onSectionReorder(event: { oldIndex?: number, newIndex?: number }) {
+function onSectionReorder(event: { moved?: { oldIndex: number, newIndex: number } }) {
 
-    const { oldIndex, newIndex } = event // Get the old and new indices from the event object
+    if (!event.moved) return
+    const { oldIndex, newIndex } = event.moved
+    if (oldIndex === newIndex) return
 
-    // Guard clause to ensure that the old and new indices are defined and different before proceeding with the reordering
-    if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
-
-    const [type] = selectedTypes.value.splice(oldIndex, 1) // Remove the selected type at the old index and store it in a variable
-    if (type) { selectedTypes.value.splice(newIndex, 0, type) } // Insert the removed type at the new index if it exists
-
-    const [width] = sectionWidths.value.splice(oldIndex, 1) // Remove the width fraction at the old index and store it in a variable
-    if (width) { sectionWidths.value.splice(newIndex, 0, width) } // Insert the removed width fraction at the new index if it exists
+    selectedTypes.value.splice(newIndex, 0, selectedTypes.value.splice(oldIndex, 1)[0])
+    sectionWidths.value.splice(newIndex, 0, sectionWidths.value.splice(oldIndex, 1)[0])
+    layout.value = identifyLayoutType(sectionWidths.value) // golden ↔ reversegolden can flip
 
     // Keep the selection
     if (currentSectionIndex.value === oldIndex) {
@@ -473,8 +479,7 @@ onBeforeUnmount(() => {
 
             <Transition name="fade" mode="out-in">
                 <div v-if="!nameEditing">
-                    <Button outlined v-if="props.slide" size="small" class="renaname-btn" @click="nameEditing = true"
-                        label="Rename">
+                    <Button outlined v-if="props.slide" size="small" @click="nameEditing = true" label="Rename">
                         <template #icon><i class="material-symbols-outlined">edit</i></template>
                     </Button>
                 </div>
@@ -539,7 +544,7 @@ onBeforeUnmount(() => {
 
                     <Draggable v-model="slideSections" item-key="_key" tag="div" class="section-selector"
                         handle=".drag-handle" :animation="220" ghost-class="section-ghost" chosen-class="section-chosen"
-                        drag-class="section-dragging" @change="onSectionReorder">
+                        @change="onSectionReorder">
 
                         <template #item="{ element: section, index }">
                             <div class="section-btn" :class="{ active: currentSectionIndex === index }"
@@ -548,44 +553,29 @@ onBeforeUnmount(() => {
                                     drag_indicator
                                 </i>
 
-                                <span class="section-label">
-                                    {{ selectedTypes[index]?.label }}
-                                </span>
+                                <div
+                                    style="display: flex; flex-direction: row; align-items: center; gap: var(--space-small);">
+                                    <i class="material-symbols-outlined">
+                                        {{ selectedTypes[index]?.icon }}
+                                    </i>
 
-                                <i class="material-symbols-outlined section-icon">
-                                    {{ selectedTypes[index]?.icon }}
-                                </i>
+                                    <span class="section-label" v-if="currentSectionIndex !== index">
+                                        {{ selectedTypes[index]?.label }}
+                                    </span>
 
-                                <Button class="section-action" size="small" rounded text aria-label="Section actions"
-                                    @click.stop="onSectionTypePopover($event, section)">
-                                    <i class="material-symbols-outlined">label</i>
-                                </Button>
+                                    <div class="section-type-change" v-else @click.stop="onSectionTypePopover($event)">
+                                        <span
+                                            :class="{ 'section-label': true, 'active': currentSectionIndex === index }">
+                                            {{ selectedTypes[index]?.label }}
+                                        </span>
+                                        <i class="material-symbols-outlined">arrow_drop_down</i>
 
-
-                                <Popover ref="sectionPopover">
-                                    <div class="popover-content">
-
-                                        <Listbox v-model="selectedTypes[index]" :options="SlideSectionTypes"
-                                             option-value="value" class="section-type-listbox">
- 
-                                            <template #option="{ option }" >
-                                                <div class="listbox-option">
-                                                    <div class="listbox-option-name">
-                                                        <i class="material-symbols-outlined">{{ option.icon }}</i> <span>{{ option.label }}</span>
-                                                    </div>
-                                                    <div class="listbox-option-description">
-                                                        {{ option.description }}
-                                                    </div>
-                                                </div>
-                                            </template>
-
-                                        </Listbox>
                                     </div>
-                                </Popover>
 
+                                </div>
 
-                                <Button class="section-action" size="small" rounded text aria-label="Remove section"
-                                    @click.stop="removeSectionAt(index)">
+                                <Button :class="{ 'section-action': true, 'active': currentSectionIndex === index }"
+                                    size="small" rounded text @click.stop="removeSectionAt(index)">
                                     <i class="material-symbols-outlined">close</i>
                                 </Button>
                             </div>
@@ -593,7 +583,33 @@ onBeforeUnmount(() => {
 
                     </Draggable>
 
+                    <Popover ref="sectionPopover">
+                        <Listbox :modelValue="selectedTypes[currentSectionIndex]" :options="SlideSectionTypes"
+                            optionLabel="label" class="section-type-listbox" @update:modelValue="onPopoverTypeChange">
+                            <template #option="{ option }">
+                                <div class="listbox-option">
+
+                                    <i class="material-symbols-outlined  listbox-option-icon">
+                                        {{ option.icon }}
+                                    </i>
+
+                                    <div class="listbox-option-meta">
+                                        <div class="listbox-option-name">
+
+                                            <span>{{ option.label }}</span>
+                                        </div>
+
+                                        <div class="listbox-option-description">
+                                            {{ option.description }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </Listbox>
+                    </Popover>
+
                     <Button size="small" outlined class="add-section-btn"
+                        :disabled="slideSections.length >= SECTION_LIMIT"
                         @click="addSectionAt(currentSectionIndex + 1)">
                         <template #icon>
                             <i class="material-symbols-outlined">add</i>
@@ -602,36 +618,22 @@ onBeforeUnmount(() => {
 
                 </div>
 
-                <Tabs :value="String(currentSectionIndex)" @update:value="currentSectionIndex = Number($event)"
-                    style="flex: 1; min-height: 0;" scrollable>
-
-                    <!-- For every section in the slide, create a tab with an editor -->
-
-
-
-                    <!-- For every section in the slide, create a tab panel with a CodeMirror editor -->
-                    <TabPanels class="tab-panel">
-                        <TabPanel v-for="(section, index) in slideSections" :key="section._key" :value="String(index)"
-                            style="height: 100%;">
-
-                            <!-- Display the right Editor component based on the selected view type for the section (markdown, map, chart, etc.) -->
-
-                            <Transition name="editor-fade" mode="out-in">
-                                <component :is="editorMapping[selectedTypes[index]?.value ?? 'markdown']"
-                                    :key="`${section._key}-${selectedTypes[index]?.value ?? 'markdown'}`"
-                                    :slideSection="serializeSectionAt(index)"
-                                    :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                                    @contentUpdated="updateSectionContentAt(index, $event)"
-                                    @sectionUpdated="updateSectionAt(index, $event)" @basemapUpdated="basemap = $event"
-                                    @targetSlideUpdated="targetSlide = $event" :basemap="basemap"
-                                    :progress="vegaProgress" :sectionIdx="index" :autosize="autosizeVega"
-                                    :slide="currentSlide">
-                                </component>
-                            </Transition>
-
-                        </TabPanel>
-                    </TabPanels>
-                </Tabs>
+                <div class="editor-container">
+                    <Transition name="editor-fade" mode="out-in">
+                        <KeepAlive :max=12>
+                            <component :is="editorMapping[selectedTypes[currentSectionIndex]?.value ?? 'markdown']"
+                                :key="`${slideSections[currentSectionIndex]._key}-${selectedTypes[currentSectionIndex]?.value ?? 'markdown'}`"
+                                :slideSection="serializeSectionAt(currentSectionIndex)"
+                                :slideSections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
+                                @contentUpdated="updateSectionContentAt(currentSectionIndex, $event)"
+                                @sectionUpdated="updateSectionAt(currentSectionIndex, $event)"
+                                @basemapUpdated="basemap = $event" @targetSlideUpdated="targetSlide = $event"
+                                :basemap="basemap" :progress="vegaProgress" :sectionIdx="currentSectionIndex"
+                                :autosize="autosizeVega" :slide="currentSlide">
+                            </component>
+                        </KeepAlive>
+                    </Transition>
+                </div>
 
             </SplitterPanel>
 
@@ -680,48 +682,14 @@ onBeforeUnmount(() => {
 
 .section-selector {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: var(--space-small);
 
     padding: var(--space-small);
     overflow-x: auto;
 }
 
-.section-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-small);
 
-    height: calc(var(--space-large) * 1.5);
-
-    padding: 0px var(--space-small) 0px var(--space-small);
-
-    border: 1px solid var(--p-primary-200);
-    border-radius: var(--br-small);
-    color: var(--p-primary-500);
-
-    cursor: default;
-
-    transition:
-        background-color 180ms ease,
-        border-color 180ms ease,
-        box-shadow 180ms ease;
-}
-
-.section-btn :deep(.p-button) {
-    padding: 0px;
-    margin: 0px;
-}
-
-.section-btn:hover :deep(.p-button) {
-    background: var(--p-primary-100);
-}
-
-.section-btn.active {
-    background: var(--p-primary-500);
-    border-color: var(--p-primary-600);
-    color: white;
-}
 
 .drag-handle {
     cursor: grab;
@@ -755,37 +723,50 @@ onBeforeUnmount(() => {
 
 .section-type-listbox {
     margin: 0;
-    padding: 0px; 
+    padding: 0px;
     border: none;
+    box-shadow: none;
 }
 
 .listbox-option {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0px;
+    gap: var(--space-small);
+}
+
+.listbox-option-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
 }
 
+.listbox-option-icon {
+    font-size: 2rem;
+    font-variation-settings: 'opsz' 24;
+    /* 20–48, roughly the px size */
+    color: var(--p-primary-500);
+}
+
 .listbox-option-name {
     display: flex;
     align-items: center;
     gap: var(--space-small);
-    color: var(--p-primary-700);
     font-weight: 600;
+    color: var(--p-primary-500);
 }
 
 .listbox-option-description {
-    color: var(--p-primary-500);
+    color: var(--text)
 }
 
 .slide-creator-container {
     display: flex;
     flex-direction: column;
     height: 100%;
-}
-
-.dashboard-header .p-inputtext {
-    width: 30%;
 }
 
 .dashboard-header .p-message {
@@ -806,10 +787,6 @@ onBeforeUnmount(() => {
 
 .dashboard-header .p-floatlabel label {
     color: var(--p-floatlabel-invalid-color) !important;
-}
-
-.p-toolbar {
-    margin: 0;
 }
 
 .preview-panel {
@@ -837,64 +814,68 @@ onBeforeUnmount(() => {
 }
 
 .section-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     font-size: var(--fs-medium);
     font-weight: 700;
 }
 
-:deep(.p-tab) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0rem 0.5rem;
-    border: none;
-    border-radius: var(--br-medium) var(--br-medium) 0 0;
-    height: 2.5rem;
-    background-color: transparent;
-    color: var(--p-primary-700);
-    transition: background-color 0.15s ease, color 0.15s ease;
+.section-action {
+    color: var(--p-primary-500);
+    border-radius: var(--br-small);
+    margin: 0px;
+    padding: 0px;
 }
 
+.section-action:hover {
+    background: transparent;
+    border: 1px solid white;
+}
 
-.add-tab-btn {
+.section-action.active {
+    background: var(--p-primary-500);
+    color: white;
+}
+
+.section-type-change {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    padding: 0rem 0.1rem;
-    border-radius: var(--br-medium) var(--br-medium) 0 0;
-    height: 2.5rem;
+    gap: calc(var(--space-small) / 2);
+    border-bottom: 2px solid white;
     cursor: pointer;
 }
 
-.tab-type-option {
-    padding: 0.25rem 0.5rem;
+.add-section-btn {
+    width: 2.5rem;
+    height: 2.5rem
 }
 
-.tab-type-select:deep(.p-select-dropdown) {
-    color: var(--p-primary-200);
-}
-
-.tab-type-selected {
-    display: flex;
+.section-btn {
+    display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-small);
+
+
+    padding: var(--space-small);
+
+    border: 1px solid var(--p-primary-200);
+    border-radius: var(--br-small);
+    color: var(--p-primary-500);
+
+    cursor: default;
+
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
 }
 
-.tab-header {
-    border-bottom: 2px solid var(--p-primary-500);
-    height: 2.5rem;
+.section-btn.active {
+    background: var(--p-primary-500);
+    border-color: var(--p-primary-600);
+    color: white;
 }
 
-.tab-title {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    margin: 0;
-}
-
-.tab-panel {
+.editor-container {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -902,20 +883,9 @@ onBeforeUnmount(() => {
     min-height: 0;
     overflow: hidden;
     padding: 0;
-    padding-top: 0.5rem;
+
 }
 
-.close-tab-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0rem 0rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    margin: 0;
-}
 
 .editor-fade-enter-active,
 .editor-fade-leave-active {
