@@ -111,6 +111,7 @@ export const getSlide = (id: number) => api.get(`/slides/${id}/`);
 
 export const getISlides = () => api.get("/slides/interactive/");
 export const getIPanels = () => api.get("/slides/ipanels/")
+export const getIPSlide = (slide_id: number) => api.get(`/slides/ipanels/${slide_id}/`)
 
 export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
     api.post("/slides/", { ...slide, sections });
