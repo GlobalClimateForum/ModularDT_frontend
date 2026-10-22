@@ -33,12 +33,11 @@ function toDocument(html: string, css: string): string {
     `;
 }
 
-
 async function getMarpContent() {
     const renderWidth = props.slide.width * props.sectionWidth;
     isRendering.value = true;
     try {
-        const content = await renderSlide(props.section.content, renderWidth, props.slide.height, debouncedBgColor.value);
+        const content = await renderSlide(props.section.content, renderWidth, props.slide.height, bgColor.value);
         marpDocument.value = toDocument(content.data.html, content.data.css);
     } catch (error) {
         console.error("Error rendering slide:", error);
@@ -47,18 +46,19 @@ async function getMarpContent() {
     }
 }
 
-watch(bgColor, (newColor) => {
+watch(bgColor, () => {
     clearTimeout(bgTimer);
-    bgTimer = setTimeout(() => {
-        debouncedBgColor.value = newColor;
-    }, 300);
-})
+    bgTimer = setTimeout(getMarpContent, 300);
+});
 
-onBeforeUnmount(() => clearTimeout(bgTimer));
+
+onBeforeUnmount(
+    () => clearTimeout(bgTimer)
+);
 
 watch(
-    () => [props.section.content, props.sectionWidth, debouncedBgColor.value],
-    () => { getMarpContent(); },
+    () => [props.section.content, props.sectionWidth],
+    () => { clearTimeout(bgTimer); getMarpContent(); },
     { immediate: true }
 );
 </script>
@@ -67,8 +67,8 @@ watch(
     <div class="section-wrapper" :style="{
         width: props.slide.width * props.sectionWidth + 'px',
         height: props.slide.height + 'px',
+        backgroundColor: bgColor,
         boxShadow: props.shadow ? '-2px 5px 32px -1px rgba(0,0,0,0.48)' : 'none',
-
     }">
         <Transition name="spinner">
             <div v-if="isRendering" class="spinner-overlay">
@@ -91,6 +91,7 @@ watch(
 }
 
 .marp-iframe {
+    background: transparent;
     display: block;
     box-sizing: border-box;
     border: none;
