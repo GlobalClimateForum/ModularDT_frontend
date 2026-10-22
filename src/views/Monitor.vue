@@ -32,7 +32,7 @@ const wsService = useWebsocketService()
 
 let livePresentationActive = ref<Boolean>(false)
 let liveSlidesActive = ref<Boolean>(false)
-let ready_to_render = ref<Boolean>(false)
+//let ready_to_render = ref<Boolean>(false)
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -203,7 +203,7 @@ const handleMessage = (data) => {
       liveSlidesActive.value = data.presentation.liveSlidesActive
       livePresentationActive.value = data.presentation.livePresentationActive
       currentSlide.value = data.presentation.slide
-      ready_to_render.value = true
+      //ready_to_render.value = true
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)

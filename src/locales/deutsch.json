@@ -105,7 +105,9 @@
     "greeting": "@:appName Teilnehmner",
     "waiting": "Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
     "seat": "Platz",
-    "live_presentation_state": "Live Teilnehmer status"
+    "who_are_you": "Wer sind sie?", 
+    "live_presentation_state": "Live Teilnehmer status",
+    "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv."
   },
   "monitor": {
     "greeting": "@:appName Monitor",

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // Vue stuff
-import { ref, onMounted, onUnmounted, computed, toRaw } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -9,7 +9,6 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
-import MultiSelect from 'primevue/multiselect';
 import { useToast } from 'primevue/usetoast'
 // globals and services
 import { type ParameterChange } from '@/services/parameterstore_service'
@@ -27,7 +26,6 @@ const toast = useToast();
 const parameterChanges = ref<ParameterChange[]>([])
 const addParameterActive = ref<Boolean>(false)
 const parameterName = ref<string>("");
-const autoConnection = ref<Boolean>(false);
 const selectedParameterType = ref<string | null>(null);
 
 const parameterTypeOptions = ref<{ label: string; value: string }[]>([
@@ -40,7 +38,6 @@ const parameterTypeOptions = ref<{ label: string; value: string }[]>([
 const parameterSelectionValueOption = ref<string>("");
 const parameterSelectionValueOptions = ref<string[]>([]);
 
-const selectedSlideParameters = ref<number[]>([]);
 const slideParameterArray = ref<{ label: string; value: number }[]>([]);
 
 const selectedGlobalParameter = ref<GlobalParameter | null>(null);
@@ -93,10 +90,15 @@ function onChangeActive(active_clicked: boolean, glob: GlobalParameter) {
 function onSaveParameter() {
     addParameterActive.value = false
 
+    let my_current_value = ""
+    if (selectedParameterType.value === 'Number') my_current_value = "0" 
+    if (selectedParameterType.value === 'Boolean') my_current_value = "0" 
+    if (selectedParameterType.value === 'Selection') my_current_value = parameterSelectionValueOptions.value[0] 
+
     currentGlobalParameter.value = {
         id: currentGlobalParameter.value?.id ?? undefined,
         description: "",
-        current_value: "",
+        current_value: my_current_value,
         name: parameterName.value,
         ptype: selectedParameterType.value ? selectedParameterType.value : "",
         pvalues: (parameterSelectionValueOptions.value.length === 0) ? [] : parameterSelectionValueOptions.value,
@@ -214,7 +216,7 @@ function globalParameterChange(glob: GlobalParameter) {
                                 @click="onCancelAddParameter" />
                             <Button type="button" :label="$t('moderator.save')" class="save-btn"
                                 @click="onSaveParameter"
-                                :disabled="selectedParameterType == null || parameterName.length == 0" />
+                                :disabled="selectedParameterType == null || parameterName.length == 0 || (selectedParameterType === 'Selection' && parameterSelectionValueOptions.length == 0)" />
                         </div>
                     </div>
                     <div class="label-container">
@@ -282,30 +284,39 @@ function globalParameterChange(glob: GlobalParameter) {
                             <InputText v-model="slotProps.data.name" />
                         </template>
                         <template #body="slotProps">
-                            <span v-if="slotProps.data.active" style="font-weight: 600;">{{ slotProps.data.name }}</span>
-                            <span v-else style="font-weight: 600; user-select: none; color: #94a3b8;">{{ slotProps.data.name }}</span>
+                            <span v-if="slotProps.data.active" style="font-weight: 600;">{{ slotProps.data.name
+                                }}</span>
+                            <span v-else style="font-weight: 600; user-select: none; color: #94a3b8;">{{
+                                slotProps.data.name }}</span>
                         </template>
                     </Column>
 
                     <Column field="input" header="Value" style="text-align: left">
                         <template #body="slotProps">
-                            <InputText v-if="slotProps.data.ptype === 'String'" v-model="slotProps.data.current_value" :disabled="!slotProps.data.active" 
+                            <InputText v-if="slotProps.data.ptype === 'String'" v-model="slotProps.data.current_value"
+                                :disabled="!slotProps.data.active" @change="globalParameterChange(slotProps.data)" />
+                            <InputText v-else-if="slotProps.data.ptype === 'Number'"
+                                v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
                                 @change="globalParameterChange(slotProps.data)" />
-                            <InputText v-else-if="slotProps.data.ptype === 'Number'" v-model="slotProps.data.current_value" :disabled="!slotProps.data.active" 
-                                @change="globalParameterChange(slotProps.data)" />
-                            <Select v-else-if="slotProps.data.ptype === 'Selection'" v-model="slotProps.data.current_value" :disabled="!slotProps.data.active" 
-                                :options="slotProps.data.pvalues" @change="globalParameterChange(slotProps.data)" /> 
-                            <Checkbox v-else-if="slotProps.data.ptype === 'Boolean'" v-model="slotProps.data.current_value" :disabled="!slotProps.data.active" 
-                                binary trueValue="1" falseValue="0" @change="globalParameterChange(slotProps.data)" />
+                            <Select v-else-if="slotProps.data.ptype === 'Selection'"
+                                v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
+                                :options="slotProps.data.pvalues" @change="globalParameterChange(slotProps.data)" />
+                            <div v-else-if="slotProps.data.ptype === 'Boolean'">
+                                <Checkbox v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
+                                    binary trueValue="1" falseValue="0"
+                                    @change="globalParameterChange(slotProps.data)" />
+                                <span v-if="slotProps.data.active" class="form-label" style="font-weight: 600;  margin-left: 8px;"> {{ slotProps.data.current_value == "0" ? "false" : "true" }} </span>
+                                <span v-else class="form-label" style="font-weight: 600; user-select: none; color: #94a3b8;  margin-left: 8px;"> {{ slotProps.data.current_value == "0" ? "false" : "true" }} </span>
+                            </div>
                             <span v-else>Unsupported input type</span>
                         </template>
                     </Column>
 
                     <Column style="width: 12rem; text-align: right">
                         <template #body="slotProps">
-                            <Button size="small" rounded text icon="pi pi-code" :disabled="!slotProps.data.active" 
+                            <Button size="small" rounded text icon="pi pi-code" :disabled="!slotProps.data.active"
                                 @click="onEditGlobalParameter(slotProps.data)" />
-                            <Button size="small" rounded text icon="pi pi-clone" :disabled="!slotProps.data.active" 
+                            <Button size="small" rounded text icon="pi pi-clone" :disabled="!slotProps.data.active"
                                 @click="onDuplicateEditGlobalParameter(slotProps.data)" />
                             <Button size="small" rounded text icon="pi pi-pencil" :disabled="!slotProps.data.active"
                                 @click="(e) => slotProps.editorInitCallback(e)" />

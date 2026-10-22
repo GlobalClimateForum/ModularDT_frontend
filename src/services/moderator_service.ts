@@ -12,3 +12,8 @@ export const sendModeratorAMonitorRequest = (monitorid: string) => api.patch(`/m
     event_type: "monitor_request",
     monitorid: monitorid
 });
+
+export const sendModeratorAParticipantRequest = (participantid: string) => api.patch(`/moderator/`, {
+    event_type: "participant_request",
+    participantid: participantid
+});

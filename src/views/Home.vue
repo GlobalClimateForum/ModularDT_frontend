@@ -10,8 +10,8 @@ import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
 import { type Event, getEventById } from '@/services/event_service'
 import { authorizeModerator } from '@/services/settings_service' // adjust path
-
-import { type Participant, getParticipants } from '@/services/participant_service'
+import { participants } from '@/globals/participants' 
+import { getParticipants } from '@/services/participant_service'
 import { avatarUri as buildAvatarUri, makeStyle, type StyleName} from '@/services/avatar_service';
 
 const { t } = useI18n();
@@ -20,7 +20,6 @@ const event = ref<Event | null>(null)
 const selectedRole = ref<string | null>(null)
 const pin = ref<any>(null)
 const pinError = ref(false)
-const participants = ref<Participant[]>([])
 const seatedParticipants = computed(() => participants.value.filter(p => p.seat !== null));
 const selectedMonitors = ref<number[]>([])
 
@@ -155,9 +154,9 @@ function logout() {
 
     <!-- Participant Menu -->
     <div v-if="selectedRole !== null && selectedRole === 'participant'">
-      <p style="text-align: center;">Who are you?</p>
+      <p style="text-align: center;">{{ t('participant.who_are_you') }}</p>
       <div class="participant-select-container">
-        <div v-for="participant in seatedParticipants" :key="participant.id" class="participant-option"
+        <div v-for="participant in seatedParticipants" :key="participant.seat" class="participant-option"
           @click="router.push('/participant/' + participant.seat)">
           <img :src="avatarUri(participant.name)" width="88" height="88" />
           <span>{{ participant.name }}</span>

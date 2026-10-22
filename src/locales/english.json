@@ -105,7 +105,9 @@
     "greeting": "@:appName Participant",
     "waiting": "Please wait until the participant slideshow is started by the moderator.",
     "seat": "Seat",
-    "live_presentation_state": "Participant live presentation state"
+    "who_are_you": "Who are you?", 
+    "live_presentation_state": "Participant live presentation state",
+    "invalid": "My instance ID is invalid. I'm staying inactive."
   },
   "monitor": {
     "greeting": "@:appName Monitor",

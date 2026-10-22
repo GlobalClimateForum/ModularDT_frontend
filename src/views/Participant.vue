@@ -9,12 +9,15 @@ import { useI18n } from 'vue-i18n';
 import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
 import { API_BASE_URL } from '@/config'
+import { participants } from '@/globals/participants'
+import { getParticipants } from '@/services/participant_service'
 // components
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
-import type { Slideshow } from "@/services/slideshow_service"
 import { sendModeratorUpdate, sendUpdateParticipantParameter } from "@/services/moderator_service";
+import { sendModeratorAParticipantRequest } from '@/services/moderator_service'
 import SlideLink from '@/components/SlideLink.vue'
+
 
 //const parameterChanges = ref<ParameterChange[]>([])
 //const panels = ref<any[]>([])
@@ -23,12 +26,12 @@ const currentId = computed(() => route.params.id)
 const { t } = useI18n();
 const wsService = useWebsocketService()
 
-const connectionStatus = ref('Connecting...')
-
 const channelId = `participant/${currentId.value}/`
 const wsUrlParticipant = new URL('/ws/participant/', API_BASE_URL)
 const socketUrl = wsUrlParticipant + `${currentId.value}/`
 
+const currentParticipantName = ref<String>("")
+const activeParticipant = ref<Boolean>(false)
 const slideshowActive = ref<Boolean>(false)
 const mySlideshow = ref<Slide[] | null>(null);
 const myCurrentSlide = ref<Slide | null>(null);
@@ -37,20 +40,42 @@ let mySlideshowId = -1
 
 let stop: (() => void) | undefined
 
+onMounted(async () => {
+  //stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
+  await getParticipants().then(response => {
+    participants.value = response.data.participants;
+  }).catch(error => {
+    console.error("Error fetching participants:", error);
+  });
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
+  window.addEventListener('keydown', handleKeyDown)
+  sendModeratorAParticipantRequest(`${currentId.value}`)
+  const filteredResult = participants.value.find((p) => p.seat === Number(Array.isArray(currentId.value) ? currentId.value[0] : currentId.value));
+  currentParticipantName.value = filteredResult ? filteredResult.name : ""
+  activeParticipant.value = filteredResult ? true : false
+})
+
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
+  window.removeEventListener('keydown', handleKeyDown)
+})
+
 function updateParticipantParameter(parameter_name: string, value: string) {
   sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
 
-function participantSlideLinkHandler(href: string, event: Event) {  
+function participantSlideLinkHandler(href: string, event: Event) {
   console.log('Handler für Link:', href);
   const index = mySlideshow.value?.findIndex(slide => slide.name === href)
   if ((index) && (mySlideshow.value)) {
     currentSlideIndex = index
     myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
   }
-  event.preventDefault() 
+  event.preventDefault()
 }
 
 provide('slideLinkClickHandler', participantSlideLinkHandler)
@@ -137,26 +162,6 @@ const handleSwipe = () => {
     previousSlide();
   }
 };
-
-onMounted(() => {
-  //stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
-  wsService.connect(channelId, socketUrl)
-  wsService.on(channelId, 'message', handleMessage)
-  window.addEventListener('keydown', handleKeyDown)
-  //window.updateParticipantParameter = updateParticipantParameter;
-})
-
-/*
-const ipanels = getIPanels().then((response) => {
-  panels.value = response.data
-})*/
-
-onUnmounted(() => {
-  wsService.off(channelId, 'message', handleMessage)
-  wsService.disconnect(channelId)
-  window.removeEventListener('keydown', handleKeyDown)
-  //delete window.updateParticipantParameter;
-})
 </script>
 
 <template>
@@ -170,9 +175,13 @@ onUnmounted(() => {
     </div>
   </div>
   <div v-else class="welcome show-bg-text">
-    <div style="position: absolute;">
-      <h2>{{ t('participant.greeting') }}</h2>
+    <div v-if="(activeParticipant)" style="position: absolute;">
+      <h2>{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
       <p> {{ t('participant.waiting') }} </p>
+    </div>
+    <div v-else style="position: absolute;">
+      <h2>{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
+      <p> {{ t('participant.invalid') }}</p>
     </div>
   </div>
 </template>

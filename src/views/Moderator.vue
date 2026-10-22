@@ -19,6 +19,7 @@ import { updateParticipantParameters, participantParameters } from '@/globals/pa
 import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
+import { sendParticipantUpdate } from "@/services/participant_service"
 import { API_BASE_URL } from '@/config'
 import { saveDraft } from '@/services/draft_service'
 import '@/assets/main.css'
@@ -206,6 +207,9 @@ const handleMessage = (data) => {
     if (data.event_type === 'monitor_request' || data.message) {
       updateDataForMonitor(data.monitorid)
     }
+    if (data.event_type === 'participant_request' || data.message) {
+      updateDataForParticipant(data.participantid)
+    }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
   }
@@ -242,10 +246,32 @@ function updateDataForMonitor(monitorid: string) {
   })
 }
 
+function updateDataForParticipant(participantid: string) {
+  sendParticipantUpdate(Number(participantid), {
+    // Need to adjust
+    /*'payload': {
+      'event_type': 'data_update',
+      'settings': {
+        'number_of_screens': settings.value.number_of_screens,
+        'background_image': settings.value.background_image,
+        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
+        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+        'show_screen_id': settings.value.show_screen_id,
+        'palette': settings.value.palette,
+      },
+      'presentation': {
+        'livePresentationActive': livePresentationState.value.active,
+        'liveSlidesActive': liveSlidesActive.value,
+        'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
+      }
+    } */
+  })
+}
+
 function updateDataForMonitors() {
-  for (let i=1; i<=settings.value.number_of_screens; ++i) {
+  for (let i = 1; i <= settings.value.number_of_screens; ++i) {
     updateDataForMonitor(i.toString())
-  }   
+  }
 }
 
 function handleSlideEdit(slide: Slide) {
@@ -282,8 +308,8 @@ watch(() => currentView.value, (newView, oldView) => {
     <SplitterPanel :size="15" :minSize="15" class="menu-panel">
 
       <div class="dashboard-header">
-        <div >{{ $t('moderator.nav.dashboard') }}</div>
-        <Button  @click="router.push('/')" text>
+        <div>{{ $t('moderator.nav.dashboard') }}</div>
+        <Button @click="router.push('/')" text>
           <template #icon>
             <span style="color: white" class="material-symbols-outlined">home</span>
           </template>
@@ -326,7 +352,8 @@ watch(() => currentView.value, (newView, oldView) => {
               </div>
               <div v-else>
                 <p style="padding: 0; margin: 0; font-weight: 400; font-family: 'Fira Code';
-                font-size: var(--fs-small); ">{{ t('moderator.presentation_control.no_presentation_showing_short') }}</p>
+                font-size: var(--fs-small); ">{{ t('moderator.presentation_control.no_presentation_showing_short') }}
+                </p>
               </div>
             </div>
           </li>
