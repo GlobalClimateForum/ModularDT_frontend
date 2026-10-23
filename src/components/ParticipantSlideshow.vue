@@ -8,9 +8,7 @@ import { useToast } from 'primevue/usetoast';
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-import { FilterMatchMode } from '@primevue/core/api'
 import draggable from 'vuedraggable';
-import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from "@/services/slide_service"
@@ -39,18 +37,12 @@ interface SelectedSlide {
 
 const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
-const confirm = useConfirm();
 
 const selectedSlide = ref<Slide | null>(null);
 const editingRows = ref<Presentation[]>([]);
-
 const selectedSlideshow = ref<Slideshow | null>(null);
 const slideshowName = ref<string>("");
-
 const toast = useToast();
-const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-})
 
 const selectedOrder = ref<SelectedSlide[]>([]);
 

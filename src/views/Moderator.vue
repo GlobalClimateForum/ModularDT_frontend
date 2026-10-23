@@ -14,12 +14,13 @@ import type { Scene } from "@/services/scene_service"
 import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
-import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
+import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters, participantParameters } from '@/globals/participant_parameters';
 import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
-import { sendParticipantUpdate } from "@/services/participant_service"
+import { slideshows } from '@/globals/slideshows';
 import { API_BASE_URL } from '@/config'
 import { saveDraft } from '@/services/draft_service'
 import '@/assets/main.css'
@@ -246,26 +247,16 @@ function updateDataForMonitor(monitorid: string) {
   })
 }
 
-function updateDataForParticipant(participantid: string) {
-  sendParticipantUpdate(Number(participantid), {
-    // Need to adjust
-    /*'payload': {
-      'event_type': 'data_update',
-      'settings': {
-        'number_of_screens': settings.value.number_of_screens,
-        'background_image': settings.value.background_image,
-        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
-        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
-        'show_screen_id': settings.value.show_screen_id,
-        'palette': settings.value.palette,
-      },
-      'presentation': {
-        'livePresentationActive': livePresentationState.value.active,
-        'liveSlidesActive': liveSlidesActive.value,
-        'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
-      }
-    } */
-  })
+function updateDataForParticipant(participantseat: string) {
+  console.log(liveParticipantsSlideshow.value)
+
+  const filteredResult = liveParticipantsSlideshow.value.find((p) => p.participant_seat === Number(participantseat));
+  if (filteredResult) {
+    const slideshow = slideshows.value.find((s) => s.id === filteredResult.slideshow_id);
+    if (slideshow) {
+      startSlideshow(slideshow, Number(participantseat));
+    }
+  }
 }
 
 function updateDataForMonitors() {
