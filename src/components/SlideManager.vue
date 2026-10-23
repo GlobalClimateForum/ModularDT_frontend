@@ -44,22 +44,22 @@ const filters = ref<SearchFilters>({
 const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
 async function onRowEditSave(event: any) {
-    
+
     const oldSlide = event.data
     const { id, name } = event.newData
     const trimmedName = name.trim()
 
     if (trimmedName === oldSlide.name) {
-        toast.add({ severity: 'warn', summary: 'Warning',  detail: 'New and old filenames are identical', life: 3000, })
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000, })
         return
     }
 
     try {
         await renameSlide(id, trimmedName) // Wait for the backend to perform the rename operation
-        updateSlideStore({ ...oldSlide, name: trimmedName,}) // Rename the slide in the local store after successful backend operation
-        toast.add({severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
+        updateSlideStore({ ...oldSlide, name: trimmedName, }) // Rename the slide in the local store after successful backend operation
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
     } catch {
-        toast.add({ severity: 'error', summary: 'Error',detail: 'Failed to rename slide',life: 3000})
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename slide', life: 3000 })
     }
 }
 
@@ -119,7 +119,10 @@ function onTagAdded(addedTag: string) {
                         <InputText v-model="slotProps.data.name" />
                     </template>
                     <template #body="slotProps">
-                        <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                        <div class="slide-info">
+                            <span class="slide-id">{{ slotProps.data.id }}</span><br>
+                            <span style="font-weight: 600;">{{ slotProps.data.name }}</span><br>
+                        </div>
                         <span style="font-size: 0.875rem; color: #64748b;">Updated {{
                             formatDate(slotProps.data.updated_at) }}</span>
                         <!-- <div style="width: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem;">
@@ -191,6 +194,22 @@ function onTagAdded(addedTag: string) {
     /* the critical line */
 }
 
+.slide-info {
+    display: flex;
+    flex-direction: row;
+    gap: calc(var(--space-small) / 2);
+
+    align-items: center;
+
+    width: 100%;
+}
+
+.slide-id {
+    font-size: var(--fs-small);
+    font-weight: 600;
+    font-family: "Fira Code", monospace;
+    color: var(--p-primary-400);
+}
 
 .marp-output {
     flex: 1;
