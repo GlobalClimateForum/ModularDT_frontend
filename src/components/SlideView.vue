@@ -3,6 +3,7 @@ import type { Slide, SlideSection } from '@/services/slide_service';
 import { defineAsyncComponent } from 'vue'
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { basemaps } from '@/utils/map_utils';
+import Message from 'primevue/message';
 
 // -- Inputs -- 
 // Props definition with default values for optional props
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<{
     sections: SlideSection[],
     preview: boolean,
     showframe?: boolean,
+    showSectionID?: boolean,
     shadow?: boolean
     basemap?: keyof typeof basemaps
 }>(), {
@@ -35,7 +37,7 @@ watch(
 const componentsMap: Record<string, any> = {
     markdown: defineAsyncComponent(() => import('@/components/MarkdownSlide.vue')),
     map: defineAsyncComponent(() => import('@/components/MapSlide.vue')),
-    vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue')), 
+    vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue')),
     ipanel: defineAsyncComponent(() => import('@/components/IPSlide.vue')),
     custom: defineAsyncComponent(() => import('@/components/CustomSlide.vue')),
 };
@@ -71,6 +73,9 @@ const autoScale = computed(() => {
     return Math.min(scaleX, scaleY)
 })
 
+// Calculates the cumulative offsets for each section based on their widths, used for positioning  within the slide
+const sectionOffsets = computed(() => sectionWidths.value.map((_, i) => sectionWidths.value.slice(0, i).reduce((a, b) => a + b, 0)))
+
 // Disconnect the ResizeObserver when the component is unmounted
 onBeforeUnmount(() => resizeObserver?.disconnect())
 </script>
@@ -92,16 +97,38 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
                 width: props.slide?.width + 'px',
                 height: props.slide?.height + 'px',
                 transform: `scale(${autoScale})`,
-                transformOrigin: 'top left',
-                boxShadow: props.shadow 
+                transformOrigin: 'top left'
             }">
 
                 <!-- dynamic component rendering slide sections based on their view_type -->
                 <component v-for="(section, index) in sectionContents" :key="`${section.view_type}-${index}`"
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
-                    :sectionWidth="sectionWidths[index]" :showframe="props.showframe"
-                    :basemap="props.basemap" 
-                    :targetSlide="props.targetSlide"/>
+                    :sectionWidth="sectionWidths[index]" :basemap="props.basemap" :targetSlide="props.targetSlide"
+                    class="section-component" />
+
+                <template v-if="props.showframe">
+                    <div v-for="(w, i) in sectionWidths" :key="`frame-${i}`" class="frame-overlay" :style="{
+                        left: sectionOffsets[i] * 100 + '%',
+                        width: w * 100 + '%',
+                        boxShadow: `inset 0 0 0 ${2 / autoScale}px red`,
+                    }" />
+                </template>
+
+                <template v-if="props.showSectionID">
+                    <div v-for="(section, i) in sectionContents" :key="`id-${i}`" class="frame-overlay" :style="{
+                        left: sectionOffsets[i] * 100 + '%',
+                        width: sectionWidths[i] * 100 + '%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                    }">
+                        <div class="section-id-indicator">
+                            {{ section.id }}
+                        </div>
+                    </div>
+                </template>
+
             </div>
         </div>
     </div>
@@ -121,11 +148,38 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
     pointer-events: none;
 }
 
+.section-id-indicator {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    padding: 12px 32px;
+    border-radius: 999px;
+    background: rgba(255, 50, 50, 0.85);
+    backdrop-filter: blur(4px);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85);
+    font: bold 56px "Fira Code", monospace;
+    line-height: 1;
+}
+
+.frame-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
 .slide-content {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+
+.section-component {
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .monitor-preview {
@@ -138,5 +192,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
     display: flex;
     flex-direction: row;
     gap: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 </style>

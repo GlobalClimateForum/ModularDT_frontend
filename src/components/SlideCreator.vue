@@ -62,6 +62,7 @@ const currentSectionIndex = ref<number>(0) // Track the index of the currently s
 const slideSections = ref<EditorSection[]>([]) // Track the sections of the current slide (view_type, content, content_path, width_fraction)
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
+const showSectionID = ref<boolean>(false) // Track whether to show the section ID overlay on the slide preview
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const sectionBgColor = computed(() => slideSections.value[currentSectionIndex.value]?.properties?.bg ?? '#ffffff') // Track the background color of the current section
 const sectionBgColorEditable = computed(() => SECTION_BG_COLOR_EDITING[slideSections.value[currentSectionIndex.value]?.view_type ?? 'markdown'] ?? false) // Track whether background editing is allowed for current section
@@ -647,7 +648,7 @@ onBeforeUnmount(() => {
                     <!-- Slide Preview -->
                     <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                         :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                        :showframe="showFrame" :basemap="basemap" :targetSlide="targetSlide" />
+                        :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap" :targetSlide="targetSlide" />
 
                 </div>
 
@@ -655,9 +656,10 @@ onBeforeUnmount(() => {
                     <h1 class="dashboard_label">Slide Settings</h1>
                     <!-- Layout Editor -->
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
-                        @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
+                        :showSectionID="showSectionID" @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
                         @autosize="onToggleAutoSize($event)"
+                        @showsectionid="showSectionID = $event"
                         @bgcolor="updateSectionBgColorAt(currentSectionIndex, $event)" :backgroundColor="sectionBgColor"
                         :slide="currentSlide" :bgPicker="sectionBgColorEditable" />
                 </div>

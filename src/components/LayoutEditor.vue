@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Toolbar from 'primevue/toolbar'
 import ToggleSwitch from 'primevue/toggleswitch';
+import Checkbox from 'primevue/checkbox'
 import Button from 'primevue/button'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
@@ -19,6 +20,7 @@ import { Color } from 'maplibre-gl';
 const emit = defineEmits<{
     (e: 'sectionWidths', layout: number[]): void,
     (e: 'showframe', show: boolean): void,  // emits a boolean value indicating whether to show the frame or not
+    (e: 'showsectionid', show: boolean): void,  // emits a boolean value indicating whether to show the section ID or not
     (e: 'autosize', autoSize: boolean): void // emits a boolean value indicating whether to auto size or not
     (e: 'bgcolor', color: string): void // emits a Color object representing the selected background color
 }>()
@@ -37,6 +39,7 @@ const props = defineProps<{
 const hexBgColor = ref(props.backgroundColor ?? '')
 const currentLayout = ref<string>(props.layout || 'fullscreen');
 const currentWidths = ref<number[]>(props.widths || [0.5]);
+const showSectionID = ref<boolean>(false);
 const showFrame = ref<boolean>(false);
 const autoSize = ref<boolean>(props.autoSizeButton || false);
 const isCustom = ref<boolean>(false);
@@ -84,6 +87,10 @@ function onToggleSectionFrame() {
     emit('showframe', showFrame.value);
 }
 
+function onToggleShowSectionID() {
+    emit('showsectionid', showSectionID.value);
+}
+
 function onHexInput(v: string | undefined) {
     const hex = (v ?? '').replace('#', '')
     if (/^[0-9a-f]{6}$/i.test(hex)) emit('bgcolor', hex)
@@ -109,55 +116,67 @@ watch(hexBgColor, v => {
 
 <template>
     <div>
-        <Toolbar class="">
+        <Toolbar class="main-toolbar">
             <template #start>
                 <div class="label-container">
-                    <label class="layout-label">Layout</label>
-                    <div class="layout-controls ">
-                        <div v-for="layout in layouts" :key="layout.id"
-                            :class="{ 'layout-btn': true, active: layout.id === activeLayout() && !isCustom, disabled: isDisabled(layout) }"
-                            :title="layout.label" @click="selectLayout(layout.widths)">
-                            <div class="col-preview">
-                                <div v-for="(f, i) in layout.fractions" :key="i" class="col-block"
-                                    :style="{ flex: f }" />
+                    <label> Layout </label>
+                    <InputGroup>
+                        <InputGroupAddon class="layout-btn-container">
+                            <div v-for="layout in layouts" :key="layout.id"
+                                :class="{ 'layout-btn': true, active: layout.id === activeLayout() && !isCustom, disabled: isDisabled(layout) }"
+                                :title="layout.label" @click="selectLayout(layout.widths)">
+                                <div class="col-preview">
+                                    <div v-for="(f, i) in layout.fractions" :key="i" class="col-block"
+                                        :style="{ flex: f }" />
+                                </div>
                             </div>
-                        </div>
-                        <Button v-if="currentWidths.length > 1" outlined size="small" label="Custom"
-                            @click="onCustomLayout" :class="{ active: isCustom }" />
-                    </div>
+                            <Button v-if="currentWidths.length > 1" outlined size="small" label="Custom"
+                                @click="onCustomLayout" :class="{ active: isCustom }"
+                                style="margin-left: var(--space-small);">
+                                <template #icon>
+                                    <i class="material-symbols-outlined">border_vertical</i>
+                                </template>
+                            </Button>
+                        </InputGroupAddon>
+                        <InputGroupAddon class="layout-btn-container" v-if="props.autoSizeButton">
+                            <Button size="small" :label="autoSize ? 'Fill Section' : 'Original Size'"
+                                @click="autoSize = !autoSize; emit('autosize', autoSize)">
+                                <template #icon>
+                                    <i v-if="autoSize" class="material-symbols-outlined">fit_screen</i>
+                                    <i v-else class="material-symbols-outlined">photo_size_select_small</i>
+                                </template>
+                            </Button>
+                        </InputGroupAddon>
+                    </InputGroup>
                 </div>
             </template>
             <template #end>
-                <div class="layout-btn-controls">
-                    <div class="label-container" >
-                        <label for="showFrame">Show Meta</label>
-                        <div class="toggle-container">
-                            <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
-                            <label>Section Frames</label>
-                        </div>
-                        <div  class="toggle-container">
-                            <ToggleSwitch v-model="props.showFrame" @change="onToggleSectionFrame"></ToggleSwitch>
-                            <label>Section IDs</label>
-                        </div>
-                        <!-- <Button small rounded text @click="showFrame = !showFrame; emit('showframe', showFrame)">
-                            <template #icon>
-                                <i v-if="showFrame" class="material-symbols-outlined">grid_off</i>
-                                <i v-else class="material-symbols-outlined">grid_on</i>
-                            </template>
-</Button> -->
-                    </div>
 
-                    <div class="label-container" center v-if="props.autoSizeButton">
-                        <label>auto fit</label>
-                        <Button small rounded @click="autoSize = !autoSize; emit('autosize', autoSize)">
-                            <template #icon>
-                                <i v-if="autoSize" class="material-symbols-outlined">fit_screen</i>
-                                <i v-else class="material-symbols-outlined">photo_size_select_small</i>
-                            </template>
-                        </Button>
-                    </div>
+                <div class="layout-btn-controls">
 
                     <div class="label-container">
+                        <label>Section Info</label>
+                        <InputGroup>
+                            <InputGroupAddon>
+                                <div class="label-container">
+                                    <label>Frame</label>
+                                    <ToggleSwitch size="small" v-model="showFrame" @change="onToggleSectionFrame">
+                                    </ToggleSwitch>
+                                </div>
+                            </InputGroupAddon>
+
+                            <InputGroupAddon v-if="props.slide?.sections?.[0]?.id">
+                                <div class="label-container">
+                                    <label>IDs</label>
+                                    <ToggleSwitch v-model="showSectionID" @change="onToggleShowSectionID">
+                                    </ToggleSwitch>
+                                </div>
+                            </InputGroupAddon>
+                        </InputGroup>
+                    </div>
+
+
+                    <div class="label-container" v-if="props.bgPicker">
                         <label>Background Color</label>
                         <InputGroup v-if="props.bgPicker" class="">
                             <InputGroupAddon>
@@ -178,6 +197,13 @@ watch(hexBgColor, v => {
 </template>
 
 <style scoped>
+.main-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
 .layout-controls {
     display: flex;
     align-items: center;
@@ -195,8 +221,8 @@ watch(hexBgColor, v => {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: var(--space-small); 
-    width: 100%; 
+    gap: var(--space-small);
+    width: 100%;
 }
 
 .disabled {
@@ -217,6 +243,16 @@ watch(hexBgColor, v => {
     outline: none;
 }
 
+.layout-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-medium);
+}
+
+.layout-btn-container {
+    padding: var(--space-small);
+}
 
 .layout-btn {
     display: flex;
