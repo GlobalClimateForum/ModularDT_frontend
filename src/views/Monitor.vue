@@ -86,7 +86,6 @@ function getSlideMode(sections: SlideSection[]): string {
 }
 
 
-
 // Function to apply a parameter change to a slide, returning a new slide object with the updated parameters
 function applyParameterChange(slide: Slide, change: ParameterChange | undefined): Slide {
   if (!change) return slide // If no change is provided, return the original slide

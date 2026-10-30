@@ -3,14 +3,15 @@
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n';
+import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
-//import { parameterStore, type ParameterChange } from '@/services/parameter_service'
-//import { getIPanels } from '@/services/slide_service'
+import { settings } from '@/globals/settings'
 import { useWebsocketService } from '@/services/websocket_service'
 import '@/assets/main.css'
 import { API_BASE_URL } from '@/config'
 import { participants } from '@/globals/participants'
 import { getParticipants } from '@/services/participant_service'
+import palettes from '@/assets/palettes.json'
 // components
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
@@ -63,6 +64,7 @@ onUnmounted(() => {
 })
 
 function updateParticipantParameter(parameter_name: string, value: string) {
+  console.log("update participant parameters.")
   sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 
@@ -98,6 +100,14 @@ const handleMessage = (data) => {
       myCurrentSlide.value = null
       currentSlideIndex = -1
       mySlideshowId = -1
+    }
+
+    if (data.event_type === 'settings_update' || data.message) {
+      console.log("kuckuck")
+      if (settings.value.palette != data.settings.palette) {
+        settings.value.palette = data.settings.palette
+        updatePrimaryPalette(palettes[settings.value.palette]);
+      }
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -176,11 +186,11 @@ const handleSwipe = () => {
   </div>
   <div v-else class="welcome show-bg-text">
     <div v-if="(activeParticipant)" style="position: absolute;">
-      <h2>{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
+      <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
       <p> {{ t('participant.waiting') }} </p>
     </div>
     <div v-else style="position: absolute;">
-      <h2>{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
+      <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
       <p> {{ t('participant.invalid') }}</p>
     </div>
   </div>
