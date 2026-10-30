@@ -64,7 +64,7 @@ async function stopAllParticipantSlideshows() {
 <template>
     <div class="dashboard">
         <Splitter :gutter-size="2" class="dashboard" layout="vertical">
-            <SplitterPanel :size="75" class="sub-panel">
+            <SplitterPanel :size="100" class="sub-panel">
                 <div class="panel-content" style="padding: var(--space-large);">
                     <div class="header-row">
                         <h1 class="dashboard_label">{{ $t('participant.live_presentation_state') }}</h1>
@@ -133,6 +133,7 @@ async function stopAllParticipantSlideshows() {
                     </div>
                 </div>
             </SplitterPanel>
+            <!--
             <SplitterPanel :size="25" class="sub-panel">
                 <h1 class="dashboard_label">Parameter Changes</h1>
                 <div style="width: 100%; height: 100%; padding: var(--space-large);"
@@ -154,6 +155,7 @@ async function stopAllParticipantSlideshows() {
                     </div>
                 </div>
             </SplitterPanel>
+            -->
         </Splitter>
     </div>
 </template>

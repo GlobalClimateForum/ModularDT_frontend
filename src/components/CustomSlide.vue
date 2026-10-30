@@ -24,7 +24,7 @@ const sharedModuleCache = buildModuleCache()
 const dynamicComponent = shallowRef<any>(null)
 
 // Define  the updateParticipantParameter function to be injected from the parent component
-
+/*
 const updateParticipantParameter = inject('updateParticipantParameter', () => { })
 provide('updateParticipantParameter', (name: string, value: any) => {
     parameterStore.set({
@@ -33,7 +33,7 @@ provide('updateParticipantParameter', (name: string, value: any) => {
         value: value
     })
 })
-
+*/
 
 // Stable id per section, used for both the wrapper and the CSS prefix
 const sectionScopeId = computed(() => `sfc-${props.section.id ?? Math.random().toString(36).slice(2)}`)

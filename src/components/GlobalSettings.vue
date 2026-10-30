@@ -22,6 +22,7 @@ import { settings, fetchSettings } from '@/globals/settings'
 import { updateSettings, isModerator, clearModerator } from "@/services/settings_service";
 import { saveEvent, deleteEvent } from "@/services/event_service";
 import { sendMonitorsUpdate } from "@/services/monitor_service";
+import { sendParticipantsUpdate } from "@/services/participant_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
 import { styleNames, previewUri, prettyName } from '@/services/avatar_service';
 // @ts-ignore: module has no declaration file
@@ -125,6 +126,7 @@ const onPaletteChange = ({ value }: { value: string }) => {
   updatePrimaryPalette(palettes[value]);
   settings.value.palette = value;
   updateSettingsForMonitors()
+  updateSettingsForParticipants()
 };
 
 function changePassword() {
@@ -186,6 +188,17 @@ function updateSettingsForMonitors() {
         'palette': settings.value.palette,
       }
     }
+  })
+}
+
+function updateSettingsForParticipants() {
+  sendParticipantsUpdate({
+    //'payload': {
+      'event_type': 'settings_update',
+      'settings': {
+        'palette': settings.value.palette,
+      }
+    //}
   })
 }
 
