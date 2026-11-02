@@ -58,8 +58,8 @@ export interface SelectParameter {
 }
 
 export interface LocationValue {
-    coord : [number, number]
-    zoom : number
+    coord: [number, number]
+    zoom: number
 }
 
 export interface LocationParameter {
@@ -75,7 +75,7 @@ export type Parameter =
     | NumberParameter
     | SelectParameter
     | LocationParameter
-    
+
 export interface Parameters {
     [key: string]: Parameter
 }
@@ -92,7 +92,8 @@ export const SlideSectionTypes: SlideSectionType[] = [
     { value: "map", icon: "map", label: "Map", description: "Create an interactive map section." },
     { value: "ipanel", icon: "interactive_space", label: "Interactive Panel", description: "Create an interactive panel section for a defined slide." },
     { value: "vega", icon: "bar_chart", label: "Vega", description: "Create a Vega data visualization section." },
-    { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." }, 
+    { value: "image", icon: "image", label: "Image", description: "Create a slide section with a local Image." },
+    { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." },
     // { value: "stylesheet", icon: "style", label: "Stylesheet", description: "Create a stylesheet for HTML or Markdown slides." },
 ];
 
@@ -116,7 +117,7 @@ export const getIPSlide = (slide_id: number) => api.get(`/slides/ipanels/${slide
 export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
     api.post("/slides/", { ...slide, sections });
 
-export const updateSlide = async (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) => 
+export const updateSlide = async (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) =>
     await api.patch(`/slides/${id}/`, { ...slide, sections });
 
 export const deleteSlide = (id: number) => api.delete(`/slides/${id}/`);

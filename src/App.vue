@@ -8,6 +8,8 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { useI18n } from 'vue-i18n'
 // globals and services
 import { fetchSettings, settings } from '@/globals/settings'
+import { fetchGlobalParameter, globalParameters } from '@/globals/global_parameters';
+import { useParameterStore } from '@/services/parameterstore_service';
 import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
 import { fetchPresentations } from '@/globals/presentations';
@@ -25,6 +27,7 @@ import palettes from '@/assets/palettes.json'
 
 // proxy ersetzt das klassische "this" im Setup-Skript
 const { proxy } = getCurrentInstance() as any;
+const paramstore = useParameterStore()
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
@@ -61,6 +64,16 @@ watch(
 
 onBeforeMount(async () => {
   await fetchSettings();
+  await fetchGlobalParameter(); 
+
+  globalParameters.value.map((param) => {
+    paramstore.set({
+      'section' : 'global', 
+      'value' : param.current_value,
+      'parameter' : param.name,
+    });
+  })
+
   isSettingsLoaded.value = true
   const appName = proxy.$APP_NAME || 'Default App Title';
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
