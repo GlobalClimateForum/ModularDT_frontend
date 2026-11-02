@@ -197,7 +197,6 @@ function onDeleteParameterValueOption(item) {
 }
 
 function globalParameterChange(glob: GlobalParameter) {
-    console.log("Change global!", glob)
     updateGlobalParameter(glob.id!, glob)
     // and here: send update message to all slides.
 }

@@ -12,3 +12,9 @@ export async function fetchGlobalParameter() {
     });
 }
 
+export function getGlobalParametersAsJSON() {
+    const nameValueObject = Object.fromEntries(
+        globalParameters.value.filter(item => item.active).map(item => [item.name, item.current_value])
+    );
+    return JSON.stringify(nameValueObject);
+}
