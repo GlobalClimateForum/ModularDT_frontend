@@ -276,7 +276,8 @@ const handleDragStart = (item) => {
                             </template>
                         </Column>
 
-                        <Column style="width: 12rem" bodyClass="flex justify-content-end white-space-nowrap"
+                         <Column style="width: 10rem; text-align: right"
+                            bodyClass="flex justify-content-end white-space-nowrap"
                             editorClass="flex justify-content-end white-space-nowrap">
                             <template #body="slotProps">
                                 <Button size="small" rounded text icon="pi pi-clone"
