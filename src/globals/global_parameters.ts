@@ -12,3 +12,10 @@ export async function fetchGlobalParameter() {
     });
 }
 
+export function getGlobalParametersAsJSON() {
+    // 1. Array in ein Objekt umwandeln: { [name]: value }
+    const nameValueObject = Object.fromEntries(
+        globalParameters.value.map(item => [item.name, item.current_value])
+    );
+    return JSON.stringify(nameValueObject);
+}
