@@ -39,6 +39,7 @@ const componentsMap: Record<string, any> = {
     map: defineAsyncComponent(() => import('@/components/MapSlide.vue')),
     vega: defineAsyncComponent(() => import('@/components/VegaSlide.vue')),
     ipanel: defineAsyncComponent(() => import('@/components/IPSlide.vue')),
+    image: defineAsyncComponent(() => import('@/components/ImageSlide.vue')),
     custom: defineAsyncComponent(() => import('@/components/CustomSlide.vue')),
 };
 
