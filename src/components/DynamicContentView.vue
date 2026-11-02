@@ -42,7 +42,7 @@ watch(() => props.section?.content, async (newContent) => {
 
 <template>
     <iframe :srcdoc="dynamicContent" 
-            :style="{ width: props.slide.width, height: props.slide.height, backgroundColor: 'red' , border: 'none' }"
+            :style="{ width: '100%', height: props.slide.height, border: 'none' }"
             :sandbox="'allow-scripts allow-same-origin'" 
             v-if="dynamicContent">
     </iframe>
