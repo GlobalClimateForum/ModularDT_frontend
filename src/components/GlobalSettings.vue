@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+import { useParameterStore } from '@/services/parameterstore_service';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
@@ -38,6 +39,8 @@ const toast = useToast();
 const dialog = useDialog();
 const changePasswordComponent = defineAsyncComponent(() => import('@/components/ChangePasswordDialog.vue'));
 const router = useRouter();
+
+const paramstore = useParameterStore()
 
 const availablePalettes = computed(() => {
   return Object.keys(palettes).map(key => ({
@@ -399,6 +402,11 @@ function selectActiveEvent(eventID: number) {
               @change="updateSettingsForMonitors()" />
             <Label for="show_screen_id-checkbox"> {{ $t('moderator.settings.show_screen_id') }}</Label>
           </div>
+        </div>
+
+        <div class="sub-panel-adaptive">
+          <h1 class="dashboard_label">Parameter Store</h1>
+          <Textarea rows="20" :value="paramstore.stateJson.value" fluid readonly />
         </div>
 
         <div class="sub-panel-adaptive">
