@@ -41,8 +41,12 @@ watch(() => props.section?.content, async (newContent) => {
 
 
 <template>
-    <div :style="{ width: props.slide.width, height: props.slide.height }" v-if="dynamicContent" v-html="dynamicContent">
-    </div>
+    <!-- <div :style="{ width: props.slide.width, height: props.slide.height }" v-if="dynamicContent" v-html="dynamicContent">
+    </div> -->
+    <iframe :srcdoc="dynamicContent" 
+            :style="{ width: props.slide.width, height: props.slide.height, border: 'none' }" 
+            v-if="dynamicContent">
+    </iframe>
 </template>
 
 <style scoped>
