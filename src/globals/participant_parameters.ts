@@ -24,6 +24,7 @@ export function getCurrentParticipantParametersAsJSON(participants: Participant[
         getParticipantName(Number(outerKey)), innerMap])
     );
 
+    console.log(JSON.stringify(Object.fromEntries(Array.from(participantParametersPerParticipantName.entries(), ([k, v]) => [k, Object.fromEntries(v)]))))
     return JSON.stringify(Object.fromEntries(Array.from(participantParametersPerParticipantName.entries(), ([k, v]) => [k, Object.fromEntries(v)])));
   } else {
     return ""
