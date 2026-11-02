@@ -3,7 +3,6 @@ import type { Participant } from "@/services/participant_service"
 
 // globale reactive variable
 export const participantParameters = ref<Map<string, Map<string, string>>>(new Map());
-const participantParametersPerName = ref<Map<string, Map<string, string>>>(new Map());
 
 export function updateParticipantParameters(parameter: string, participant_seat: string, value: string) {
   if (!participantParameters.value.has(participant_seat)) {
