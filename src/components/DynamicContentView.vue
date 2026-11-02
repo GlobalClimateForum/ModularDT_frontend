@@ -2,7 +2,7 @@
 
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { contentServerApi } from '@/services/api';
-import { ref, watch, onMounted} from 'vue';
+import { ref, watch, onMounted } from 'vue';
 
 const props = defineProps<{
     section: SlideSection;
@@ -41,22 +41,28 @@ watch(() => props.section?.content, async (newContent) => {
 
 
 <template>
-    <iframe :srcdoc="dynamicContent" 
-            :style="{ width: '100%', height: props.slide.height, border: 'none' }"
-            :sandbox="'allow-scripts allow-same-origin'" 
-            v-if="dynamicContent">
-    </iframe>
+    <div class="dynamic-content-view"
+         :style="{
+             width: (props.slide.width * props.section.width_fraction) + 'px',
+             height: props.slide.height + 'px'
+         }">
+        <iframe v-if="dynamicContent"
+                :srcdoc="dynamicContent"
+                sandbox="allow-scripts allow-same-origin">
+        </iframe>
+    </div>
 </template>
 
 <style scoped>
+.dynamic-content-view {
+    position: relative;
+    overflow: hidden;
+}
 
-.debug-info {
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 5px;
-    font-size: 12px;
-    z-index: 1000;
+.dynamic-content-view iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 </style>
