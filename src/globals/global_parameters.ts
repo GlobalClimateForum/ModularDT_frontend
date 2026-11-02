@@ -8,7 +8,7 @@ export async function fetchGlobalParameter() {
     await getGlobalParameters().then(response => {
         globalParameters.value = response.data;
     }).catch(error => {
-        console.error("Error fetching slides:", error);
+        console.error("Error fetching global parameters:", error);
     });
 }
 
