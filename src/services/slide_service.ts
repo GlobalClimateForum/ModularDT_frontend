@@ -94,6 +94,8 @@ export const SlideSectionTypes: SlideSectionType[] = [
     { value: "vega", icon: "bar_chart", label: "Vega", description: "Create a Vega data visualization section." },
     { value: "image", icon: "image", label: "Image", description: "Create a slide section with a local Image." },
     { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." },
+    { value: "dynamic", icon: "dynamic_feed", label: "Dynamic", description: "Create a slide section with dynamic content." },
+    
     // { value: "stylesheet", icon: "style", label: "Stylesheet", description: "Create a stylesheet for HTML or Markdown slides." },
 ];
 

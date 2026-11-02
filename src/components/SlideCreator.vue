@@ -85,6 +85,7 @@ const editorMapping: Record<string, any> = {
     ipanel: defineAsyncComponent(() => import('@/components/InteractivePanelEditor.vue')),
     image: defineAsyncComponent(() => import('@/components/ImageSlideEditor.vue')),
     custom: defineAsyncComponent(() => import('@/components/CustomSlideEditor.vue')),
+    dynamic: defineAsyncComponent(() => import('@/components/DynamicContentEditor.vue')),
 };
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages

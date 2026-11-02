@@ -1,2 +1,3 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/'
 export const MARP_API_BASE_URL = import.meta.env.VITE_MARP_API_BASE_URL  || 'http://localhost:3000/'
+export const CS_API_BASE_URL = import.meta.env.VITE_CS_URL || 'http://localhost:8002/'

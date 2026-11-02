@@ -1,5 +1,5 @@
 import axios from "axios";
-import { API_BASE_URL, MARP_API_BASE_URL } from '@/config'
+import { API_BASE_URL, CS_API_BASE_URL, MARP_API_BASE_URL } from '@/config'
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -19,5 +19,12 @@ const marpApi = axios.create({
     },
 })
 
+const contentServerApi = axios.create({
+    baseURL: CS_API_BASE_URL,
+    headers: {
+        "Content-Type": "application/json",
+    }
+});
+
 export default api;
-export { api, uploadApi, marpApi };
+export { api, uploadApi, marpApi, contentServerApi };

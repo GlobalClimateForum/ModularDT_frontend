@@ -41,6 +41,7 @@ const componentsMap: Record<string, any> = {
     ipanel: defineAsyncComponent(() => import('@/components/IPSlide.vue')),
     image: defineAsyncComponent(() => import('@/components/ImageSlide.vue')),
     custom: defineAsyncComponent(() => import('@/components/CustomSlide.vue')),
+    dynamic: defineAsyncComponent(() => import('@/components/DynamicContentView.vue')),
 };
 
 // -- Auto scaling --
