@@ -96,9 +96,7 @@ function onRowClick(event: any) {
                 id: String(scene.id ?? ''),
                 name: scene.name,
                 description: scene.description,
-                uniqueId: typeof crypto.randomUUID === 'function'
-                    ? crypto.randomUUID()
-                    : `${scene.id}-init-${Math.random().toString(36).substring(2, 11)}`
+                uniqueId: `${scene.id}-init-${Math.random().toString(36).substring(2, 11)}`
             }));
         } else {
             selectedOrder.value = [];
@@ -243,7 +241,7 @@ const handleNativeDrop = async (event: DragEvent) => {
 
         const newElement: SelectedScene = {
             ...deepClonedScene,
-            uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
+            uniqueId: `${rawScene.id}-init-${Math.random().toString(36).substring(2, 11)}` // Garantiert eindeutige ID im Browser
         };
 
         await nextTick();

@@ -69,9 +69,7 @@ function onRowClick(event: any) {
                 id: String(slide.id ?? ''),
                 name: slide.name,
                 description: slide.description,
-                uniqueId: typeof crypto.randomUUID === 'function'
-                    ? crypto.randomUUID()
-                    : `${slide.id}-init-${Math.random().toString(36).substring(2, 11)}`
+                uniqueId: `${slide.id}-init-${Math.random().toString(36).substring(2, 11)}`
             }));
         } else {
             selectedOrder.value = [];
@@ -184,7 +182,7 @@ const onDrop = async (event: DragEvent) => {
         const slide = JSON.parse(slideData) as SelectedSlide;
         const newElement: SelectedSlide = {
             ...structuredClone(slide),
-            uniqueId: crypto.randomUUID() // Garantiert eindeutige ID im Browser
+            uniqueId: `${slide.id}-init-${Math.random().toString(36).substring(2, 11)}`
         };
 
         await nextTick();

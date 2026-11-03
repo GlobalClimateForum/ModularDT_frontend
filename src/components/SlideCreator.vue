@@ -74,7 +74,7 @@ const targetSlide = ref<Slide | null>(null) // Track the target slide for intera
 const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
 const sectionPopover = ref<InstanceType<typeof Popover> | null>(null) // Reference to the Popover component for section type selection
 
-const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: crypto.randomUUID() })
+const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: `${s.id}-init-${Math.random().toString(36).substring(2, 11)}`})
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -333,7 +333,7 @@ function onPopoverTypeChange(option: SlideSectionType | null) {
     selectedTypes.value[index] = option
     onChangeViewType(index, option)
     // Update the unique key of the section to force re-rendering of the CodeEditor when the view type changes
-    slideSections.value[index]._key = crypto.randomUUID()
+    slideSections.value[index]._key = `${slideSections.value[index].id}-init-${Math.random().toString(36).substring(2, 11)}`
     sectionPopover.value?.hide()
 }
 
