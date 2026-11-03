@@ -133,29 +133,6 @@ async function stopAllParticipantSlideshows() {
                     </div>
                 </div>
             </SplitterPanel>
-            <!--
-            <SplitterPanel :size="25" class="sub-panel">
-                <h1 class="dashboard_label">Parameter Changes</h1>
-                <div style="width: 100%; height: 100%; padding: var(--space-large);"
-                    class="inset-control parameter-change-container">
-                    <div v-for="change in parameterChanges">
-                        <Message severity="secondary" size="small">
-                            <template #default>
-                                <div class="parameter-change">
-                                    <div class="section-indicator">
-                                        {{ change.section }}
-                                    </div>
-                                    <ul class="parameter-change-list">
-                                        <li><strong>Parameter:</strong> {{ change.parameter }}</li>
-                                        <li><strong>New Value:</strong> {{ change.value }}</li>
-                                    </ul>
-                                </div>
-                            </template>
-                        </Message>
-                    </div>
-                </div>
-            </SplitterPanel>
-            -->
         </Splitter>
     </div>
 </template>

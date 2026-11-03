@@ -20,8 +20,6 @@ import { sendModeratorAParticipantRequest } from '@/services/moderator_service'
 import SlideLink from '@/components/SlideLink.vue'
 
 
-//const parameterChanges = ref<ParameterChange[]>([])
-//const panels = ref<any[]>([])
 const route = useRoute()
 const currentId = computed(() => route.params.id)
 const { t } = useI18n();
