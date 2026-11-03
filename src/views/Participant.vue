@@ -64,7 +64,7 @@ onUnmounted(() => {
 })
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-  console.log("update participant parameters.")
+  //console.log("update participant parameters.")
   sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 

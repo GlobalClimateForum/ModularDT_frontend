@@ -10,6 +10,7 @@ import TabPanel from 'primevue/tabpanel';
 import { useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 // components
 import LiveParametersGlobal from '@/components/LiveParametersGlobal.vue';
+import LiveParametersSlide from '@/components/LiveParametersSlide.vue';
 
 const { t } = useI18n();
 let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
@@ -29,7 +30,8 @@ let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
                 </TabPanel>
                 <TabPanel v-for="(slot, index) in whatYouSeeOnMonitors" :key="'monitor' + (index + 1)"
                     :value="'monitor' + (index + 1)">
-                    <!--<h2 class="text-lg font-bold">Tab for Monitor {{ index + 1 }}</h2>-->
+                    <!-- <h2 class="text-lg font-bold">Tab for Monitor {{ index + 1 }}</h2> -->
+                    <LiveParametersSlide :slide="slot" :sections="slot?.sections ?? []"/>
                 </TabPanel>
             </TabPanels>
         </Tabs>
@@ -38,5 +40,11 @@ let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 
 <style scoped>
-
+:deep(.p-tabpanel) { /* Falls du PrimeVue nutzt, ansonsten die entsprechende Klasse des TabPanels wählen */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
 </style>

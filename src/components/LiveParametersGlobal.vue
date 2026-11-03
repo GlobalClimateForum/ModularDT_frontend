@@ -14,7 +14,7 @@ import { useToast } from 'primevue/usetoast'
 import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
-import { globalParameters, fetchGlobalParameter } from '@/globals/global_parameters';
+import { globalParameters, fetchGlobalParameter, getGlobalParametersAsJSON } from '@/globals/global_parameters';
 import { updateGlobalParameter, deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
 import { useItemDeletion } from '@/generics/deleteItem'
 
@@ -198,6 +198,7 @@ function onDeleteParameterValueOption(item) {
 
 function globalParameterChange(glob: GlobalParameter) {
     updateGlobalParameter(glob.id!, glob)
+    console.log("getGlobalParametersAsJSON: ",getGlobalParametersAsJSON())
     // and here: send update message to all slides.
 }
 </script>

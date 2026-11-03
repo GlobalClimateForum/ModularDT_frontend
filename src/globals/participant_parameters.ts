@@ -23,6 +23,7 @@ export function updateParticipantParameters(parameter: string, participant_seat:
 
   const pseat = Number(participant_seat);
   const pname = getParticipantName(pseat, participants.value) || "Unknown";
+  console.log("update: ", pname, " on seat ", pseat, " ",parameter,": ",value)
 
   if (pseat) {
     const parameterChange: ParameterChange = {
