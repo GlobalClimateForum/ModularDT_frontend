@@ -2,14 +2,21 @@ import { reactive, readonly } from 'vue'
 import { useWebsocketService } from '@/services/websocket_service'
 import { API_BASE_URL } from '@/config'
 import { computed } from 'vue'
-import { getCurrentParticipantParametersAsJSON } from '@/globals/participant_parameters'
-import { participants } from '@/globals/participants'
 
 export interface ParameterChange {
     section: number | number[] | "global" | "participant",
-    seat?: number
+    participantSeat?: number,
+    participantName?: string,
     parameter: string
     value: any
+}
+
+type ParamMap = Record<string, ParameterChange>
+
+interface ParameterJSON {
+    global: ParamMap
+    participants: Record<string, ParamMap>
+    sections: Record<number, ParamMap>
 }
 
 function createParameterStore() {
@@ -27,7 +34,10 @@ function createParameterStore() {
     const socketUrl = wsUrlParameter.toString()
 
     // Private helpers
-    const getKey = (section: number, parameter: string) => `${section}:${parameter}`
+    const getKey = (c: Pick<ParameterChange, 'section' | 'parameter' | 'participantSeat'>) =>
+        c.section === 'participant'
+            ? `participant:${c.participantSeat}:${c.parameter}`
+            : `${c.section}:${c.parameter}`
 
     const handleMessage = (data: ParameterChange) => {
         if (data?.section == null || data?.parameter == null) return
@@ -38,11 +48,11 @@ function createParameterStore() {
 
     // Public methods
     const set = (change: ParameterChange) => {
-        state[getKey(change.section, change.parameter)] = change.value
-        listeners.forEach(fn => fn(change))
-        if (!applyingRemote) wsService.send(channelId, change)
+        const c = { ...change }
+        state[getKey(c)] = c
+        listeners.forEach(fn => fn(c))
+        if (!applyingRemote) wsService.send(channelId, c)
     }
-
     const get = (section: number, parameter: string) => {
         return state[getKey(section, parameter)]
     }
@@ -54,34 +64,31 @@ function createParameterStore() {
 
     const getStoreState = () => readonly(state)
 
-    const stateJson = computed(() => {
+    const asJSON = computed<ParameterJSON>(() => {
+        const result: ParameterJSON = {
+            global: {},
+            participants: {},
+            sections: {}
+        }
 
-        let globals = {}
-        let sectionspecific = {}
-        let participantsspecific = {}
-
-        Object.keys(state).forEach(key => {
-            const [section, parameter] = key.split(':')
-
-            if (section === 'global') {
-                globals[parameter] = state[key]
+        for (const change of Object.values(state)) {
+            const s = change.section
+            if (s === 'global') {
+                result.global[change.parameter] = change
+            } else if (s === 'participant') {
+                const name = change.participantName ?? String(change.participantSeat)
+                    ; (result.participants[name] ??= {})[change.parameter] = change
+            } else {
+                const ids = Array.isArray(s) ? s : [s]
+                for (const id of ids) {
+                    (result.sections[id] ??= {})[change.parameter] = change
+                }
             }
+        }
+        return result
+    })
 
-            if (section !== 'global') {
-                sectionspecific[section] =  { [parameter]: state[key] }
-            }
-        })
-
-        return JSON.stringify(
-            {
-                global: globals,
-                sectionspecific: sectionspecific,
-                participants : getCurrentParticipantParametersAsJSON()
-            }
-        )
-    }
-
-    )
+    const asJSONString = computed(() => JSON.stringify(asJSON.value, null, 2))
 
     const destroy = () => {
         wsService.off(channelId, 'message', handleMessage)
@@ -94,7 +101,8 @@ function createParameterStore() {
 
     return {
         state: getStoreState(),
-        stateJson,
+        asJSON,
+        asJSONString,
         set,
         get,
         subscribe,

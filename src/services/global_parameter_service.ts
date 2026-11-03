@@ -1,4 +1,8 @@
 import { api } from "./api";
+import type { ParameterChange } from "./parameterstore_service";
+import { useParameterStore } from './parameterstore_service';
+
+const parameterStore = useParameterStore();
 
 export interface GlobalParameter {
   id?: number;
@@ -20,6 +24,20 @@ export const deleteGlobalParameter = (id: number) => api.delete(`/globalparamete
 export const deleteGlobalParameters = async () => await api.delete("/globalparameters/");
 
 export const updateGlobalParameter = async (id: number, globpar: Partial<GlobalParameter>) => {
-  return await api.patch(`/globalparameters/${id}/`, { ...globpar });
+  
+  // Update the parameter store with the new value
+  const pChange:ParameterChange = {
+    section: 'global',
+    parameter: globpar.name ?? "unknown",
+    value: globpar.current_value
+  };
+  
+  // Only update the parameter store if path is successful
+  return await api.patch(`/globalparameters/${id}/`, { ...globpar }).then((response) => {
+    if (response.status === 200) {
+      parameterStore.set(pChange);
+    }
+    return response;
+  });
 }
 

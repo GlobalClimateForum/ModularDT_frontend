@@ -2,49 +2,39 @@ import { ref } from 'vue';
 import type { Participant } from "@/services/participant_service"
 import { participants } from "@/globals/participants";
 import { useParameterStore } from '@/services/parameterstore_service';
+import type { ParameterChange } from '@/services/parameterstore_service';
 
+// Helper function to get participant name by seat number
+export function getParticipantName(seat: number, participants: Participant[]): string | null {
+  return participants.find(p => p.seat === seat)?.name ?? null
+}
 
 // globale reactive variable
 export const participantParameters = ref<Map<string, Map<string, string>>>(new Map());
 
-export function updateParticipantParameters(parameter: string, participant_seat: string, value: string) {''
+export function updateParticipantParameters(parameter: string, participant_seat: string, value: string) {
+
   const parameterStore = useParameterStore();
 
   if (!participantParameters.value.has(participant_seat)) {
     participantParameters.value.set(participant_seat, new Map<string, string>());
   }
   participantParameters.value.get(participant_seat)?.set(parameter, value)
-  
-  parameterStore.set({
-    section: 'participant',
-    seat: Number(participant_seat),
-    parameter: parameter,
-    value: value
-  });
 
-}
+  const pseat = Number(participant_seat);
+  const pname = getParticipantName(pseat, participants.value) || "Unknown";
 
-export function getCurrentParticipantParametersAsJSON() {
-
-  if (participants.value) {
-    
-    function getParticipantName(seat: number) {
-      const index = participants.value.findIndex(item => item.seat === seat);
-      if (index) { return participants.value[index].name } else { return "" }
-    }
-    
-    console.log("participantParameters",participantParameters.value)
-    const participantParametersPerParticipantName = new Map<string, Map<string, string>>(
-      Array.from(participantParameters.value.entries()).map(([outerKey, innerMap]) => [
-        getParticipantName(Number(outerKey)), innerMap])
-    );
-    console.log("participantParametersPerParticipantName",participantParametersPerParticipantName)
-
-    //console.log(JSON.stringify(Object.fromEntries(Array.from(participantParametersPerParticipantName.entries(), ([k, v]) => [k, Object.fromEntries(v)]))))
-    //console.log("participantParametersPerParticipantName:", participantParametersPerParticipantName)
-
-    return JSON.stringify(Object.fromEntries(Array.from(participantParametersPerParticipantName.entries(), ([k, v]) => [k, Object.fromEntries(v)])));
-  } else {
-    return ""
+  if (pseat) {
+    const parameterChange: ParameterChange = {
+      section: 'participant',
+      participantSeat: pseat,
+      participantName: pname,
+      parameter: parameter,
+      value: value
+    };
+    parameterStore.set(parameterChange);
   }
+
+
+
 }

@@ -13,7 +13,7 @@ import { participants } from '@/globals/participants';
 import SlideView from '@/components/SlideView.vue';
 import { stopSlideshow } from "@/services/slideshow_service";
 import { deleteLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
-import { participantParameters, getCurrentParticipantParametersAsJSON } from '@/globals/participant_parameters';
+import { participantParameters } from '@/globals/participant_parameters';
 
 
 const parameterChanges = ref<ParameterChange[]>([])

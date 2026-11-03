@@ -197,10 +197,10 @@ function updateSettingsForMonitors() {
 function updateSettingsForParticipants() {
   sendParticipantsUpdate({
     //'payload': {
-      'event_type': 'settings_update',
-      'settings': {
-        'palette': settings.value.palette,
-      }
+    'event_type': 'settings_update',
+    'settings': {
+      'palette': settings.value.palette,
+    }
     //}
   })
 }
@@ -224,6 +224,16 @@ function selectActiveEvent(eventID: number) {
       console.error("Error fetching selected event:", error);
     });
   }
+}
+
+function copyParameterStoreToClipboard() {
+  const paramStoreJSON = paramstore.asJSONString.value;
+  navigator.clipboard.writeText(paramStoreJSON).then(() => {
+    toast.add({ severity: 'success', summary: 'Copied', detail: 'Parameter Store copied to clipboard.', life: 3000 });
+  }).catch(err => {
+    console.error('Failed to copy Parameter Store:', err);
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to copy Parameter Store.', life: 3000 });
+  });
 }
 
 </script>
@@ -405,8 +415,15 @@ function selectActiveEvent(eventID: number) {
         </div>
 
         <div class="sub-panel-adaptive">
-          <h1 class="dashboard_label">Parameter Store</h1>
-          <Textarea rows="20" :value="paramstore.stateJson.value" fluid readonly />
+          <div class="label-button-row">
+            <h1 class="dashboard_label">Parameter Store</h1>
+            <Button size="small" label="Copy" @click="copyParameterStoreToClipboard()"">
+              <template #icon>
+                <i class="material-symbols-outlined">content_copy</i>
+              </template>
+            </Button>
+          </div>
+          <Textarea disabled rows="10" :value="paramstore.asJSONString.value" fluid readonly />
         </div>
 
         <div class="sub-panel-adaptive">
@@ -453,7 +470,7 @@ function selectActiveEvent(eventID: number) {
 
           <div class="label-container" v-if="selectedEvent">
             <label>Description</label>
-            <Textarea rows="20" v-model="selectedEvent.description" fluid />
+            <Textarea rows="15" v-model="selectedEvent.description" fluid />
           </div>
 
         </div>
@@ -578,5 +595,13 @@ function selectActiveEvent(eventID: number) {
 .style-option img {
   border-radius: 4px;
   flex-shrink: 0;
+}
+
+.label-button-row{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 </style>
