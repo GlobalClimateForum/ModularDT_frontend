@@ -13,7 +13,11 @@ const props = defineProps<{
 }>()
 
 const container = ref<HTMLElement | null>(null)
-const bgColor = computed(() => props.section.properties?.bg ?? 'transparent')
+// Background Color: 'transparent' (or missing) -> transparent, otherwise hex like '000000'
+const bgColor = computed(() => {
+  const bg = props.section.properties?.bg ?? 'transparent'
+  return bg.toLowerCase() === 'transparent' ? 'transparent' : '#' + bg
+})
 const spec = ref<string>(props.section.content ?? '')
 
 let view: any = null
@@ -97,7 +101,7 @@ onBeforeUnmount(() => {
   <div class="vega-layout" :style="{
     width: slide.width * section.width_fraction + 'px',
     height: slide?.height + 'px',
-    backgroundColor: '#' + bgColor,
+    backgroundColor: bgColor,
   }">
     <div ref="container" class="vega-container"></div>
   </div>
