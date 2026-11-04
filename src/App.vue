@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, onBeforeMount, getCurrentInstance, watch, ref } from 'vue'
+import { onMounted, onBeforeMount, getCurrentInstance, watch, ref, onUnmounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import ConfirmDialog from "primevue/confirmdialog";
@@ -33,6 +34,19 @@ const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 
+const toast = useToast()
+
+const unsubscribe = paramstore.subscribe((change) => {
+  if (settings.value.dev_mode) {
+    toast.add({
+      severity: 'info',
+      summary: 'Parameter Update',
+      detail: `Parameter ${change.parameter} updated to ${change.value}`,
+      life: 3000,
+    });
+  }
+})
+
 watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
 }, { immediate: true });
@@ -64,13 +78,13 @@ watch(
 
 onBeforeMount(async () => {
   await fetchSettings();
-  await fetchGlobalParameter(); 
+  await fetchGlobalParameter();
 
   globalParameters.value.map((param) => {
     paramstore.set({
-      'section' : 'global', 
-      'value' : param.current_value,
-      'parameter' : param.name,
+      'section': 'global',
+      'value': param.current_value,
+      'parameter': param.name,
     });
   })
 
@@ -89,13 +103,17 @@ onMounted(async () => {
   fetchSlideshows();
   fetchParticipants();
 })
+
+onUnmounted(() => {
+  unsubscribe();
+})
 </script>
 
 <template>
   <Toast position="bottom-right" />
-  <RouterView v-if="isSettingsLoaded" :key="$route.path"/>
+  <RouterView v-if="isSettingsLoaded" :key="$route.path" />
   <div v-else class="loading-screen">
-    <ProgressSpinner  animationDuration="1s" style="width: 100px; height: 100px" />
+    <ProgressSpinner animationDuration="1s" style="width: 100px; height: 100px" />
     <p style="color: black">Load Settings ...</p>
   </div>
   <DynamicDialog />
@@ -115,13 +133,13 @@ onMounted(async () => {
   background: linear-gradient(135deg, var(--p-primary-600) 0%, var(--p-primary-900) 100%);
 }
 
-.welcome::before {  
+.welcome::before {
   content: none;
 }
 
 /* .welcome[data-bg-text="true"]::before { */
 .welcome.show-bg-text::before {
-  content: var(--app-title); 
+  content: var(--app-title);
   position: absolute;
   top: 50%;
   left: 50%;
@@ -149,11 +167,11 @@ onMounted(async () => {
   backdrop-filter: blur(10px);
   z-index: 9999;
 
-  display: flex; 
+  display: flex;
   flex-direction: column;
   justify-content: center;
 
-  p{
+  p {
     text-align: center;
     font-size: var(--fs-medium);
     margin-top: 1rem;
