@@ -34,6 +34,7 @@ const baseUrl = ref<string>('')          // path + non-filter query params
 const vegaUrlSource = ref<string>('')    // what the user types / sees
 const urlError = ref<string>('')
 const draftOption = ref<Record<string, string>>({})
+const vegaEndpoint = ref<string>('') // the resolved URL to fetch the vega spec from
 
 interface ModeOption {
     label: string
@@ -67,7 +68,7 @@ watch(() => props.slideSection, (section) => {
 
 
     } else {
-   
+
     }
 
     const modeOption = modeOptions.find(o => o.value === section.mode)
@@ -141,6 +142,11 @@ function fetchWithDefaults() {
 
     const resolved = buildVegaUrl(urlPattern.value, values)
     emitSection({ content_path: resolved })
+}
+
+function fetchVega() {
+    console.log('fetchVega: urlPattern=', vegaEndpoint.value)
+    emitSection({ content_path: vegaEndpoint.value })
 }
 
 // --- Select-parameter option handling ---------------------------------------
@@ -282,23 +288,30 @@ watch(parameters, () => emitSection({}), { deep: true })
             <div
                 style="display: flex; flex-direction: row; gap: 0.5rem; align-items: flex-end; width: 100%; min-width: 0;">
 
-                <div class="label-container" style="flex: 1 1 auto; min-width: 0;">
+                <!-- <div class="label-container" style="flex: 1 1 auto; min-width: 0;">
                     <label>URL Pattern</label>
                     <InputText v-model="vegaUrlSource" placeholder="Enter a URL pattern" fluid
                         style="flex: 1; min-width: 0;">
                     </InputText>
+                </div> -->
+
+                <div style="width: 100%">
+                    <InputText v-model="vegaEndpoint" placeholder="endpoint url" fluid>
+                    </InputText>
                 </div>
 
-                <Button @click="seedParametersFromUrl(vegaUrlSource)" rounded>
+                <!-- <Button @click="seedParametersFromUrl(vegaUrlSource)" rounded>
                     <template #icon>
                         <i class="material-symbols-outlined">functions</i>
                     </template>
-                </Button>
-                <Button :disabled="!urlPattern" @click="fetchWithDefaults()" rounded>
+                </Button> -->
+
+                <Button @click="fetchVega()" size="small" label="Fetch">
                     <template #icon>
                         <i class="material-symbols-outlined">download</i>
                     </template>
                 </Button>
+
             </div>
 
             <!-- parameter list -->
