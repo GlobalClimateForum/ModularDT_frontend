@@ -278,6 +278,11 @@ const handleMessage = (data) => {
   white-space: nowrap;
 }
 
+.slide-preview {
+  text-align: left;
+  align-self: stretch;
+}
+
 .bg_image {
   position: fixed;
   top: 0;
