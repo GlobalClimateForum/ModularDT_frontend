@@ -62,7 +62,8 @@ function onRowEditSaveParameter(event: any) {
     } else {
         updateGlobalParameter(id, { name: name }).then(response => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Global parameter updated successfully', life: 3000 });
-            globalParameters.value[event.index] = { ...response.data };
+            // Merge, not replace: the PATCH response only contains {status, id, name}.
+            globalParameters.value[event.index] = { ...globalParameters.value[event.index], ...response.data };
         }).catch(error => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update global parameter', life: 3000 });
             console.error("Error updating global parameter:", error)
