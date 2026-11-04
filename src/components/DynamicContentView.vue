@@ -2,7 +2,8 @@
 
 import type { Slide, SlideSection } from '@/services/slide_service';
 import { contentServerApi } from '@/services/api';
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useParameterStore } from '@/services/parameterstore_service';
 
 const props = defineProps<{
     section: SlideSection;
@@ -10,28 +11,34 @@ const props = defineProps<{
 }>()
 
 const dynamicContent = ref<string | null>(null);
+const paramstore = useParameterStore()
 
 async function getDynamicContent() {
-
-    if (props.section?.content) {
-        console.log(`Fetching dynamic content from ${props.section.content}`);
-        const response = await contentServerApi.get(props.section?.content)
-        if (response.status === 200) {
-            dynamicContent.value = response.data;
-        } else {
-            console.error(`Failed to fetch dynamic content from ${props.section.content}: ${response.statusText}`);
-            return null;
-            console.error(`Failed to fetch dynamic content from ${props.section.content}: ${response.statusText}`);
-
-        }
+    const path = props.section?.content_path
+    if (!path) return
+    try {
+        const response = await contentServerApi.get<string>(path, { responseType: 'text' })
+        dynamicContent.value = response.data
+    } catch (err) {
+        console.error(`Failed to fetch dynamic content from ${path}`, err)
     }
 }
+
+const unsubscribe = paramstore.subscribe((change) => {
+    if (props.section?.parameters && change.parameter in props.section.parameters) {
+        getDynamicContent();
+    }
+})
 
 onMounted(async () => {
     await getDynamicContent();
 });
 
-watch(() => props.section?.content, async (newContent) => {
+onUnmounted(() => {
+    unsubscribe();
+});
+
+watch(() => props.section?.content_path, async (newContent) => {
     if (newContent) {
         await getDynamicContent();
     }
@@ -41,14 +48,11 @@ watch(() => props.section?.content, async (newContent) => {
 
 
 <template>
-    <div class="dynamic-content-view"
-         :style="{
-             width: (props.slide.width * props.section.width_fraction) + 'px',
-             height: props.slide.height + 'px'
-         }">
-        <iframe v-if="dynamicContent"
-                :srcdoc="dynamicContent"
-                sandbox="allow-scripts allow-same-origin">
+    <div class="dynamic-content-view" :style="{
+        width: (props.slide.width * props.section.width_fraction) + 'px',
+        height: props.slide.height + 'px'
+    }">
+        <iframe v-if="dynamicContent" :srcdoc="dynamicContent" sandbox="allow-scripts allow-same-origin">
         </iframe>
     </div>
 </template>
