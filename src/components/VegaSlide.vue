@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount, watch, onMounted, onUnmounted, computed } from 'vue'
-import { watchDebounced } from '@vueuse/core'
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { watchDebounced, useDebounceFn } from '@vueuse/core'
 import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
-import { buildVegaUrl, streamVegaSpec } from '@/utils/vega_utils'
-import parameterStore from '@/services/parameterstore_service'
-import { type ParameterChange, hit } from '@/services/parameterstore_service'
+import { streamVegaSpec } from '@/utils/vega_utils'
+import parameterStore, { type ParameterChange, hit } from '@/services/parameterstore_service'
 
 const props = defineProps<{
   slide: Slide,
@@ -13,78 +12,51 @@ const props = defineProps<{
   progress?: number | null,
 }>()
 
-let unsubscribe: (() => void) | null = null // Unsubscribe function for parameter store updates
-
-// Containter for the Vega chart. We use a ref so that we can pass it to vega-embed.
 const container = ref<HTMLElement | null>(null)
-// The current values of the parameters for this section.
-const paramValues = ref<Record<string, unknown>>(seedValues())
-// Background Color
 const bgColor = computed(() => props.section.properties?.bg ?? 'transparent')
-
-let view: any = null // The current Vega view
-let renderToken = 0 // Token to track the latest render request. If a new render is requested before the previous one finishes, we cancel the previous one.
-let fetchToken = 0 // Token to track the latest fetch request. If a new fetch is requested before the previous one finishes, we cancel the previous one.
-
-// Whether this section is interactive (i.e. has a URL pattern and is in interactive mode)
-const isInteractive = computed(() =>
-  props.section.mode === 'interactive' && !!props.section.url_pattern
-)
-
-// The current Vega spec for this section. This is either the content of the section (if not interactive) or the fetched spec from the URL (if interactive).
 const spec = ref<string>(props.section.content ?? '')
 
-// The URL this section currently resolves to
-const currentUrl = computed(() => {
-  if (!isInteractive.value) return ''
-  return buildVegaUrl(props.section.url_pattern!, paramValues.value)
-})
+let view: any = null
+let renderToken = 0
+let fetchToken = 0
+let unsubscribe: (() => void) | null = null
+let alive = true
 
-// Function to fetch the Vega spec from the current URL. We use a token to ensure that we only update the spec if this is the latest fetch request.
-async function fetchSpec() {
-  if (!currentUrl.value) return
+// Sections with a URL are streamed; the rest use static content
+const streamUrl = computed(() =>
+  props.section.mode !== 'static' ? (props.section.content_path ?? '') : ''
+)
+
+// ---------- Fetching ----------
+async function fetchSpecification() {
+  const url = streamUrl.value
+  if (!alive || !url) return
   const token = ++fetchToken
   try {
-    const fetched = await streamVegaSpec(currentUrl.value, () => { })
-    if (token === fetchToken) spec.value = fetched
+    const fetched = await streamVegaSpec(url, () => { })
+    if (alive && token === fetchToken) spec.value = fetched
   } catch (err) {
-    console.error('fetchSpec: failed', err)
+    console.error('Failed to fetch vega spec:', err)
   }
 }
 
-// Function to initialize the parameter values for this section.
-function seedValues(): Record<string, unknown> {
-  const seeded: Record<string, unknown> = {}
-  Object.entries(props.section.parameters ?? {}).forEach(([name, param]) => {
-    seeded[name] = param.default ?? null
-  })
-  return seeded
+const debouncedFetch = useDebounceFn(fetchSpecification, 500)
+
+function parameterChangeHandler(change: ParameterChange) {
+  const hit_ = hit(props.section.id, change)
+  console.log('parameterChangeHandler: section.id=', props.section.id, 'change=', change, 'hit=', hit_)
+  if (props.section.id && hit(props.section.id, change)) debouncedFetch()
 }
 
-async function parameterChangeHandler(change: ParameterChange) {
-
-  if (props.section.id && hit(props.section.id, change)) {
-    paramValues.value[change.parameter] = change.value
-    if (isInteractive.value) fetchSpec()
-  }
-
-}
-
-// Function to render the Vega spec in the container. We use a token to ensure that we only update the view if this is the latest render request.
+// ---------- Rendering ----------
 async function renderContent() {
   if (!container.value || !spec.value) return
   const token = ++renderToken
-
   try {
     const parsed = JSON.parse(spec.value)
-
     const finalSpec = props.section.properties?.autosize
-      ? {
-        width: 'container', height: 'container',
-        autosize: { type: 'fit', contains: 'padding' }, ...parsed
-      }
+      ? { width: 'container', height: 'container', autosize: { type: 'fit', contains: 'padding' }, ...parsed }
       : parsed
-
     const result = await embed(container.value, finalSpec, { actions: false })
     if (token !== renderToken) { result.view.finalize(); return }
     view?.finalize()
@@ -94,35 +66,30 @@ async function renderContent() {
   }
 }
 
-// Refetch only when the resolved URL genuinely changes
-watchDebounced(currentUrl, (url) => {
-  if (url) fetchSpec()
-}, { debounce: 400, immediate: true })
+// ---------- Watchers ----------
+// init + whenever the URL changes
+watch(streamUrl, (url) => { if (url) fetchSpecification() }, { immediate: true })
 
-// Re-render whenever the section content changes (debounced while typing)
-watchDebounced(spec, renderContent, { debounce: 400 })
-watch(() => props.section.properties, renderContent, { deep: true })
-watch(() => props.section.parameters, () => { paramValues.value = seedValues() }, { deep: true })
-
+// static sections: use the stored content
 watch(() => props.section.content, (content) => {
-  if (!isInteractive.value) spec.value = content ?? ''
+  if (!streamUrl.value) spec.value = content ?? ''
 }, { immediate: true })
 
+watchDebounced(spec, renderContent, { debounce: 400 })
 watch(() => props.section.properties, renderContent, { deep: true })
 
-
-onBeforeUnmount(() => {
-  view?.finalize();
-})
-
+// ---------- Lifecycle ----------
 onMounted(() => {
   renderContent()
-  unsubscribe = parameterStore.subscribe((change) => {
-    parameterChangeHandler(change)
-  })
+  unsubscribe = parameterStore.subscribe(parameterChangeHandler)
 })
 
-onUnmounted(() => unsubscribe?.()) // Unsubscribe from parameter store updates when the component is unmounted
+onBeforeUnmount(() => {
+  alive = false
+  unsubscribe?.()
+  view?.finalize()
+})
+
 
 </script>
 
