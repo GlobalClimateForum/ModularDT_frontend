@@ -1,7 +1,22 @@
-import { reactive, readonly } from 'vue'
+import { reactive, readonly, watch } from 'vue'
 import { useWebsocketService } from '@/services/websocket_service'
 import { API_BASE_URL } from '@/config'
 import { computed } from 'vue'
+
+// ----------------- Parameter Types -----------------
+
+export type ParamMap = Record<string, ParameterChange>
+
+export interface ParameterJSON {
+    global: ParamMap
+    participants: Record<string, ParamMap>
+    sections: Record<number, ParamMap>
+}
+
+export const ptypes = ['number', 'boolean', 'select', 'string'] as const
+export type ParameterType = typeof ptypes[number]
+
+
 
 export interface ParameterChange {
     section: number | number[] | "global" | "participant",
@@ -11,13 +26,21 @@ export interface ParameterChange {
     value: any
 }
 
-type ParamMap = Record<string, ParameterChange>
-
-interface ParameterJSON {
-    global: ParamMap
-    participants: Record<string, ParamMap>
-    sections: Record<number, ParamMap>
+export interface ParameterDefinition {
+    id: number
+    type: ParameterType
+    description: string
+    range: { min: number | null; max: number | null } | null
+    default: string | number | boolean
+    options: string[]
 }
+
+export type ParameterDefinitionMap = Record<string, ParameterDefinition>
+
+
+
+
+// ----------------- Parameter Store -----------------
 
 function createParameterStore() {
     const wsService = useWebsocketService()
@@ -26,12 +49,20 @@ function createParameterStore() {
     const state = reactive<Record<string, any>>({})
     const listeners = new Set<(change: ParameterChange) => void>()
     let applyingRemote = false
+    let dirty = false // Tracks if there are unsaved changes to the parameter store
+    let sendTimer: ReturnType<typeof setTimeout> | undefined    // Timer for batching parameter changes to send to the server
 
     // Setup
     const channelId = 'parameters/'
     const wsUrlParameter = new URL('/ws/parameters/', API_BASE_URL)
     wsUrlParameter.protocol = wsUrlParameter.protocol === 'https:' ? 'wss:' : 'ws:'
     const socketUrl = wsUrlParameter.toString()
+
+    // Snapshot Channel
+    const stateChannel = 'parameter-state/'
+    const wsUrlState = new URL('/ws/parameter-state/', API_BASE_URL)
+    wsUrlState.protocol = wsUrlState.protocol === 'https:' ? 'wss:' : 'ws:'
+    const stateSocketUrl = wsUrlState.toString()
 
     // Private helpers
     const getKey = (c: Pick<ParameterChange, 'section' | 'parameter' | 'participantSeat'>) =>
@@ -42,8 +73,11 @@ function createParameterStore() {
     const handleMessage = (data: ParameterChange) => {
         if (data?.section == null || data?.parameter == null) return
         applyingRemote = true
-        set(data)
-        applyingRemote = false
+        try {                                                   // CHANGED: try/finally
+            set(data)
+        } finally {
+            applyingRemote = false
+        }
     }
 
     // Public methods
@@ -51,10 +85,14 @@ function createParameterStore() {
         const c = { ...change }
         state[getKey(c)] = c
         listeners.forEach(fn => fn(c))
-        if (!applyingRemote) wsService.send(channelId, c)
+        if (!applyingRemote) {
+            wsService.send(channelId, c)
+            dirty = true  // There are unsynced changes after a local change
+        }
     }
-    const get = (section: number, parameter: string) => {
-        return state[getKey(section, parameter)]
+
+    const get = (section: ParameterChange['section'], parameter: string, participantSeat?: number) => {
+        return state[getKey({ section, parameter, participantSeat })]
     }
 
     const subscribe = (fn: (change: ParameterChange) => void) => {
@@ -90,7 +128,37 @@ function createParameterStore() {
 
     const asJSONString = computed(() => JSON.stringify(asJSON.value, null, 2))
 
+    // Hydrate = Load the parameter store from a snapshot
+    const hydrate = (snap: ParameterJSON) => {
+        applyingRemote = true
+        try {
+            Object.values(snap.global ?? {}).forEach(set)
+            Object.values(snap.participants ?? {}).forEach(m => Object.values(m).forEach(set))
+            Object.values(snap.sections ?? {}).forEach(m => Object.values(m).forEach(set))
+        } finally {
+            applyingRemote = false
+        }
+    }
+
+    // handle state messages from the server (snapshot updates)
+    const handleStateMessage = (msg: { type?: string; data?: ParameterJSON }) => {
+        if (msg?.type === 'snapshot' && msg.data) hydrate(msg.data)
+    }
+
+
+    // Stream the parameter state from the server
+    const stopWatch = watch(asJSON, (snap) => {
+        if (!dirty) return
+        clearTimeout(sendTimer)
+        sendTimer = setTimeout(() => {
+            wsService.send(stateChannel, { type: 'snapshot', data: snap })
+            dirty = false
+        }, 200)
+    })
+
     const destroy = () => {
+        clearTimeout(sendTimer)
+        stopWatch()
         wsService.off(channelId, 'message', handleMessage)
         wsService.disconnect(channelId)
     }
@@ -98,6 +166,8 @@ function createParameterStore() {
     // Initialize
     wsService.connect(channelId, socketUrl)
     wsService.on(channelId, 'message', handleMessage)
+    wsService.connect(stateChannel, stateSocketUrl)
+    wsService.on(stateChannel, 'message', handleStateMessage)
 
     return {
         state: getStoreState(),
