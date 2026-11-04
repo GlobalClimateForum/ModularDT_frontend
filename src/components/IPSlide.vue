@@ -33,6 +33,18 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
     })
 }
 
+function initializeParameters(section: SlideSection) {
+    for (const [key, field] of Object.entries(section?.parameters ?? {})) {
+        if (field && field.default !== undefined) {
+            parameterStore.set({
+                section: section.id as number,
+                parameter: key,
+                value: field.default,
+            })
+        }
+    }
+}
+
 onMounted(() => {
     if (!props.targetSlide && props.section.content) {
         const targetSlideId = JSON.parse(props.section.content).targetSlide
@@ -48,7 +60,15 @@ watch(() => props.targetSlide, (newSlide) => {
     if (newSlide) localTargetSlide.value = newSlide
 })
 
-const hexColor = (color:string) => `#${color}`
+watch(localTargetSlide, (newSlide) => {
+    if (newSlide) {
+        for (const s of newSlide?.sections ?? []) {
+            initializeParameters(s)
+        }
+    }
+})
+
+const hexColor = (color: string) => `#${color}`
 
 </script>
 
@@ -87,7 +107,8 @@ const hexColor = (color:string) => `#${color}`
                     <label>{{ key }}</label>
                     <div class=" location-select">
                         <div v-for="(option, optionKey) in field?.options" :key="optionKey">
-                        <Button @click="onParameterChange(section, key, field.options?.[optionKey])">{{ optionKey }}</Button>
+                            <Button @click="onParameterChange(section, key, field.options?.[optionKey])">{{ optionKey
+                                }}</Button>
                         </div>
                     </div>
                 </div>
