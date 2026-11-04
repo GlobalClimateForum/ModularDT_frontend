@@ -1,4 +1,5 @@
 import { api, marpApi } from "./api";
+import { type Rule } from '@/services/rules_service'
 
 export interface Slide {
     id?: number;
@@ -27,6 +28,7 @@ export interface SlideSection {
     content_path: string;
     mode?: 'static' | 'url' | 'interactive' | 'html' | 'vue';
     parameters?: Parameters;
+    rules?: Rule[]
     url_pattern?: string;
     properties?: SectionProperties;
 }
