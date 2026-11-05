@@ -73,8 +73,11 @@ const emit = defineEmits<{
 function onRowEditSaveScene(event: any) {
     const { id, name } = event.newData
     if (name === event.data.name) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000 });
-    } else {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 4000 });
+    } else
+    /* here: test if name is empty */
+    /* here: test if name exists */
+    {
         updateScene(id, { name: name }).then(response => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 });
             scenes.value[event.index] = { ...response.data };

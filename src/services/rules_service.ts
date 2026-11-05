@@ -1,8 +1,6 @@
 import type { ParameterDefinition } from './parameterstore_service'
 
 // ----------------- Parameter Rules -----------------
-
-
 export const OPERATORS_MAP = {
   eq: { label: 'equals', symbol: '=', function: (a: unknown, b: unknown) => a === b },
   neq: { label: 'not equals', symbol: '≠', function: (a: unknown, b: unknown) => a !== b },

@@ -4,7 +4,8 @@ import SlideView from '@/components/SlideView.vue';
 
 const props = withDefaults(defineProps<{
     slide: Slide | null,
-    sections: SlideSection[]
+    sections: SlideSection[],
+    monitor_id: Number
 }>(), {
     sections: () => [],
 })
@@ -15,8 +16,8 @@ const props = withDefaults(defineProps<{
         <SlideView :preview="false" :slide="props.slide" :sections="props.sections">
         </SlideView>
     </div>
-    <div v-else class="panel-content">
-        No parameters for the slide on Monitor X.
+    <div v-else class="panel-content centred_text">
+        {{ $t('moderator.no_parameters_for_monitor') }} {{ props.monitor_id }}
     </div>
 </template>
 
@@ -33,9 +34,16 @@ const props = withDefaults(defineProps<{
   padding: var(--space-large);
   overflow: hidden;
   flex: 1;
-  /* Zwingt den Container, den Rest des Panels auszufüllen */
   min-height: 0;
-  /* Verhindert das Kollabieren von Flexbox-Kindern */
 }
 
+.centred_text {
+  text-align: center;
+  position: relative;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  font-size:   200%;
+}
 </style>

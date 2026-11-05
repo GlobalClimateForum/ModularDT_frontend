@@ -50,6 +50,7 @@ const componentsMap: Record<string, any> = {
 let resizeObserver: ResizeObserver | null = null
 // Calculate available width and height for scaling based on the wrapper div's size on mount
 onMounted(() => {
+    console.log('SlideView', props.slide?.name, 'previewBackground =', props.previewBackground)
     if (!wrapperRef.value) return
     resizeObserver = new ResizeObserver(([entry]) => {
         availableWidth.value = entry.contentRect.width

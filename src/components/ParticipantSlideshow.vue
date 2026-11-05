@@ -102,10 +102,10 @@ async function onConfirmDeleteSlideshow(slideshow: Slideshow) {
     const deleted = await onConfirmDeleteItem(slideshow, "participants_slideshow", deleteSlideshow)
 
     if (deleted) {
-            slideshows.value = slideshows.value.filter(s => s.id !== slideshow.id);
-            if (selectedSlideshow.value?.id === slideshow.id) {
-                selectedSlideshow.value = null;
-            }
+        slideshows.value = slideshows.value.filter(s => s.id !== slideshow.id);
+        if (selectedSlideshow.value?.id === slideshow.id) {
+            selectedSlideshow.value = null;
+        }
     }
 }
 
@@ -243,11 +243,13 @@ const handleDragStart = (item) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" :slide_preview="false" />
+                    <SlideGallery v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart"
+                        :slide_preview="false" />
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
                     <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
-                        :sections="selectedSlide.sections ? selectedSlide.sections : []" class="slide-preview" />
+                        :previewBackground="true" :sections="selectedSlide.sections ? selectedSlide.sections : []"
+                        class="slide-preview" />
                 </SplitterPanel>
             </Splitter>
         </div>
@@ -274,7 +276,7 @@ const handleDragStart = (item) => {
                             </template>
                         </Column>
 
-                         <Column style="width: 10rem; text-align: right"
+                        <Column style="width: 10rem; text-align: right"
                             bodyClass="flex justify-content-end white-space-nowrap"
                             editorClass="flex justify-content-end white-space-nowrap">
                             <template #body="slotProps">

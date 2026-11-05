@@ -12,6 +12,7 @@ import { API_BASE_URL } from '@/config'
 import { participants } from '@/globals/participants'
 import { getParticipants } from '@/services/participant_service'
 import palettes from '@/assets/palettes.json'
+import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 // components
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
@@ -101,10 +102,20 @@ const handleMessage = (data) => {
     }
 
     if (data.event_type === 'settings_update' || data.message) {
-      console.log("kuckuck")
       if (settings.value.palette != data.settings.palette) {
         settings.value.palette = data.settings.palette
         updatePrimaryPalette(palettes[settings.value.palette]);
+      }
+
+      if (settings.value.background_image != data.settings.background_image) {
+        console.log("New Background image: ", data.settings.background_image)
+        settings.value.background_image = data.settings.background_image
+        fetchBackgoundImage(settings.value.background_image);
+      }
+
+
+      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
+        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
       }
     }
   } catch (e) {
@@ -182,7 +193,27 @@ const handleSwipe = () => {
         @click="nextSlide">▶</button>
     </div>
   </div>
-  <div v-else class="welcome show-bg-text">
+  <div v-else>
+    <div v-if="settings.background_image_on_welcome_screens && background_image">
+      <img class="bg_image" :src="background_image?.src || ''" alt="">
+    </div>
+    <div v-else class="welcome show-bg-text">
+    </div>
+    <div class="centered">
+      <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
+      <!-- Monitor ID is between 1 and the number of screens -->
+      <div v-if="activeParticipant">
+        <p>{{ t('participant.waiting') }}</p>
+      </div>
+      <!-- Monitor ID is 0 or exceeds the number of screens -->
+      <div v-else>
+        <p>{{ t('participant.invalid') }}</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!--  <div v-else class="welcome show-bg-text">
     <div v-if="(activeParticipant)" style="position: absolute;">
       <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
       <p> {{ t('participant.waiting') }} </p>
@@ -192,7 +223,7 @@ const handleSwipe = () => {
       <p> {{ t('participant.invalid') }}</p>
     </div>
   </div>
-</template>
+-->
 
 <style scoped>
 .slideshow-container {
