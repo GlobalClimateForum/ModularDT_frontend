@@ -205,7 +205,7 @@ const saveOrderToApi = async () => {
 
     isSaving.value = true;
     try {
-        // 1. Payload für das Backend vorbereiten
+        // 1. Prepare the payload for the backend
         const slideshowPayload = selectedOrder.value.map((item, index) => ({
             slide_id: Number(item.id),
             position: index + 1
@@ -391,7 +391,7 @@ const handleDragStart = (item) => {
     min-height: 400px;
 }
 
-/* Rechter Bereich: Die Drop-Zone */
+/* Right area: the drop zone */
 .drop-zone {
     min-height: 300px;
     border: 2px dashed #cbd5e1;
@@ -415,7 +415,7 @@ const handleDragStart = (item) => {
     margin: 0;
 }
 
-/* Einzelnes gezogenes Element */
+/* Single dragged element */
 .ordered-item {
     display: flex;
     justify-content: space-between;
@@ -462,14 +462,14 @@ const handleDragStart = (item) => {
     cursor: grab;
 }
 
-/* CSS für das Element während des Ziehens */
+/* CSS for the element while dragging */
 .ghost-item {
     opacity: 0.4;
     background: #e2e8f0;
     border: 2px dashed #94a3b8;
 }
 
-/* Einfacher Trigger-Bereich für die linke Tabellenseite */
+/* Simple trigger area for the left table side */
 .draggable-table-row-trigger {
     padding: 0.5rem;
     background: #ffffff;
