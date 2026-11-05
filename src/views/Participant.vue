@@ -37,6 +37,7 @@ const myCurrentSlide = ref<Slide | null>(null);
 let currentSlideIndex = -1
 let mySlideshowId = -1
 
+
 let stop: (() => void) | undefined
 
 onMounted(async () => {
@@ -62,7 +63,6 @@ onUnmounted(() => {
 })
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-  //console.log("update participant parameters.")
   sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 
@@ -177,9 +177,9 @@ const handleSwipe = () => {
     <SlideView :preview="false" :slide="myCurrentSlide" :showframe="false"
       :sections="myCurrentSlide?.sections ? myCurrentSlide?.sections : []" class="slide-preview" />
     <div class="controls">
-      <button class="nav-btn prev" @click="previousSlide" :disabled="currentSlideIndex <= 0">◀</button>
-      <button class="nav-btn next" @click="nextSlide"
-        :disabled="currentSlideIndex === (mySlideshow && mySlideshow.length - 1)">▶</button>
+      <button v-if="currentSlideIndex > 0" class="nav-btn prev" @click="previousSlide">◀</button>
+      <button v-if="mySlideshow && currentSlideIndex < mySlideshow.length - 1" class="nav-btn next"
+        @click="nextSlide">▶</button>
     </div>
   </div>
   <div v-else class="welcome show-bg-text">
