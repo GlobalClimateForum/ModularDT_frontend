@@ -200,6 +200,8 @@ function updateSettingsForParticipants() {
     'event_type': 'settings_update',
     'settings': {
       'palette': settings.value.palette,
+      'background_image': settings.value.background_image,
+      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens
     }
     //}
   })
@@ -270,7 +272,7 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_image_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
+              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors(); updateSettingsForParticipants()" />
             <Label for="background_image_on_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>

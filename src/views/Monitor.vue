@@ -104,6 +104,7 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 function updateSettings(data) {
+  // This is probably unneccessary
   let need_to_rerender = false
 
   settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
