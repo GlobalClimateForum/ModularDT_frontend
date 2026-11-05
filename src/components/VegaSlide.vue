@@ -10,6 +10,7 @@ const props = defineProps<{
   slide: Slide,
   section: SlideSection,
   progress?: number | null,
+  preview?: boolean
 }>()
 
 const container = ref<HTMLElement | null>(null)
