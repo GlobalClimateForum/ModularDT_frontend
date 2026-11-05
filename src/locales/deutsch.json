@@ -65,7 +65,8 @@
       "auto_parameter_connection": "Automatisch verbinden (mit Folien-Parametern gleichen Namens)",
       "global_parameter_connect": "Verbundene Folien-Parameter",
       "select_type": "Typ auswählen",
-      "select_parameter": "Parameter auswählen"
+      "select_parameter": "Parameter auswählen",
+      "participant_bau_identifier": "Business as usual Identifikator"
     },
     "scene": "Szene",
     "slide": "Folie",
@@ -106,7 +107,7 @@
     "greeting": "@:appName Teilnehmner",
     "waiting": "Bitte Warten bis die Teilnehmer-Folien vom Moderator gestartet werden.",
     "seat": "Platz",
-    "who_are_you": "Wer sind sie?", 
+    "who_are_you": "Wer sind sie?",
     "live_presentation_state": "Live Teilnehmer status",
     "invalid": "Meine Instanz-ID ist ungültig. Ich bleibe inaktiv."
   },
