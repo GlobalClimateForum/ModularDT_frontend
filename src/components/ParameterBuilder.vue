@@ -30,18 +30,25 @@ const original = dialogRef.value.data.section as SlideSection
 const section = reactive<SlideSection>(JSON.parse(JSON.stringify(original))) // deep copy to avoid mutation
 
 
-const optionsFor = (param: { type: ParameterType }) =>
+const optionsFor = (param: any) =>
     ptypes.map(type => ({
         label: type,
         command: () => {
             param.type = type
             if (type === 'number') param.range ??= { min: 0, max: 1, step: 0.25 }
+            if (type === 'select') {
+                param.options ??= []                       // NEW
+                if (!param.options.includes(param.default)) {
+                    param.default = param.options[0] ?? null   // default must be one of the options
+                }
+            }
         }
     }))
 
 
 for (const param of Object.values(section.parameters ?? {})) {
-    if (param.type === 'number') param.range ??= { min: 0, max: 1, step: 0.25 }
+    if (param.type === 'number') param.range ??= { min: 0, max: 1, step: 0.5 }
+    if (param.type === 'select') param.options ??= []   // NEW
 }
 
 const sectionParameters = computed(() => {
