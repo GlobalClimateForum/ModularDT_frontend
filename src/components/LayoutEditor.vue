@@ -14,7 +14,7 @@ import { layouts, type Layout } from '@/globals/slide_layout'
 
 import CustomLayoutDialog from '@/components/CustomLayoutDialog.vue'
 
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Color } from 'maplibre-gl';
 
 const emit = defineEmits<{
@@ -42,7 +42,10 @@ const currentWidths = ref<number[]>(props.widths || [0.5]);
 const showSectionID = ref<boolean>(false);
 const showFrame = ref<boolean>(false);
 const autoSize = ref<boolean>(props.autoSizeButton || false);
-const isCustom = ref<boolean>(false);
+const isCustom = ref<boolean>(false)
+
+// true when the section background is set to 'transparent'
+const isTransparent = computed(() => String(props.backgroundColor ?? '').toLowerCase() === 'transparent');
 
 
 
@@ -183,8 +186,16 @@ watch(hexBgColor, v => {
                                 <InputText v-model="hexBgColor" size="small" style="width: 80px" />
                             </InputGroupAddon>
                             <InputGroupAddon>
-                                <ColorPicker class="background-btn" :modelValue="props.backgroundColor"
+                                <ColorPicker class="background-btn" :modelValue="isTransparent ? '#ffffff' : props.backgroundColor"
                                     @update:modelValue="emit('bgcolor', $event)" />
+                            </InputGroupAddon>
+                            <InputGroupAddon>
+                                <Button size="small" outlined :label="isTransparent ? 'Transparent' : 'Set Transparent'"
+                                    :class="{ active: isTransparent }" @click="emit('bgcolor', 'transparent')">
+                                    <template #icon>
+                                        <i class="material-symbols-outlined">visibility</i>
+                                    </template>
+                                </Button>
                             </InputGroupAddon>
                         </InputGroup>
                     </div>
