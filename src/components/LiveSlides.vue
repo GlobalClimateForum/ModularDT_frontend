@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Toolbar from 'primevue/toolbar'
@@ -10,6 +10,7 @@ import Message from 'primevue/message';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
+import { slides, fetchSlides } from '@/globals/slides'
 import { dialogService } from '@/services/dialog_service';
 import { useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
@@ -39,6 +40,19 @@ function onDrop(event: DragEvent, index: number) {
     liveSlidesOnMonitors.value[index] = slide;
     updateOneMonitor(slide, index + 1)
 }
+
+// -- Background slide --
+// Shown behind each monitor preview, so the dashboard shows the actual monitor picture.
+// Looked up by name in the global slide store, same as in the Monitor view.
+const backgroundSlide = computed<Slide | null>(() =>
+  settings.value.background_monitor_slide
+    ? slides.value.find(slide => slide.name === settings.value.background_monitor_slide) ?? null
+    : null
+)
+
+watch(() => settings.value.background_monitor_slide, (name) => {
+  if (name) fetchSlides()
+}, { immediate: true })
 
 const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m + 1}` }))
@@ -110,8 +124,15 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                         </div>
 
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                        <div v-if="slot" style="width: 100%; height:90%; pointer-events: none">
-                            <SlideView :preview="true" :slide="slot" :sections="slot.sections ? slot.sections : []"
+                        <div v-if="slot" style="width: 100%; height:90%; pointer-events: none; position: relative;">
+                            <!-- Background slide layer (from global settings), if configured -->
+                            <div v-if="backgroundSlide" class="background-slide">
+                                <SlideView :preview="true" :slide="backgroundSlide"
+                                    :sections="backgroundSlide.sections ?? []" :showFrame="false">
+                                </SlideView>
+                            </div>
+                            <SlideView class="monitor-preview-content" :preview="true" :slide="slot"
+                                :sections="slot.sections ? slot.sections : []"
                                 :showFrame="false">
                             </SlideView>
                         </div>
@@ -213,5 +234,17 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     border-radius: var(--br-medium);
     border: 1px solid var(--surface-border, #e2e8f0);
     background-color: var(--p-primary-50, #f8fafc);
+}
+
+.monitor-preview-content {
+    position: relative;
+    z-index: 1;
+}
+
+.background-slide {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
 }
 </style>
