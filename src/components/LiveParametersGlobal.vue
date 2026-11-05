@@ -16,7 +16,7 @@ import parameterStore from '@/services/parameterstore_service'
 import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
 import { globalParameters, fetchGlobalParameter, getGlobalParametersAsJSON } from '@/globals/global_parameters';
 import { participants, fetchParticipants } from '@/globals/participants';
-import { updateGlobalParameter, deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
+import { updateGlobalParameter, deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, LANGUAGE_PARAMETER_NAME, type GlobalParameter } from '@/services/global_parameter_service'
 import { useItemDeletion } from '@/generics/deleteItem'
 
 const { onConfirmDeleteItem } = useItemDeletion();
@@ -25,6 +25,11 @@ const confirm = useConfirm();
 const toast = useToast();
 
 const parameterChanges = ref<ParameterChange[]>([])
+
+// The automatically mirrored language parameter is not edited/displayed here
+const visibleGlobalParameters = computed(() =>
+  globalParameters.value.filter(p => p.name !== LANGUAGE_PARAMETER_NAME)
+)
 const addParameterActive = ref<Boolean>(false)
 const parameterName = ref<string>("");
 const selectedParameterType = ref<string | null>(null);
@@ -312,7 +317,7 @@ function globalParameterChange(glob: GlobalParameter) {
                     </div>
                 </div>
 
-                <DataTable v-if="globalParameters.length > 0" :value="globalParameters" dataKey="id" editMode="row"
+                <DataTable v-if="visibleGlobalParameters.length > 0" :value="visibleGlobalParameters" dataKey="id" editMode="row"
                     @row-edit-save="onRowEditSaveParameter" scrollable scrollHeight="flex" responsiveLayout="scroll"
                     v-model:editingRows="editingRows" tableStyle="width: 100%; table-layout: auto;">
 
