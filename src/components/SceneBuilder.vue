@@ -34,6 +34,10 @@ const props = defineProps({
         type: Object as () => Scene | null,
         required: false,
         default: null
+    },
+    name_edit_enabled: {
+        type: Boolean,
+        default: true
     }
 })
 
@@ -121,6 +125,7 @@ function confirmedUpdateScene(id: number) {
 
     updateScene(id, scene_).then(_response => {
         toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 })
+        fetchScenes()
     }).catch(error => {
         console.error("Error saving scene:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update scene', life: 3000 })
@@ -209,6 +214,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                     :disabled="isSavedScene && !nameEditing" :invalid="nameTaken" fluid />
                 <label v-if="nameTaken" for="scenename_input">Scene name already exists</label>
             </FloatLabel>
+            <!-- <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" :disabled="!props.name_edit_enabled" /> -->
 
             <Transition name="fade" mode="out-in">
                 <div v-if="!nameEditing" key="view">

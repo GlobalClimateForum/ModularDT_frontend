@@ -22,8 +22,6 @@ const bgColor = computed(() => {
   const bg = props.section.properties?.bg ?? 'transparent'
   return bg.toLowerCase() === 'transparent' ? 'transparent' : '#' + bg
 })
-const spec = ref<string>(props.section.content ?? '')
-
 let view: any = null
 let renderToken = 0
 let fetchToken = 0
@@ -35,6 +33,12 @@ const streamUrl = computed(() =>
   props.section.mode !== 'static' ? (props.section.content_path ?? '') : ''
 )
 
+// Streaming sections start blank: the stored content is a cache and must not
+// be shown before the fresh spec from the content server has arrived.
+// Static sections render their stored content directly.
+const spec = ref<string>(streamUrl.value ? '' : (props.section.content ?? ''))
+
+// ---------- Fetching ----------
 async function fetchSpecification() {
   const url = streamUrl.value
   if (!alive || !url) return
@@ -81,9 +85,16 @@ async function renderContent() {
 
 // ---------- Watchers ----------
 // init + URL change + manual refresh (refreshKey)
+// Clear the spec so nothing (not even cached content) is shown until the
+// fresh spec from the content server arrives.
 watch(
   () => [streamUrl.value, props.section.properties?.refreshKey],
-  ([url]) => { if (url) fetchSpecification() },
+  ([url]) => {
+    if (url) {
+      spec.value = ''
+      fetchSpecification()
+    }
+  },
   { immediate: true }
 )
 

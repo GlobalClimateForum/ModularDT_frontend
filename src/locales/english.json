@@ -98,7 +98,8 @@
     "choose_presentation": "Choose presentation",
     "live_monitors": "Live monitors",
     "send_to_multiple_monitors": "Multiple monitors",
-    "confirmation-message-all-parameters": "Delete all global parameters?"
+    "confirmation-message-all-parameters": "Delete all global parameters?",
+    "no_parameters_for_monitor": "There are currently no slide-specific parameters on Monitor "
   },
   "participant": {
     "name": "Participant",

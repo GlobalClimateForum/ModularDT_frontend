@@ -65,7 +65,7 @@ const activeTab = ref('global_parameters')
                 <TabPanel v-for="(slot, index) in whatYouSeeOnMonitors" :key="'monitor' + (index + 1)"
                     :value="'monitor' + (index + 1)">
                     <!-- <h2 class="text-lg font-bold">Tab for Monitor {{ index + 1 }}</h2> -->
-                    <LiveParametersSlide :slide="IpSlidesForCurrentMonitorSlides[index]" :sections="IpSlidesForCurrentMonitorSlides[index]?.sections ?? []"/>
+                    <LiveParametersSlide :slide="IpSlidesForCurrentMonitorSlides[index]" :sections="IpSlidesForCurrentMonitorSlides[index]?.sections ?? []" :monitor_id="(index + 1)"/>
                 </TabPanel>
             </TabPanels>
         </Tabs>
@@ -80,5 +80,10 @@ const activeTab = ref('global_parameters')
     flex: 1;
     min-height: 0;
     width: 100%;
+}
+
+.dashboard :deep(Tab), 
+.dashboard :deep([role="tab"]) {
+    font-size: 130%;
 }
 </style>

@@ -12,6 +12,7 @@ import { API_BASE_URL } from '@/config'
 import { participants } from '@/globals/participants'
 import { getParticipants } from '@/services/participant_service'
 import palettes from '@/assets/palettes.json'
+import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 // components
 import SlideView from '@/components/SlideView.vue'
 import type { Slide } from "@/services/slide_service"
@@ -36,6 +37,7 @@ const mySlideshow = ref<Slide[] | null>(null);
 const myCurrentSlide = ref<Slide | null>(null);
 let currentSlideIndex = -1
 let mySlideshowId = -1
+
 
 let stop: (() => void) | undefined
 
@@ -62,7 +64,6 @@ onUnmounted(() => {
 })
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-  //console.log("update participant parameters.")
   sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
 }
 
@@ -101,10 +102,20 @@ const handleMessage = (data) => {
     }
 
     if (data.event_type === 'settings_update' || data.message) {
-      console.log("kuckuck")
       if (settings.value.palette != data.settings.palette) {
         settings.value.palette = data.settings.palette
         updatePrimaryPalette(palettes[settings.value.palette]);
+      }
+
+      if (settings.value.background_image != data.settings.background_image) {
+        console.log("New Background image: ", data.settings.background_image)
+        settings.value.background_image = data.settings.background_image
+        fetchBackgoundImage(settings.value.background_image);
+      }
+
+
+      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
+        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
       }
     }
   } catch (e) {
@@ -177,12 +188,32 @@ const handleSwipe = () => {
     <SlideView :preview="false" :slide="myCurrentSlide" :showframe="false"
       :sections="myCurrentSlide?.sections ? myCurrentSlide?.sections : []" class="slide-preview" />
     <div class="controls">
-      <button class="nav-btn prev" @click="previousSlide" :disabled="currentSlideIndex <= 0">◀</button>
-      <button class="nav-btn next" @click="nextSlide"
-        :disabled="currentSlideIndex === (mySlideshow && mySlideshow.length - 1)">▶</button>
+      <button v-if="currentSlideIndex > 0" class="nav-btn prev" @click="previousSlide">◀</button>
+      <button v-if="mySlideshow && currentSlideIndex < mySlideshow.length - 1" class="nav-btn next"
+        @click="nextSlide">▶</button>
     </div>
   </div>
-  <div v-else class="welcome show-bg-text">
+  <div v-else>
+    <div v-if="settings.background_image_on_welcome_screens && background_image">
+      <img class="bg_image" :src="background_image?.src || ''" alt="">
+    </div>
+    <div v-else class="welcome show-bg-text">
+    </div>
+    <div class="centered">
+      <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
+      <!-- Monitor ID is between 1 and the number of screens -->
+      <div v-if="activeParticipant">
+        <p>{{ t('participant.waiting') }}</p>
+      </div>
+      <!-- Monitor ID is 0 or exceeds the number of screens -->
+      <div v-else>
+        <p>{{ t('participant.invalid') }}</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!--  <div v-else class="welcome show-bg-text">
     <div v-if="(activeParticipant)" style="position: absolute;">
       <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>
       <p> {{ t('participant.waiting') }} </p>
@@ -192,7 +223,7 @@ const handleSwipe = () => {
       <p> {{ t('participant.invalid') }}</p>
     </div>
   </div>
-</template>
+-->
 
 <style scoped>
 .slideshow-container {
@@ -242,5 +273,15 @@ const handleSwipe = () => {
 .next {
   right: 20px;
   /* Abstand zum rechten Rand */
+}
+
+.bg_image {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  /* Preserve aspet ratio */
+  min-width: 100%;
+  min-height: 100%;
 }
 </style>
