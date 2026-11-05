@@ -3,7 +3,6 @@ import type { Slide, SlideSection } from '@/services/slide_service';
 import { defineAsyncComponent } from 'vue'
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { basemaps } from '@/utils/map_utils';
-import Message from 'primevue/message';
 
 // -- Inputs -- 
 // Props definition with default values for optional props
@@ -12,6 +11,7 @@ const props = withDefaults(defineProps<{
     targetSlide?: Slide | null,
     sections: SlideSection[],
     preview: boolean,
+    previewBackground?: boolean,
     showframe?: boolean,
     showSectionID?: boolean,
     shadow?: boolean
@@ -22,6 +22,7 @@ const props = withDefaults(defineProps<{
 
 const sectionContents = computed(() => props.sections);
 const sectionWidths = computed(() => props.sections.map(section => section.width_fraction));
+const previewBackground = computed(() => props.previewBackground ?? false);
 
 // -- Re-Rendering -- 
 // A reference to trigger re-rendering of sections when their content or widths change
@@ -64,8 +65,8 @@ const availableHeight = ref(0)
 
 // Width of the decorative monitor bezel (box-shadow spread) painted around the slide in preview mode - kept out of
 // the box model (outline/box-shadow) so it must be reserved manually here instead of via padding/border.
-const BEZEL_PX = props.preview ? 48 : 0
-const bezel = computed(() => (props.preview ? BEZEL_PX : 0))
+const BEZEL_PX = previewBackground ? 48 : 0
+const bezel = computed(() => (previewBackground ? BEZEL_PX : 0))
 
 // Computes the scale factor to fit the slide (plus its bezel) within the available width and height while maintaining aspect ratio
 const autoScale = computed(() => {
@@ -83,7 +84,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
 </script>
 
 <template>
-    <div :class="{ 'slide-outer': true, 'inset-control': props.preview }">
+    <div :class="{ 'slide-outer': true, 'inset-control': previewBackground }">
         <div ref="wrapperRef" class="slide-measure" />
 
         <div class="slide-content" :style="{
@@ -92,7 +93,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
         }">
 
             <!-- preview container -->
-            <div :class="{ 'monitor-preview': props.preview, 'section-container': true }" :style="{
+            <div :class="{ 'monitor-preview': previewBackground, 'section-container': true }" :style="{
                 position: 'absolute',
                 top: bezel * autoScale + 'px',
                 left: bezel * autoScale + 'px',
@@ -106,7 +107,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
                 <component v-for="(section, index) in sectionContents" :key="`${section.view_type}-${index}`"
                     :is="componentsMap[section.view_type]" :slide="props.slide" :section="section"
                     :sectionWidth="sectionWidths[index]" :basemap="props.basemap" :targetSlide="props.targetSlide"
-                    class="section-component" />
+                    :preview="props.preview" class="section-component" />
 
                 <template v-if="props.showframe">
                     <div v-for="(w, i) in sectionWidths" :key="`frame-${i}`" class="frame-overlay" :style="{

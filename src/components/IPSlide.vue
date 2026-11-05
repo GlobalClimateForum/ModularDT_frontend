@@ -15,9 +15,11 @@ const props = defineProps<{
     section: SlideSection,
     sectionWidth: number,
     showframe?: boolean,
+    preview?: boolean
 }>()
 
 const localTargetSlide = ref<Slide | null>(props.targetSlide ?? null)
+const preview = ref(props.preview ?? false)
 
 const emit = defineEmits<{
     (e: 'parameterChanged', changePayload: ParameterChange): void
@@ -34,13 +36,15 @@ function onParameterChange(section: SlideSection, key: string, event: any) {
 }
 
 function initializeParameters(section: SlideSection) {
-    for (const [key, field] of Object.entries(section?.parameters ?? {})) {
-        if (field && field.default !== undefined) {
-            parameterStore.set({
-                section: section.id as number,
-                parameter: key,
-                value: field.default,
-            })
+    if (!preview.value) {
+        for (const [key, field] of Object.entries(section?.parameters ?? {})) {
+            if (field && field.default !== undefined) {
+                parameterStore.set({
+                    section: section.id as number,
+                    parameter: key,
+                    value: field.default,
+                })
+            }
         }
     }
 }

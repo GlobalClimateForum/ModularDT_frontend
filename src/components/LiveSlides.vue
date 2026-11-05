@@ -26,7 +26,7 @@ const selectedSlide = ref<Slide | null>(null);
 let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
 let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
-const handleDragStart = (item) => {    
+const handleDragStart = (item) => {
     // Track if needed, but actual drag setup happens in child
 };
 
@@ -69,7 +69,8 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery style="flex: 1; min-height: 0;"  v-model:selectedSlide="selectedSlide" @slide-drag-start="handleDragStart" />
+                <SlideGallery style="flex: 1; min-height: 0;" v-model:selectedSlide="selectedSlide"
+                    @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Current view -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -110,7 +111,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
                         <div v-if="slot" style="width: 100%; height:90%; pointer-events: none">
-                            <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
+                            <SlideView :preview="true" :slide="slot" :sections="slot.sections ? slot.sections : []"
                                 :showFrame="false">
                             </SlideView>
                         </div>
