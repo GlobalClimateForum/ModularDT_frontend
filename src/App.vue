@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 // globals and services
 import { fetchSettings, settings } from '@/globals/settings'
 import { fetchGlobalParameter, globalParameters } from '@/globals/global_parameters';
+import { syncLanguageParameter } from '@/services/global_parameter_service';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
@@ -51,9 +52,19 @@ watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
 }, { immediate: true });
 
+const syncLanguage = (language: string) => {
+  // Spiegelt die Sprache als globalen Parameter in den Parameter Store (einweg)
+  syncLanguageParameter(language).catch(error => {
+    console.error("Error syncing language parameter:", error);
+  })
+}
+
 watch(() => settings.value?.language, (newLanguage) => {
   if (newLanguage) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
     locale.value = newLanguage
+    // Erst nach dem initialen Settings-Load synchronisieren,
+    // da der Watcher bei 'en' (Default) noch vor fetchSettings feuert
+    if (isSettingsLoaded.value) syncLanguage(newLanguage)
   }
 }, { immediate: true })
 
@@ -89,6 +100,8 @@ onBeforeMount(async () => {
   })
 
   isSettingsLoaded.value = true
+  // Initialer Sync der Spracheinstellung in den Parameter Store
+  syncLanguage(settings.value.language)
   const appName = proxy.$APP_NAME || 'Default App Title';
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
 })
