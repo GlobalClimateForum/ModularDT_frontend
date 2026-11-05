@@ -20,6 +20,7 @@ import Checkbox from 'primevue/checkbox';
 // globals and services
 import { useRouter } from 'vue-router';
 import { settings, fetchSettings } from '@/globals/settings'
+import { slides, fetchSlides } from '@/globals/slides'
 import { updateSettings, isModerator, clearModerator } from "@/services/settings_service";
 import { saveEvent, deleteEvent } from "@/services/event_service";
 import { sendMonitorsUpdate } from "@/services/monitor_service";
@@ -58,6 +59,12 @@ const themeOptions = [
 const eventOptions = ref<EventOption[]>([]);
 const selectedEvent = ref<Event | null>(null);
 
+// Slide options for the background slide dropdowns; empty value = no background slide
+const slideOptions = computed(() => [
+  { label: '(none)', value: '' },
+  ...slides.value.map(slide => ({ label: slide.name, value: slide.name }))
+]);
+
 const translatedLocales = computed(() => {
   return availableLocales.map(locale => ({
     label: LANGUAGE_NAMES[locale] || locale,
@@ -76,6 +83,8 @@ const saveSettings = async () => {
     background_image_on_welcome_screens: settings.value.background_image_on_welcome_screens,
     background_image_on_all_slides_per_default: settings.value.background_image_on_all_slides_per_default,
     background_image: settings.value.background_image,
+    background_monitor_slide: settings.value.background_monitor_slide,
+    background_participant_slide: settings.value.background_participant_slide,
     language: settings.value.language,
     palette: settings.value.palette,
     theme: settings.value.theme,
@@ -176,6 +185,7 @@ function onAddEvent() {
 onMounted(async () => {
   eventOptions.value = await getEventOptions();
   onEventChange(settings.value.event_id);
+  await fetchSlides(); // populate the background slide dropdowns
 });
 
 function updateSettingsForMonitors() {
@@ -189,6 +199,7 @@ function updateSettingsForMonitors() {
         'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
         'show_screen_id': settings.value.show_screen_id,
         'palette': settings.value.palette,
+        'background_monitor_slide': settings.value.background_monitor_slide,
       }
     }
   })
@@ -201,7 +212,8 @@ function updateSettingsForParticipants() {
     'settings': {
       'palette': settings.value.palette,
       'background_image': settings.value.background_image,
-      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens
+      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+      'background_participant_slide': settings.value.background_participant_slide
     }
     //}
   })
@@ -282,6 +294,18 @@ function copyParameterStoreToClipboard() {
               inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()" />
             <Label for="background_image_on_all_slides_per_default-checkbox"> {{
               $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
+          </div>
+
+          <div class="label-container">
+            <label>{{ $t('moderator.settings.background_monitor_slide') }}</label>
+            <Select v-model="settings.background_monitor_slide" :options="slideOptions" optionLabel="label"
+              optionValue="value" fluid @change="updateSettingsForMonitors()" />
+          </div>
+
+          <div class="label-container">
+            <label>{{ $t('moderator.settings.background_participant_slide') }}</label>
+            <Select v-model="settings.background_participant_slide" :options="slideOptions" optionLabel="label"
+              optionValue="value" fluid @change="updateSettingsForParticipants()" />
           </div>
 
           <div class="label-container">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted, onBeforeMount, ref, provide, getCurrentInstance } from 'vue'
+import { computed, onMounted, onUnmounted, onBeforeMount, ref, provide, getCurrentInstance, watch } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
@@ -11,6 +11,7 @@ import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
+import { slides, fetchSlides } from '@/globals/slides'
 import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
@@ -81,6 +82,20 @@ const displaySlide = computed(() => {
   return updatedSlide
 })
 
+// -- Background slide --
+// The slide selected in the global settings is rendered as a layer behind the
+// current slide. It is looked up by name in the global slide store.
+const backgroundSlide = computed<Slide | null>(() =>
+  settings.value.background_monitor_slide
+    ? slides.value.find(slide => slide.name === settings.value.background_monitor_slide) ?? null
+    : null
+)
+
+// Make sure the slide store is populated whenever a background slide is configured
+watch(() => settings.value.background_monitor_slide, (name) => {
+  if (name) fetchSlides()
+}, { immediate: true })
+
 function getSlideMode(sections: SlideSection[]): string {
   return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
@@ -134,6 +149,13 @@ function updateSettings(data) {
     settings.value.background_image = data.settings.background_image
     fetchBackgoundImage(settings.value.background_image);
     //need_to_rerender = true
+  }
+
+  // Only update if the payload actually carries the field, so older/other payloads
+  // cannot wipe the locally loaded setting back to ''
+  if (data.settings.background_monitor_slide !== undefined
+    && settings.value.background_monitor_slide != data.settings.background_monitor_slide) {
+    settings.value.background_monitor_slide = data.settings.background_monitor_slide
   }
 
   if (need_to_rerender) {
@@ -225,7 +247,12 @@ const handleMessage = (data) => {
       <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
         style="width: 100vw; height: 100vh; overflow: hidden;">
       </div>
-      <div v-else style="width: 100vw; height: 100vh; overflow: hidden;">
+      <div v-else style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
+        <!-- Background slide layer (from global settings), if configured -->
+        <div v-if="backgroundSlide" class="background-slide">
+          <SlideView :preview="false" :slide="backgroundSlide" :showframe="false"
+            :sections="backgroundSlide.sections ?? []" />
+        </div>
         <SlideView :preview="false" :slide="displaySlide" :showframe="false"
           :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
       </div>
@@ -280,8 +307,17 @@ const handleMessage = (data) => {
 }
 
 .slide-preview {
+  position: relative;
+  z-index: 1;
   text-align: left;
   align-self: stretch;
+}
+
+.background-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .bg_image {
