@@ -65,8 +65,8 @@ const availableHeight = ref(0)
 
 // Width of the decorative monitor bezel (box-shadow spread) painted around the slide in preview mode - kept out of
 // the box model (outline/box-shadow) so it must be reserved manually here instead of via padding/border.
-const BEZEL_PX = previewBackground ? 48 : 0
-const bezel = computed(() => (previewBackground ? BEZEL_PX : 0))
+const BEZEL_PX = 48
+const bezel = computed(() => (previewBackground.value ? BEZEL_PX : 0))
 
 // Computes the scale factor to fit the slide (plus its bezel) within the available width and height while maintaining aspect ratio
 const autoScale = computed(() => {
