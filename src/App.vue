@@ -27,7 +27,7 @@ import { updatePrimaryPalette } from '@primeuix/themes';
 
 import palettes from '@/assets/palettes.json'
 
-// proxy ersetzt das klassische "this" im Setup-Skript
+// proxy replaces the classic "this" in the setup script
 const { proxy } = getCurrentInstance() as any;
 const paramstore = useParameterStore()
 
@@ -53,23 +53,23 @@ watch(() => settings.value?.cs_url, (url) => {
 }, { immediate: true });
 
 const syncLanguage = (language: string) => {
-  // Spiegelt die Sprache als globalen Parameter in den Parameter Store (einweg)
+  // Mirrors the language into the parameter store as a global parameter (one-way)
   syncLanguageParameter(language).catch(error => {
     console.error("Error syncing language parameter:", error);
   })
 }
 
 watch(() => settings.value?.language, (newLanguage) => {
-  if (newLanguage) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
+  if (newLanguage) { // Only set if a valid value is present    
     locale.value = newLanguage
-    // Erst nach dem initialen Settings-Load synchronisieren,
-    // da der Watcher bei 'en' (Default) noch vor fetchSettings feuert
+    // Only sync after the initial settings load, since the watcher
+    // already fires with 'en' (default) before fetchSettings
     if (isSettingsLoaded.value) syncLanguage(newLanguage)
   }
 }, { immediate: true })
 
 watch(() => settings.value?.palette, (newPalette) => {
-  if (newPalette) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
+  if (newPalette) { // Only set if a valid value is present    
     updatePrimaryPalette(palettes[newPalette]);
   }
 }, { immediate: true })
@@ -100,7 +100,7 @@ onBeforeMount(async () => {
   })
 
   isSettingsLoaded.value = true
-  // Initialer Sync der Spracheinstellung in den Parameter Store
+  // Initial sync of the language setting into the parameter store
   syncLanguage(settings.value.language)
   const appName = proxy.$APP_NAME || 'Default App Title';
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
