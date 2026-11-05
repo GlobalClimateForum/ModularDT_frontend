@@ -1,49 +1,51 @@
 <script lang="ts" setup>
-
-import type { Slide, SlideSection } from '@/services/slide_service';
-import { contentServerApi } from '@/services/api';
-import { ref, watch, onMounted, onUnmounted } from 'vue';
-import { useParameterStore } from '@/services/parameterstore_service';
+import type { Slide, SlideSection } from '@/services/slide_service'
+import { contentServerApi } from '@/services/api'
+import { ref, watch, onBeforeUnmount } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+import { useParameterStore, hit, type ParameterChange } from '@/services/parameterstore_service'
 
 const props = defineProps<{
-    section: SlideSection;
-    slide: Slide;
+    section: SlideSection
+    slide: Slide
 }>()
 
-const dynamicContent = ref<string | null>(null);
+const dynamicContent = ref<string | null>(null)
 const paramstore = useParameterStore()
+let fetchToken = 0
+let alive = true
 
 async function getDynamicContent() {
     const path = props.section?.content_path
-    if (!path) return
+    if (!alive || !path) return
+    const token = ++fetchToken
     try {
         const response = await contentServerApi.get<string>(path, { responseType: 'text' })
-        dynamicContent.value = response.data
+        if (alive && token === fetchToken) dynamicContent.value = response.data   // ignore outdated responses
     } catch (err) {
         console.error(`Failed to fetch dynamic content from ${path}`, err)
     }
 }
 
-const unsubscribe = paramstore.subscribe((change) => {
-    if (props.section?.parameters && change.parameter in props.section.parameters) {
-        getDynamicContent();
-    }
+// 500 ms: merges bursts of changes and lets the snapshot reach the server first
+const debouncedFetch = useDebounceFn(getDynamicContent, 500)
+
+// global changes + changes for this section
+const unsubscribe = paramstore.subscribe((change: ParameterChange) => {
+    if (props.section.id && hit(props.section.id, change)) debouncedFetch()
 })
 
-onMounted(async () => {
-    await getDynamicContent();
-});
+// init + URL change + manual refresh (Fetch button)
+watch(
+    () => [props.section?.content_path, props.section?.properties?.refreshKey],
+    ([path]) => { if (path) getDynamicContent() },
+    { immediate: true }
+)
 
-onUnmounted(() => {
-    unsubscribe();
-});
-
-watch(() => props.section?.content_path, async (newContent) => {
-    if (newContent) {
-        await getDynamicContent();
-    }
-}, { immediate: true });
-
+onBeforeUnmount(() => {
+    alive = false
+    unsubscribe()
+})
 </script>
 
 
