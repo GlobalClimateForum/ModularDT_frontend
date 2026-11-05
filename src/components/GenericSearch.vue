@@ -18,15 +18,15 @@ const props = defineProps({
 })
 
 const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
-const filterLogic = defineModel<'and' | 'or'> ('filterLogic', { default: 'and' });
+const filterLogic = defineModel<'and' | 'or'>('filterLogic', { default: 'and' });
 
 const filters = defineModel<SearchFilters>('filters', {
-  default: () => ({
-    global: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-  }),
+    default: () => ({
+        global: {
+            value: null,
+            matchMode: FilterMatchMode.CONTAINS,
+        },
+    }),
 })
 
 const existingTags = ref<string[]>([]);
@@ -54,7 +54,7 @@ onMounted(() => {
 });
 
 defineExpose({
-  fetchTags
+    fetchTags
 })
 </script>
 
@@ -122,5 +122,29 @@ defineExpose({
     scrollbar-width: none;
     -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
     mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+
+.rolldown-enter-active,
+.rolldown-leave-active {
+    transition:
+        max-height 300ms ease,
+        opacity 200ms ease,
+        transform 300ms ease;
+    overflow: hidden;
+}
+
+.rolldown-enter-from,
+.rolldown-leave-to {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.rolldown-enter-to,
+.rolldown-leave-from {
+    max-height: 200px;
+    /* larger than the row ever gets */
+    opacity: 1;
+    transform: translateY(0);
 }
 </style>

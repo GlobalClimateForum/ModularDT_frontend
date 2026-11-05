@@ -1,12 +1,14 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast'
+import ButtonGroup from 'primevue/buttongroup';
+import FloatLabel from 'primevue/floatlabel';
 import { useI18n } from 'vue-i18n';
 import { useConfirm } from "primevue/useconfirm";
 import { dialogService } from '@/services/dialog_service';
@@ -24,6 +26,7 @@ import SlideGallery from '@/components/SlideGallery.vue';
 
 const { t } = useI18n();
 const confirm = useConfirm();
+const nameEditing = ref(false);
 
 // Define Input Proerties
 const props = defineProps({
@@ -33,6 +36,35 @@ const props = defineProps({
         default: null
     }
 })
+
+const isSavedScene = computed(() => !!props.inp_scene?.id)
+
+const nameTaken = computed(() => {
+    const name = scenename.value.trim()
+    if (!name) return false
+    return scenes.value.some(s => s.name === name && s.id !== props.inp_scene?.id)
+})
+
+function cancelRename() {
+    nameEditing.value = false
+    scenename.value = props.inp_scene?.name ?? ''
+}
+
+function onRenameScene() {
+    const id = props.inp_scene?.id
+    const name = scenename.value.trim()
+    nameEditing.value = false
+    if (!id || !name || name === props.inp_scene?.name) return
+
+    updateScene(id, { name }).then(() => {
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Scene renamed successfully', life: 3000 })
+        fetchScenes()
+    }).catch(() => {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename scene', life: 3000 })
+        scenename.value = props.inp_scene?.name ?? ''
+    })
+}
+
 
 var scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
@@ -136,15 +168,12 @@ function onSaveScene() {
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'Scene name cannot be empty', life: 3000 })
         return
     }
-
-    const exisitng_scene = scenes.value.find((s) => s.name === scenename.value);
-    if (exisitng_scene) {
-        confirmUpdateScene(exisitng_scene?.id ?? -1)
+    if (isSavedScene.value) {
+        confirmUpdateScene(props.inp_scene!.id!)
     } else {
         storeScene()
     }
 }
-
 // Check if there are slides assinged to multiple monitors (duplicates)
 function duplicates() {
     const slideIds = scene.value
@@ -175,10 +204,32 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     <div class="scene-builder">
         <div class="dashboard-header">
 
-            <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')"
-                :disabled="scenename != ''" />
+            <FloatLabel variant="on" style="width: 400px;">
+                <InputText id="scenename_input" v-model="scenename" :placeholder="$t('moderator.enter_scene_name')"
+                    :disabled="isSavedScene && !nameEditing" :invalid="nameTaken" fluid />
+                <label v-if="nameTaken" for="scenename_input">Scene name already exists</label>
+            </FloatLabel>
 
-            <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene" :disabled="scenename === ''" />
+            <Transition name="fade" mode="out-in">
+                <div v-if="!nameEditing" key="view">
+                    <Button v-if="isSavedScene" outlined size="small" label="Rename" @click="nameEditing = true">
+                        <template #icon><i class="material-symbols-outlined">edit</i></template>
+                    </Button>
+                </div>
+                <div v-else key="edit">
+                    <ButtonGroup>
+                        <Button text @click="onRenameScene" :disabled="!scenename.trim() || nameTaken">
+                            <template #icon><i class="material-symbols-outlined">check</i></template>
+                        </Button>
+                        <Button text @click="cancelRename">
+                            <template #icon><i class="material-symbols-outlined">close</i></template>
+                        </Button>
+                    </ButtonGroup>
+                </div>
+            </Transition>
+
+            <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene"
+                :disabled="!scenename.trim() || nameEditing || nameTaken" />
 
             <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
 
@@ -248,7 +299,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                         </div>
 
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                        <div v-if="slot" style="width: 100%; height:90%;">
+                        <div v-if="slot" class="monitor-preview">
                             <SlideView :preview="false" :slide="slot" :sections="slot.sections ? slot.sections : []"
                                 :showFrame="false">
                             </SlideView>
@@ -280,8 +331,16 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     justify-content: space-between;
 }
 
-.dashboard-header .p-inputtext {
+.dashboard-header .p-floatlabel {
     width: 30%;
+}
+
+.dashboard-header .p-inputtext {
+    width: 100%;
+}
+
+.dashboard-header .p-floatlabel label {
+    color: var(--p-floatlabel-invalid-color) !important;
 }
 
 .dashboard-header-messages {
@@ -314,6 +373,28 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     overflow: hidden;
 }
 
+.monitor-preview {
+    width: 100%;
+    height: 90%;
+    pointer-events: none;
+}
+
+.monitor-info {
+    background-color: var(--surface);
+    position: absolute;
+    left: var(--space-small);
+    right: var(--space-small);
+    bottom: var(--space-small);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: fit-content;
+    border-radius: var(--br-small);
+    width: auto;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--p-surface-100);
+}
+
 .monitor-label-container {
     display: flex;
     flex-direction: row;
@@ -322,7 +403,8 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 }
 
 .monitor-label {
-    font-size: var(--fs-small);
+    font-size: var(--fs-medium);
+    font-weight: bold;
     color: var(--p-primary-50);
     margin-bottom: 0;
     padding: 0;
@@ -331,7 +413,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 
 .assigned-slide-label {
     font-weight: normal;
-    font-size: var(--fs-small);
+    font-size: var(--fs-medium);
     color: var(--p-primary-50);
     margin-bottom: 0;
     padding: 0;
