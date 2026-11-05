@@ -74,7 +74,7 @@ const targetSlide = ref<Slide | null>(null) // Track the target slide for intera
 const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
 const sectionPopover = ref<InstanceType<typeof Popover> | null>(null) // Reference to the Popover component for section type selection
 
-const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: `${s.id}-init-${Math.random().toString(36).substring(2, 11)}`})
+const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: `${s.id}-init-${Math.random().toString(36).substring(2, 11)}` })
 
 // Mapping for which editor to use for each view type (markdown, map, chart, etc.)
 // all except markdown are lazy-loaded to reduce initial bundle size
@@ -650,7 +650,8 @@ onBeforeUnmount(() => {
                     <!-- Slide Preview -->
                     <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
                         :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                        :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap" :targetSlide="targetSlide" />
+                        :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap"
+                        :targetSlide="targetSlide" :previewBackground="true" />
 
                 </div>
 
@@ -658,10 +659,10 @@ onBeforeUnmount(() => {
                     <h1 class="dashboard_label">Slide Settings</h1>
                     <!-- Layout Editor -->
                     <LayoutEditor :layout="layout" :widths="sectionWidths" :showFrame="showFrame"
-                        :showSectionID="showSectionID" @sectionWidths="sectionWidths = [...$event]" @showframe="showFrame = $event"
+                        :showSectionID="showSectionID" @sectionWidths="sectionWidths = [...$event]"
+                        @showframe="showFrame = $event"
                         :autoSizeButton="slideSections[currentSectionIndex].view_type == 'vega'"
-                        @autosize="onToggleAutoSize($event)"
-                        @showsectionid="showSectionID = $event"
+                        @autosize="onToggleAutoSize($event)" @showsectionid="showSectionID = $event"
                         @bgcolor="updateSectionBgColorAt(currentSectionIndex, $event)" :backgroundColor="sectionBgColor"
                         :slide="currentSlide" :bgPicker="sectionBgColorEditable" />
                 </div>
