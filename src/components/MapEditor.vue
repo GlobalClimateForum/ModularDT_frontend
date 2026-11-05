@@ -13,8 +13,8 @@ import Button from 'primevue/button';
 import { type MapProperties, type Layer, saveMapLayer, localMapLayer, identifyVectorType, getMap } from '@/services/map_service';
 import { normalizeLayer } from '@/services/map_layers_service';
 import { settings } from '@/globals/settings.ts';
-import type { Marker } from '@/services/map_service';
-import { dotMarkerPreview, asHexValue } from '@/services/map_service';
+import { dotMarkerPreview } from '@/services/map_service';
+import { slideSectionDefaults } from '@/globals/slide_section_defaults';
 
 const DEFAULT_START_POSITION: [number, number] = [13.350103005033793, 52.51451583081903];
 const DEFAULT_START_ZOOM = 2;
@@ -51,26 +51,27 @@ const startState = computed<{ position: [number, number]; zoom: number }>(() => 
 });
 
 // --- Init Map Editor Settings onMounted  -----------------------------------------
-
 onMounted(async () => {
     try {
         existingLayers.value = await localMapLayer();
-        console.log('Existing layers fetched:', existingLayers.value);
     } catch (e) {
         console.error('localMapLayer failed:', e);
         existingLayers.value = [];
     }
-    if (props.slideSection.content) {
-        const mapProperties: MapProperties = JSON.parse(props.slideSection.content);
-        selectedBasemap.value = mapProperties.basemap;
-        layers.value = mapProperties.layers ?? [];
-        savedPositions.value = mapProperties.positions ?? [];
-    } else {
-        selectedBasemap.value = 'openfreemap_bright';
-        layers.value = [];
-        savedPositions.value = [];
-        props.slideSection.mode = 'interactive';
+
+    // content always comes from the section; fall back to the map defaults for old/empty sections
+    const raw = props.slideSection.content || (slideSectionDefaults.map.content as string)
+
+    let mapProperties: MapProperties
+    try {
+        mapProperties = JSON.parse(raw)
+    } catch {
+        mapProperties = JSON.parse(slideSectionDefaults.map.content as string)
     }
+
+    selectedBasemap.value = mapProperties.basemap;
+    layers.value = mapProperties.layers ?? [];
+    savedPositions.value = (mapProperties.positions ?? []).map(p => ({ ...p, inEdit: false }));
 });
 
 // --- build location parameters from saved positions -----------

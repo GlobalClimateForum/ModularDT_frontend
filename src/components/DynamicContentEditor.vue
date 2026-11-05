@@ -59,7 +59,6 @@ const hasExtra = (param: any) =>
 
 watch(() => props.slideSection.content_path, p => contentPath.value = p ?? '')
 
-
 </script>
 
 

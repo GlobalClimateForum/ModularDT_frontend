@@ -26,12 +26,10 @@ const emit = defineEmits<{
 }>()
 
 onMounted(() => {
-    if (!props.slideSection.mode) {
-        props.slideSection.mode = 'html'
-        emit('sectionUpdated', { ...props.slideSection, mode: 'html' })
-    }else {
-        selectedMode.value = modeOptions.find(o => o.value === props.slideSection.mode) || modeOptions[0]
-    }
+    const option = modeOptions.find(o => o.value === props.slideSection.mode)
+    selectedMode.value = option ?? modeOptions[0]
+    // To update old slides
+    if (!option) emit('sectionUpdated', { ...props.slideSection, mode: 'html' })
 })
 
 </script>
@@ -41,11 +39,12 @@ onMounted(() => {
         <div class="editor-toolbar">
             <div class="mode-select label-container">
                 <SelectButton v-model="selectedMode" :options="modeOptions" optionLabel="label" dataKey="value"
-                    :allowEmpty="false"  @change="$emit('sectionUpdated', { ...props.slideSection, mode: selectedMode.value })" />
+                    :allowEmpty="false"
+                    @change="$emit('sectionUpdated', { ...props.slideSection, mode: selectedMode.value })" />
             </div>
         </div>
-        <CodeEditor class="editor-fill" :slideSection="props.slideSection" :language="selectedMode.language" 
-        @contentUpdated="$emit('contentUpdated', $event)"></CodeEditor>
+        <CodeEditor class="editor-fill" :slideSection="props.slideSection" :language="selectedMode.language"
+            @contentUpdated="$emit('contentUpdated', $event)"></CodeEditor>
     </div>
 </template>
 

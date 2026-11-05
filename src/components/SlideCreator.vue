@@ -17,7 +17,7 @@ import Listbox from 'primevue/listbox'
 import type { Slide, SlideSection } from '@/services/slide_service'
 import { SlideSectionTypes, validateFilename, renameSlide, type SlideSectionType } from '@/services/slide_service'
 import { getSlideSectionType } from '@/services/slide_service'
-import { createDefaultSlide, createDefaultSection, updateSlideStore } from '@/globals/slides'
+import { createDefaultSlide, createDefaultSlideSection, updateSlideStore } from '@/globals/slides'
 import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_service'
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
@@ -100,7 +100,7 @@ function loadSlide(slide?: Slide | null) {
     currentSlide.value = { ...source };
 
     // Add a unique key to each section to guard section content
-    slideSections.value = (slide?.sections ?? [createDefaultSection()]).map(withKey)
+    slideSections.value = (slide?.sections ?? [createDefaultSlideSection()]).map(withKey)
     // Set the section widths based on the slide sections
     sectionWidths.value = slideSections.value.map(s => s.width_fraction ?? 1.0)
 
@@ -171,13 +171,9 @@ function serializeSectionAt(index: number): Omit<SlideSection, '_key'> | undefin
     if (!section) { return undefined } // Guard clause to ensure the section exists
 
     const { _key, ...serializedSection } = {
-        ...createDefaultSection(),
+        ...createDefaultSlideSection(section.view_type),
         ...section,
         width_fraction: sectionWidths.value[index] ?? 1,
-        parameters: section.parameters ?? {},
-        mode: section.mode ?? 'static',
-        url_pattern: section.url_pattern ?? '',
-        properties: section.properties ?? {},
     }
 
     return serializedSection
@@ -279,7 +275,12 @@ function removeSectionAt(index: number) {
 
 // Helper to reset a section at a specific index while preserving its width fraction
 function resetSectionAt(index: number) {
-    updateSectionAt(index, { ...createDefaultSection(), width_fraction: slideSections.value[index].width_fraction })
+    const old = slideSections.value[index]
+    updateSectionAt(index, {
+        ...createDefaultSlideSection(old.view_type),
+        id: old.id,
+        width_fraction: old.width_fraction,
+    })
 }
 
 // Helper to update the background color of a section when the LayoutEditor emits a bgcolor event
@@ -393,8 +394,8 @@ async function persistCurrentSlide() {
 
 function clearEditor() {
     currentSlide.value = { ...createDefaultSlide(), tags: [] }   // fresh copy, not the shared object
-    slideSections.value = [withKey(createDefaultSection())] // fresh copy, not the shared object
-    selectedTypes.value = [getSlideSectionType(createDefaultSection().view_type)] // fresh copy, not the shared object
+    slideSections.value = [withKey(createDefaultSlideSection())] // fresh copy, not the shared object
+    selectedTypes.value = [getSlideSectionType(createDefaultSlideSection().view_type)] // fresh copy, not the shared object
     sectionWidths.value = [1.0] // Reset to a single section with full width
     layout.value = 'fullscreen' // Reset layout to fullscreen
     currentSectionIndex.value = 0 // Reset to the first section
@@ -413,8 +414,12 @@ function loadDraftToEditor(slideID?: number | undefined | null) {
 // Handler to update the view_type of a section and reset content to default when the user selects a new type from the dropdown
 function onChangeViewType(index: number, option: SlideSectionType) {
     const oldSection = slideSections.value[index]
-    if (!oldSection) { return } // Guard clause to ensure the section exists
-    updateSectionAt(index, { ...createDefaultSection(), width_fraction: oldSection.width_fraction, view_type: option.value })
+    if (!oldSection) return
+    updateSectionAt(index, {
+        ...createDefaultSlideSection(option.value),
+        id: oldSection.id,
+        width_fraction: oldSection.width_fraction,
+    })
 }
 
 // --------------------- Watchers ---------------------

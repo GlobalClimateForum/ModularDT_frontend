@@ -4,9 +4,19 @@ import { getSlides, updateSlide, saveSlide } from "@/services/slide_service";
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import { useI18n } from 'vue-i18n';
+import { slideSectionDefaults } from './slide_section_defaults';
 
 // globale reactive variable
 export const slides = ref<Slide[]>([]);
+
+export function createDefaultSlideSection(viewType: string = 'markdown'): SlideSection {
+    const defaults = slideSectionDefaults[viewType] ?? slideSectionDefaults['markdown'];
+    return structuredClone({
+        id: null,
+        ...defaults,
+        view_type: viewType,
+    }) as SlideSection
+}
 
 // Fetch slides from the backend and update the reactive variable
 export async function fetchSlides() {
@@ -95,7 +105,7 @@ export function useSlide() {
                 // Persist the saved slide to the store
                 updateSlideStore(savedSlide)
                 const successMessage = shouldUpdate ? t('moderator.slide-updated-success') : t('moderator.slide-saved-success')
-                toast.add({ severity: 'success', summary: 'Success',   detail: successMessage,  life: 3000 })
+                toast.add({ severity: 'success', summary: 'Success', detail: successMessage, life: 3000 })
             }
             return savedSlide
         } catch (error) {
@@ -132,18 +142,5 @@ export function createDefaultSlide(): Slide {
         width: 1920,
         height: 1080,
         tags: [],
-    }
-}
-
-export function createDefaultSection(): SlideSection {
-    return {
-        view_type: 'markdown',
-        width_fraction: 1,
-        content: '',
-        content_path: '',
-        mode : 'static',
-        parameters: {},
-        url_pattern: '',
-        properties: {bg: '#ffffff', autosize: false},
     }
 }

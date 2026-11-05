@@ -48,24 +48,7 @@ export const slideSectionDefaults: Record<string, SlideSection> = {
     vega: {
         view_type: "vega",
         width_fraction: 1.0,
-        content: JSON.stringify({
-            $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-            title: "New Vega Chart",
-            width: "container",
-            height: "container",
-            data: {
-                values: [
-                    { category: "A", value: 28 },
-                    { category: "B", value: 55 },
-                    { category: "C", value: 43 },
-                ],
-            },
-            mark: "bar",
-            encoding: {
-                x: { field: "category", type: "nominal" },
-                y: { field: "value", type: "quantitative" },
-            },
-        }, null, 2),
+        content: "",
         content_path: "",
         mode: "static",
         parameters: {},
