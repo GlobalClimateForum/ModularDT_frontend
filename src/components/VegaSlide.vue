@@ -5,6 +5,7 @@ import embed from 'vega-embed'
 import { type Slide, type SlideSection } from '@/services/slide_service'
 import { streamVegaSpec } from '@/utils/vega_utils'
 import parameterStore, { type ParameterChange, hit } from '@/services/parameterstore_service'
+import ProgressSpinner from 'primevue/progressspinner';
 
 const props = defineProps<{
   slide: Slide,
@@ -14,6 +15,8 @@ const props = defineProps<{
 }>()
 
 const container = ref<HTMLElement | null>(null)
+const loading = ref(true)
+
 // Background Color: 'transparent' (or missing) -> transparent, otherwise hex like '000000'
 const bgColor = computed(() => {
   const bg = props.section.properties?.bg ?? 'transparent'
@@ -32,19 +35,21 @@ const streamUrl = computed(() =>
   props.section.mode !== 'static' ? (props.section.content_path ?? '') : ''
 )
 
-// ---------- Fetching ----------
 async function fetchSpecification() {
   const url = streamUrl.value
   if (!alive || !url) return
   const token = ++fetchToken
+  loading.value = true
   try {
     const fetched = await streamVegaSpec(url, () => { })
-    if (alive && token === fetchToken) spec.value = fetched
+    if (!alive || token !== fetchToken) return
+    spec.value = fetched
+    await renderContent()
   } catch (err) {
     console.error('Failed to fetch vega spec:', err)
+    if (token === fetchToken) loading.value = false
   }
 }
-
 const debouncedFetch = useDebounceFn(fetchSpecification, 500)
 
 function parameterChangeHandler(change: ParameterChange) {
@@ -66,14 +71,21 @@ async function renderContent() {
     if (token !== renderToken) { result.view.finalize(); return }
     view?.finalize()
     view = result.view
+    loading.value = false
   } catch (err) {
     console.error('Failed to render vega content:', err)
+    loading.value = false
   }
 }
 
+
 // ---------- Watchers ----------
-// init + whenever the URL changes
-watch(streamUrl, (url) => { if (url) fetchSpecification() }, { immediate: true })
+// init + URL change + manual refresh (refreshKey)
+watch(
+  () => [streamUrl.value, props.section.properties?.refreshKey],
+  ([url]) => { if (url) fetchSpecification() },
+  { immediate: true }
+)
 
 // static sections: use the stored content
 watch(() => props.section.content, (content) => {
@@ -81,7 +93,7 @@ watch(() => props.section.content, (content) => {
 }, { immediate: true })
 
 watchDebounced(spec, renderContent, { debounce: 400 })
-watch(() => props.section.properties, renderContent, { deep: true })
+watch(() => props.section.properties?.autosize, renderContent)   // only autosize needs a re-render
 
 // ---------- Lifecycle ----------
 onMounted(() => {
@@ -104,6 +116,12 @@ onBeforeUnmount(() => {
     height: slide?.height + 'px',
     backgroundColor: bgColor,
   }">
+    <div class="loading-overlay" v-if="loading">
+      <div class="loading-content">
+        <ProgressSpinner style="width: 100px; height: 100px;" strokeWidth="4" animationDuration=".5s" />
+        <div class="loading-text">Fetching Vega Spec...</div>
+      </div>
+    </div>
     <div ref="container" class="vega-container"></div>
   </div>
 </template>
@@ -111,8 +129,33 @@ onBeforeUnmount(() => {
 <style scoped>
 .vega-layout {
   display: flex;
+  position: relative;
 }
 
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  z-index: 10;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-text {
+  font-size: var(--fs-xlarge);
+  font-weight: bold;
+  color: var(--p-primary-500);
+}
 
 .vega-container {
   width: 100%;

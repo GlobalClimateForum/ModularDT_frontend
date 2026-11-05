@@ -113,7 +113,13 @@ function onUrlInput() {
 // --- Interactive mode: resolve the pattern with current defaults and fetch ----
 
 function fetchVega() {
-    emitSection({ content_path: vegaEndpoint.value })
+    emitSection({
+        content_path: vegaEndpoint.value,
+        properties: {
+            ...props.slideSection.properties,
+            refreshKey: Date.now(),          // NEW: changes on every click
+        }
+    })
 }
 
 // --- Watchers ----------------------------------------------------------------

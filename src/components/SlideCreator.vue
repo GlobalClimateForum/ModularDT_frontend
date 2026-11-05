@@ -204,7 +204,8 @@ function updateSectionAt(index: number, changes: Partial<SlideSection>, refetch 
     const pathChanged = oldSection.content_path !== updatedSection.content_path
     const viewTypeChanged = oldSection.view_type !== updatedSection.view_type
 
-    const shouldRefetch = refetch && (pathChanged || viewTypeChanged)
+    const refreshChanged = oldSection.properties?.refreshKey !== updatedSection.properties?.refreshKey
+    const shouldRefetch = refetch && (pathChanged || viewTypeChanged || refreshChanged)
 
     if (shouldRefetch) {
         // Fetch the Vega specification for the updated section if the content_path has changed
