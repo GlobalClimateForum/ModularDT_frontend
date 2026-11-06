@@ -21,6 +21,7 @@ import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_pre
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
+import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
 import { saveDraft } from '@/services/draft_service'
 import '@/assets/main.css'
@@ -52,6 +53,8 @@ let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 const channelId = `moderator/`
 const wsUrlMonitor = new URL('/ws/moderator/', API_BASE_URL)
 const socketUrl = wsUrlMonitor + ``
+
+const paramStore = useParameterStore()
 
 const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');
 const currentSlide = ref<Slide | null>(null);
@@ -224,6 +227,13 @@ function updateParticipantParameter(parameter_name: string, value: string) {
 
 provide('updateParticipantParameter', updateParticipantParameter);
 provide('SlideLink', SlideLink)
+
+function parameterStoreAsJSON() { 
+  return paramStore.asJSONString.value;
+}
+
+provide('parameterStoreAsJSON', parameterStoreAsJSON);
+
 
 
 function updateDataForMonitor(monitorid: string) {

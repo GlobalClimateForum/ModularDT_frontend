@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
-import { useParameterStore } from '@/services/parameterstore_service';
+import { computed, defineAsyncComponent, onMounted, ref, provide } from 'vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
@@ -25,6 +24,7 @@ import { saveEvent, deleteEvent } from "@/services/event_service";
 import { sendMonitorsUpdate } from "@/services/monitor_service";
 import { sendParticipantsUpdate } from "@/services/participant_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
+import { useParameterStore } from '@/services/parameterstore_service';
 import { styleNames, previewUri, prettyName } from '@/services/avatar_service';
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
