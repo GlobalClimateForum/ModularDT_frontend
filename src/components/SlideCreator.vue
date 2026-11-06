@@ -269,7 +269,7 @@ function addSectionAt(index: number) {
     }
 
     // Create a new section with a unique key and add it to the slideSections array
-    const newSection = withKey(createDefaultSection()) // Instantiate a new default section with a unique key
+    const newSection = withKey(createDefaultSlideSection()) // Instantiate a new default section with a unique key
     const newSectionType = getSlideSectionType(newSection.view_type) // Get the default view type for the new section
     slideSections.value.splice(index, 0, newSection)
     selectedTypes.value.splice(index, 0, newSectionType)
@@ -333,7 +333,7 @@ async function fetchVegaSectionAt(index: number) {
     try {
         const spec = await streamVegaSpec(section.content_path, (progress) => {
             vegaProgress.value = progress
-        }, '-1')
+        }, '-1 ')
         // Update the section with the fetched Vega specification and reset the progress indicator
         // Do not refetch again to avoid infinite loops!
         updateSectionAt(index, { content: spec }, false)
