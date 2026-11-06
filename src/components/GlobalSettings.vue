@@ -284,7 +284,8 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_image_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors(); updateSettingsForParticipants()" />
+              inputId="background_image_on_welcome_screens-checkbox"
+              @change="updateSettingsForMonitors(); updateSettingsForParticipants()" />
             <Label for="background_image_on_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
@@ -443,11 +444,18 @@ function copyParameterStoreToClipboard() {
         <div class="sub-panel-adaptive">
           <div class="label-button-row">
             <h1 class="dashboard_label">Parameter Store</h1>
-            <Button size="small" label="Copy" @click="copyParameterStoreToClipboard()"">
-              <template #icon>
-                <i class="material-symbols-outlined">content_copy</i>
-              </template>
-            </Button>
+            <div style="display: flex; flex-direction: row; gap: var(--space-small);">
+              <Button label="Empty" size="small" @click="paramstore.empty()">
+                <template #icon>
+                  <i class="material-symbols-outlined">delete</i>
+                </template>
+              </Button>
+              <Button size="small" label="Copy" @click="copyParameterStoreToClipboard()">
+                <template #icon>
+                  <i class=" material-symbols-outlined">content_copy</i>
+                </template>
+              </Button>
+            </div>
           </div>
           <Textarea disabled rows="10" :value="paramstore.asJSONString.value" fluid readonly />
         </div>
@@ -623,7 +631,7 @@ function copyParameterStoreToClipboard() {
   flex-shrink: 0;
 }
 
-.label-button-row{
+.label-button-row {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
