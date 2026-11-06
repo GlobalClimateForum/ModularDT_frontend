@@ -13,6 +13,7 @@ import { useWebsocketService } from '@/services/websocket_service'
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 import { slides, fetchSlides } from '@/globals/slides'
 import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
+import { useParameterStore } from '@/services/parameterstore_service';
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
 import { API_BASE_URL } from '@/config'
@@ -31,6 +32,8 @@ const socketUrl = wsUrlMonitor + `${currentId.value}/`
 
 const wsService = useWebsocketService()
 
+const paramStore = useParameterStore()
+
 let livePresentationActive = ref<Boolean>(false)
 let liveSlidesActive = ref<Boolean>(false)
 //let ready_to_render = ref<Boolean>(false)
@@ -40,6 +43,13 @@ const activeMonitor = computed(() => {
   const idAsNumber = Number(route.params.id)
   return 1 <= idAsNumber && idAsNumber <= settings.value.number_of_screens
 })
+
+function parameterStoreAsJSON() { 
+  return paramStore.asJSONString.value;
+}
+
+provide('parameterStoreAsJSON', parameterStoreAsJSON);
+
 
 onBeforeMount(() => {
   wsService.connect(channelId, socketUrl)
