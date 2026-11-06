@@ -2,6 +2,7 @@ import { reactive, readonly, watch } from 'vue'
 import { useWebsocketService } from '@/services/websocket_service'
 import { API_BASE_URL } from '@/config'
 import { computed } from 'vue'
+import { useToast } from 'primevue/usetoast';
 
 // ----------------- Parameter Types -----------------
 
@@ -126,6 +127,12 @@ function createParameterStore() {
         return result
     })
 
+    const empty = () => {
+        for (const key of Object.keys(state)) delete state[key]
+        dirty = true  // so the watcher pushes the empty snapshot to all clients
+        console.log("Parameter store flushed");
+    }
+
     const asJSONString = computed(() => JSON.stringify(asJSON.value, null, 2))
 
     // Hydrate = Load the parameter store from a snapshot
@@ -173,6 +180,7 @@ function createParameterStore() {
         state: getStoreState(),
         asJSON,
         asJSONString,
+        empty,
         set,
         get,
         subscribe,
