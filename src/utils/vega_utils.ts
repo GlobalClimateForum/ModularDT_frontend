@@ -115,10 +115,14 @@ export function buildVegaUrl(pattern: string, values: Record<string, unknown>): 
 // Function to stream a Vega specification from the server using SSE
 export function streamVegaSpec(
     url: string, // The sub-URL to fetch the Vega specification from
-    onProgress: (progress: number) => void // Callback function to handle progress updates
+    onProgress: (progress: number) => void, // Callback function to handle progress updates
+    senderID: string | number // Unique identifier for the sender, used to differentiate between multiple clients
 ): Promise<string> {
+
+    const sender = String(senderID) // Convert the senderID to a string for use in the URL
+
     return new Promise((resolve, reject) => {
-        const fullUrl = `${settings.value.cs_url}/${url}` // Construct the full URL using the base URL from settings
+        const fullUrl = `${settings.value.cs_url}/${url}/${sender}` // Construct the full URL using the base URL from settings
         const eventSource = new EventSource(fullUrl) // Create a new EventSource to listen for server-sent events
 
         // Handle incoming messages from the SSE stream
@@ -150,5 +154,5 @@ export function streamVegaSpec(
             reject(new Error('EventSource connection failed.'))
         };
 
-})
+    })
 };

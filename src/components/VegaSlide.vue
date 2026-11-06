@@ -45,7 +45,7 @@ async function fetchSpecification() {
   const token = ++fetchToken
   loading.value = true
   try {
-    const fetched = await streamVegaSpec(url, () => { })
+    const fetched = await streamVegaSpec(url, () => { }, props.section.id ?? '')
     if (!alive || token !== fetchToken) return
     spec.value = fetched
     await renderContent()
