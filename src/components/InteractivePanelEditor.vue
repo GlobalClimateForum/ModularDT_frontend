@@ -1,16 +1,21 @@
 <script lang="ts" setup>
 import '@/assets/main.css'
 import { getISlides, type Slide, type SlideSection } from '@/services/slide_service'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, defineProps, watch } from 'vue'
 import { formatDate } from '@/utils/date_utils'
 import Select from 'primevue/select';
 import SlideView from '@/components/SlideView.vue'
 import ParameterList from '@/components/ParameterList.vue'
-import { slides } from '@/globals/slides'
+
+const props = defineProps<{
+    slideSection: SlideSection | null
+}>()
+
 
 const islides = ref<Slide[]>([])
-const selectedSlide = ref<Slide | null>(null)
-const slide = computed(() => islides.value.find(s => s.id === selectedSlide.value) ?? null)
+const targetSlide = ref<number | null>(null)
+
+const slide = computed(() => islides.value.find(s => s.id === targetSlide.value) ?? null)
 const parametersFlat = computed(() => {
     let params: Record<string, any> = {}
     if (slide.value) {
@@ -39,12 +44,24 @@ function onTargetSlideChange(slideId: number) {
     }))
 }
 
+function loadFromSection() {
+    try {
+        const parsed = JSON.parse(props.slideSection?.content || '{}') as {
+            targetSlide: number | null, targetSection: number | null
+        }
+        targetSlide.value = parsed.targetSlide ?? null
+    } catch {
+        targetSlide.value = null
+    }
+}
+
 onMounted(async () => {
-    await getISlides().then((response) =>
-        islides.value = response.data
-    )
+    const response = await getISlides()
+    islides.value = response.data
+    loadFromSection()
 })
 
+watch(() => props.slideSection?.content, loadFromSection)
 
 </script>
 
@@ -53,7 +70,7 @@ onMounted(async () => {
         <div class="label-container" style="width: 100%;">
             <label>Choose a slide to create a panel for</label>
 
-            <Select v-model="selectedSlide" :options="islides" optionValue="id" placeholder="Interactive Panel for..."
+            <Select v-model="targetSlide" :options="islides" optionValue="id" placeholder="Interactive Panel for..."
                 @change="onTargetSlideChange($event.value)" optionLabel="name" fluid>
 
                 <template #value="slotProps">
