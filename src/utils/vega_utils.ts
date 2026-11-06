@@ -122,9 +122,8 @@ export function streamVegaSpec(
     const sender = String(senderID) // Convert the senderID to a string for use in the URL
 
     return new Promise((resolve, reject) => {
-        const fullUrl = `${settings.value.cs_url}/${url}/${sender}` // Construct the full URL using the base URL from settings
+        const fullUrl = `${settings.value.cs_url}/${url}?sender=${sender}` // Construct the full URL using the base URL from settings
         const eventSource = new EventSource(fullUrl) // Create a new EventSource to listen for server-sent events
-
         // Handle incoming messages from the SSE stream
         eventSource.onmessage = (event) => {
             let msg: any;
