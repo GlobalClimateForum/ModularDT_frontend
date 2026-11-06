@@ -20,7 +20,8 @@ async function getDynamicContent() {
     if (!alive || !path) return
     const token = ++fetchToken
     try {
-        const response = await contentServerApi.get<string>(path, { responseType: 'text' })
+        const sender = props.section.id ?? '-1'
+        const response = await contentServerApi.get<string>(`${path}?sender=${sender}`, { responseType: 'text' })
         if (alive && token === fetchToken) dynamicContent.value = response.data   // ignore outdated responses
     } catch (err) {
         console.error(`Failed to fetch dynamic content from ${path}`, err)
