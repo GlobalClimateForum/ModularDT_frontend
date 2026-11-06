@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { onMounted, onBeforeMount, getCurrentInstance, watch, ref, onUnmounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+// import { useToast } from 'primevue/usetoast'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import ConfirmDialog from "primevue/confirmdialog";
@@ -34,18 +34,18 @@ const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 
-const toast = useToast()
+// const toast = useToast()
 
-const unsubscribe = paramstore.subscribe((change) => {
-  if (settings.value.dev_mode) {
-    toast.add({
-      severity: 'info',
-      summary: 'Parameter Update',
-      detail: `Parameter ${change.parameter} updated to ${change.value}`,
-      life: 3000,
-    });
-  }
-})
+// const unsubscribe = paramstore.subscribe((change) => {
+//   if (settings.value.dev_mode) {
+//     toast.add({
+//       severity: 'info',
+//       summary: 'Parameter Update',
+//       detail: `Parameter ${change.parameter} updated to ${change.value}`,
+//       life: 3000,
+//     });
+//   }
+// })
 
 watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
@@ -105,7 +105,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  unsubscribe();
+  // unsubscribe();
 })
 </script>
 
