@@ -16,7 +16,7 @@ import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
-import { updateParticipantParameters, participantParameters } from '@/globals/participant_parameters';
+import { updateParticipantParameters } from '@/globals/participant_parameters';
 import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorUpdate } from "@/services/monitor_service"
@@ -28,8 +28,8 @@ import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
 import ParticipantsManager from '@/components/ParticipantsManager.vue';
-import SlideCreator from '@/components/SlideCreator.vue';
-import SceneBuilder from '@/components/SceneBuilder.vue';
+import SlideEditor from '@/components/SlideEditor.vue';
+import SceneEditor from '@/components/SceneEditor.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
@@ -40,6 +40,7 @@ import LivePariticipants from '@/components/LiveParticipants.vue';
 import LiveParameters from '@/components/LiveParameters.vue';
 import ParticipantSlideshow from '@/components/ParticipantSlideshow.vue';
 import SlideLink from '@/components/SlideLink.vue'
+import LivePolling from '@/components/LivePolling.vue';
 
 
 const { t } = useI18n();
@@ -56,22 +57,24 @@ const socketUrl = wsUrlMonitor + ``
 
 const paramStore = useParameterStore()
 
-const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters'>('slides');
+const currentDashboard = ref<'slides' | 'slidecreate' | 'liveslides' | 'scenes' | 'scenecreate' | 'sceneshow' | 'live' | 'scenecreate' | 'globalsettings' | 'participants' | 'participants_slides' | 'live_participants' | 'parameterchanges' | 'live_parameters' | 'live_polling'>('slides');
 const currentSlide = ref<Slide | null>(null);
 const currentScene = ref<Scene | null>(null);
 
 const dashboardViews = {
   slides: SlideManager,
-  slidecreate: SlideCreator,
+  slidecreate: SlideEditor,
   liveslides: LiveSlides,
   scenes: SceneManager,
-  scenecreate: SceneBuilder,
+  scenecreate: SceneEditor,
+  sceneshow: null,
   live: PresentationControl,
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
   participants_slides: ParticipantSlideshow,
   live_participants: LivePariticipants,
-  live_parameters: LiveParameters
+  live_parameters: LiveParameters,
+  live_polling: LivePolling
   //parameterchanges: ParameterChanges
 }
 
@@ -112,6 +115,12 @@ const items = computed(() => [
         label: t('moderator.nav.parameters'),
         materialIcon: 'tune',
         command: () => { currentDashboard.value = 'live_parameters'; }
+      },
+      {
+        key: 'livepolling',
+        label: "Live-polling",
+        materialIcon: 'tune',
+        command: () => { currentDashboard.value = 'live_polling'; }
       }
     ],
   },
@@ -131,6 +140,15 @@ const items = computed(() => [
         command: () => {
           currentScene.value = null;
           currentDashboard.value = 'scenecreate';
+        }
+      },
+      {
+        key: 'sceneshow',
+        label: t('moderator.nav.sceneshow'),
+        materialIcon: 'movie',
+        command: () => {
+          currentScene.value = null;
+          currentDashboard.value = 'sceneshow';
         }
       },
     ],
@@ -198,13 +216,7 @@ onUnmounted(() => {
 
 const handleMessage = (data) => {
   try {
-    if (data.event_type === 'participant_slideshow_update' || data.message) {
-      updateLiveParticipantsSlideshow({
-        participant_seat: Number(data.sender),
-        slideshow_id: data.slideshow_id,
-        current_slide_index: data.current_slide_index
-      });
-    }
+
     if (data.event_type === 'update_participant_parameter' || data.message) {
       updateParticipantParameters(data.parameter_name, data.participant, data.value)
     }
@@ -212,7 +224,25 @@ const handleMessage = (data) => {
       updateDataForMonitor(data.monitorid)
     }
     if (data.event_type === 'participant_request' || data.message) {
-      updateDataForParticipant(data.participantid)
+
+    }
+    if (data.event_type === 'update' || data.message) {
+      if (data.command === 'update_participant_slideshow') {
+        updateLiveParticipantsSlideshow({
+          participant_seat: Number(data.sender),
+          slideshow_id: data.slideshow_id,
+          current_slide_index: data.current_slide_index
+        });
+      }
+    }
+
+    if (data.event_type === 'request' || data.message) {
+      if (data.command === 'request_from_praticipant') {
+        updateDataForParticipant(data.participantid)
+      }
+      if (data.command === 'request_from_monitor') {
+        updateDataForMonitor(data.monitorid)
+      }
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -228,31 +258,28 @@ function updateParticipantParameter(parameter_name: string, value: string) {
 provide('updateParticipantParameter', updateParticipantParameter);
 provide('SlideLink', SlideLink)
 
-function parameterStoreAsJSON() { 
+function parameterStoreAsJSON() {
   return paramStore.asJSONString.value;
 }
 
 provide('parameterStoreAsJSON', parameterStoreAsJSON);
 
-
-
+// 
 function updateDataForMonitor(monitorid: string) {
   sendMonitorUpdate(Number(monitorid), {
-    'payload': {
-      'event_type': 'data_update',
-      'settings': {
-        'number_of_screens': settings.value.number_of_screens,
-        'background_image': settings.value.background_image,
-        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
-        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
-        'show_screen_id': settings.value.show_screen_id,
-        'palette': settings.value.palette,
-      },
-      'presentation': {
-        'livePresentationActive': livePresentationState.value.active,
-        'liveSlidesActive': liveSlidesActive.value,
-        'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
-      }
+    'event_type': 'data_update',
+    'settings': {
+      'number_of_screens': settings.value.number_of_screens,
+      'background_image': settings.value.background_image,
+      'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
+      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
+      'show_screen_id': settings.value.show_screen_id,
+      'palette': settings.value.palette,
+    },
+    'presentation': {
+      'livePresentationActive': livePresentationState.value.active,
+      'liveSlidesActive': liveSlidesActive.value,
+      'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
     }
   })
 }

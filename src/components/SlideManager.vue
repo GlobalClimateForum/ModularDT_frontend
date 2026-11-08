@@ -71,7 +71,7 @@ function onEditSlide(slide: Slide) {
 
 
 async function onConfirmDeleteSlide(slide: Slide) {
-    const deleted = await onConfirmDeleteItem(slide, "slide", deleteSlide)
+    const deleted = await onConfirmDeleteItem("slide", deleteSlide, slide)
 
     if (deleted) {
         slides.value = slides.value.filter(s => s.id !== slide.id);

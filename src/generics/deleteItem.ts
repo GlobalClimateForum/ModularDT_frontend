@@ -1,11 +1,7 @@
 import { useConfirm } from 'primevue/useconfirm';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
-
-export interface ItemInterface {
-    id?: number;
-    name: string;
-}
+import { type ItemInterface } from '@/generics/interfaceItem'
 
 type DeleteFunction = (id: number) => Promise<unknown>;
 
@@ -15,9 +11,9 @@ export function useItemDeletion() {
     const toast = useToast();
 
     async function onDeleteItem<T extends ItemInterface>(
-        item: T,
         itemTypeString: string,
-        deleteFunction: DeleteFunction
+        deleteFunction: DeleteFunction,        
+        item: T
     ): Promise<boolean> {
         if (!Number.isFinite(item.id)) {
             toast.add({
@@ -56,18 +52,18 @@ export function useItemDeletion() {
     }
 
     function onConfirmDeleteItem<T extends ItemInterface>(
-        item: T,
         itemTypeString: string,
-        deleteFunction: DeleteFunction
+        deleteFunction: DeleteFunction,        
+        item: T
     ): Promise<boolean> {
         return new Promise((resolve) => {
             confirm.require({
                 header: t('moderator.confirmation'),
-                message: t('moderator.confirmation-message-head') + t('moderator.' + itemTypeString) + " (" + item.name + ")" + t('moderator.confirmation-message-tail'),
+                message: t('moderator.confirmation-delete-message-head') + t('moderator.' + itemTypeString) + " (" + item.name + ")" + t('moderator.confirmation-delete-message-tail'),
                 acceptLabel: t('moderator.confirmation-ok'),
                 rejectLabel: t('moderator.confirmation-cancel'),
                 accept: async () => {
-                    resolve(await onDeleteItem(item, itemTypeString, deleteFunction));
+                    resolve(await onDeleteItem(itemTypeString, deleteFunction, item));
                 },
                 reject: () => resolve(false)
             });

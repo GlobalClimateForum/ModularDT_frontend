@@ -99,7 +99,7 @@ function onRowEditSaveSlideshow(event: any) {
 
 
 async function onConfirmDeleteSlideshow(slideshow: Slideshow) {
-    const deleted = await onConfirmDeleteItem(slideshow, "participants_slideshow", deleteSlideshow)
+    const deleted = await onConfirmDeleteItem("participants_slideshow", deleteSlideshow, slideshow)
 
     if (deleted) {
         slideshows.value = slideshows.value.filter(s => s.id !== slideshow.id);

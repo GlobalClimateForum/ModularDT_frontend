@@ -11,12 +11,11 @@ import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import { useWebsocketService } from '@/services/websocket_service'
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
-import { sendModeratorAMonitorRequest } from '@/services/moderator_service'
+import { sendModeratorMessage } from '@/services/moderator_service'
 import { useParameterStore } from '@/services/parameterstore_service';
 import '@/assets/main.css'
 import palettes from '@/assets/palettes.json'
 import { API_BASE_URL } from '@/config'
-
 // components
 import SlideView from '@/components/SlideView.vue';
 
@@ -63,6 +62,7 @@ onUnmounted(() => {
   wsService.disconnect(channelId)
 })
 
+
 // -- Parameter Changes --
 const parameterChanges = ref<ParameterChange[]>([])
 // Subscribe to parameter changes when the component is mounted
@@ -95,6 +95,13 @@ function getSlideMode(sections: SlideSection[]): string {
   return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
 
+function sendModeratorAMonitorRequest(monitorid: string) {
+  sendModeratorMessage({
+    event_type: "request",
+    command: "request_from_monitor",
+    monitorid: monitorid
+  })
+}
 
 // Function to apply a parameter change to a slide, returning a new slide object with the updated parameters
 function applyParameterChange(slide: Slide, change: ParameterChange | undefined): Slide {

@@ -128,7 +128,7 @@ function onEditScene(scene: Scene) {
 }
 
 async function onConfirmDeleteScene(scene: Scene) {
-    const deleted = await onConfirmDeleteItem(scene, "scene", deleteScene)
+    const deleted = await onConfirmDeleteItem("scene", deleteScene, scene)
 
     if (deleted) {
         scenes.value = scenes.value.filter(s => s.id !== scene.id);

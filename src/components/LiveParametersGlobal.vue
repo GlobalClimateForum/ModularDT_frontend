@@ -146,7 +146,7 @@ function onConfirmedClearParameters() {
 }
 
 async function onConfirmedDeleteParameter(glob: GlobalParameter) {
-    const deleted = await onConfirmDeleteItem(glob, "parameter", deleteGlobalParameter)
+    const deleted = await onConfirmDeleteItem("parameter", deleteGlobalParameter, glob)
 
     if (deleted) {
         globalParameters.value = globalParameters.value.filter(gp => gp.id !== glob.id);
