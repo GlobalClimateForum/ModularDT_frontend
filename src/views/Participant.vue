@@ -12,13 +12,12 @@ import { API_BASE_URL } from '@/config'
 import { participants } from '@/globals/participants'
 import { getParticipants } from '@/services/participant_service'
 import palettes from '@/assets/palettes.json'
+import type { Slide } from "@/services/slide_service"
+import { sendModeratorMessage } from "@/services/moderator_service";
 import { background_image, fetchBackgoundImage } from '@/globals/background_image';
 import { slides, fetchSlides } from '@/globals/slides'
 // components
 import SlideView from '@/components/SlideView.vue'
-import type { Slide } from "@/services/slide_service"
-import { sendModeratorUpdate, sendUpdateParticipantParameter } from "@/services/moderator_service";
-import { sendModeratorAParticipantRequest } from '@/services/moderator_service'
 import SlideLink from '@/components/SlideLink.vue'
 
 
@@ -38,7 +37,6 @@ const mySlideshow = ref<Slide[] | null>(null);
 const myCurrentSlide = ref<Slide | null>(null);
 let currentSlideIndex = -1
 let mySlideshowId = -1
-
 
 let stop: (() => void) | undefined
 
@@ -65,7 +63,13 @@ onUnmounted(() => {
 })
 
 function updateParticipantParameter(parameter_name: string, value: string) {
-  sendUpdateParticipantParameter(parameter_name, value, `${currentId.value}`)
+  sendModeratorMessage({
+    event_type: "update",
+    command: "update_participant_parameter",
+    participant: `${currentId.value}`,
+    parameter_name: parameter_name,
+    value: value
+  })
 }
 
 provide('updateParticipantParameter', updateParticipantParameter);
@@ -96,6 +100,14 @@ function participantSlideLinkHandler(href: string, event: Event) {
 
 provide('slideLinkClickHandler', participantSlideLinkHandler)
 provide('SlideLink', SlideLink)
+
+function sendModeratorAParticipantRequest(participantid: string) {
+  sendModeratorMessage({
+    event_type: "request",
+    command: "request_from_praticipant",
+    participantid: participantid
+  })
+}
 
 const handleMessage = (data) => {
   console.log("got message: ", data)
@@ -149,8 +161,9 @@ const nextSlide = () => {
   if ((mySlideshow.value) && (currentSlideIndex < mySlideshow.value.length - 1)) {
     currentSlideIndex++
     myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
-    sendModeratorUpdate({
-      event_type: "participant_slideshow_update",
+    sendModeratorMessage({
+      event_type: "update",
+      command: "update_participant_slideshow",
       sender: `${currentId.value}`,
       slideshow_id: mySlideshowId,
       current_slide_index: currentSlideIndex
@@ -162,8 +175,9 @@ const previousSlide = () => {
   if ((mySlideshow.value) && (currentSlideIndex > 0)) {
     currentSlideIndex--
     myCurrentSlide.value = mySlideshow.value[currentSlideIndex]
-    sendModeratorUpdate({
-      event_type: "participant_slideshow_update",
+    sendModeratorMessage({
+      event_type: "update",
+      command: "update_participant_slideshow",
       sender: `${currentId.value}`,
       slideshow_id: mySlideshowId,
       current_slide_index: currentSlideIndex

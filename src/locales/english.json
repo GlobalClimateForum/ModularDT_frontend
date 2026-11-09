@@ -22,7 +22,8 @@
       "parameters": "Parameters",
       "control": "Control",
       "live_parameters": "Live global parameter",
-      "live_parameter_configuration": "Live global parameter configuration"
+      "live_parameter_configuration": "Live global parameter configuration",
+      "sceneshow": "Scene show"
     },
     "settings": {
       "numberscreens": "Number of Screens",
@@ -94,13 +95,13 @@
     "order_instruction": "Drag the scenes here to specify order",
     "save_order": "Save order",
     "confirmation": "Confirmation",
-    "confirmation-message-head": "Are you sure you want to delete this ",
-    "confirmation-message-tail": "?",
+    "confirmation-delete-message-head": "Are you sure you want to delete this ",
+    "confirmation-delete_message-tail": "?",
+    "confirmation-update-message-head": "A ",
+    "confirmation-update-message-middle": " with name ",
+    "confirmation-update-message-tail": " already exits. Overwrite?",
     "confirmation-ok": "OK",
     "confirmation-cancel": "Cancel",
-    "update-slide-confirmation-message-head": "A slide with name",
-    "update-scene-confirmation-message-head": "A scene with name",
-    "update-slide-confirmation-message-tail": "already exits. Overwrite?",
     "choose_presentation": "Choose presentation",
     "live_monitors": "Live monitors",
     "send_to_multiple_monitors": "Multiple monitors",

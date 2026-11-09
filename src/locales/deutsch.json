@@ -22,7 +22,8 @@
       "parameters": "Parameter",
       "control": "Steuerung",
       "live_parameters": "Globale live parameter",
-      "live_parameter_configuration": "Globale live parameter Konfiguration"
+      "live_parameter_configuration": "Globale live parameter Konfiguration",
+      "sceneshow": "Szenenpräsentation"
     },
     "settings": {
       "numberscreens": "Anzahl Bildschirme",
@@ -94,13 +95,13 @@
     "order_instruction": "Ziehen Sie Szenen hierher, um die Reihenfolge festzulegen",
     "save_order": "Reihenfolge speichern",
     "confirmation": "Bestätigung",
-    "confirmation-message-head": "Diese ",
-    "confirmation-message-tail": " wirklich löschen?",
+    "confirmation-delete-message-head": "Diese ",
+    "confirmation-delete-message-tail": " wirklich löschen?",
+    "confirmation-update-message-head": "Eine ",
+    "confirmation-update-message-middle": " mit Namem ",
+    "confirmation-update-message-tail": " existiert bereits. Überschreiben?",
     "confirmation-ok": "OK",
     "confirmation-cancel": "Abbrechen",
-    "update-slide-confirmation-message-head": "Eine Folie mit Namen",
-    "update-scene-confirmation-message-head": "Eine Szene mit Namen",
-    "update-slide-confirmation-message-tail": "existier bereits. Überschreiben?",
     "choose_presentation": "Präsentation wählen",
     "live_monitors": "Live Monitore",
     "send_to_multiple_monitors": "Mehrere Monitore",

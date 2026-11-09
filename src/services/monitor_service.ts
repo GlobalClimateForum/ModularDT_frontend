@@ -20,21 +20,15 @@ export const updateMonitorStatesFromScene = async (scene: Scene) => {
         if (grid[index]) {
             console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])
             sendMonitorUpdate((Number(index) + 1), {
-                'payload': {
-                    'event_type': 'slide_change',
-                    'slide': grid[index]
-                }
-            }
-            )
+                'event_type': 'slide_change',
+                'slide': grid[index]
+            })
         } else {
             console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
             sendMonitorUpdate((Number(index) + 1), {
-                'payload': {
-                    'event_type': 'slide_change',
-                    'slide': 'null'
-                }
-            }
-            )
+                'event_type': 'slide_change',
+                'slide': 'null'
+            })
         }
 
     }
@@ -45,21 +39,15 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
         if (slides[index]) {
             console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", slides[index])
             sendMonitorUpdate((Number(index) + 1), {
-                'payload': {
-                    'event_type': 'slide_change',
-                    'slide': slides[index]
-                }
-            }
-            )
+                'event_type': 'slide_change',
+                'slide': slides[index]
+            })
         } else {
             console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
             sendMonitorUpdate((Number(index) + 1), {
-                'payload': {
-                    'event_type': 'slide_change',
-                    'slide': 'null'
-                }
-            }
-            )
+                'event_type': 'slide_change',
+                'slide': 'null'
+            })
         }
 
     }
@@ -68,18 +56,13 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
 export const updateOneMonitor = async (slide: Slide, id: number) => {
     if (slide) {
         sendMonitorUpdate((id), {
-            'payload': {
-                'event_type': 'slide_change',
-                'slide': slide
-            }
-        }
-        )
+            'event_type': 'slide_change',
+            'slide': slide
+        })
     } else {
         sendMonitorUpdate((id), {
-            'payload': {
-                'event_type': 'slide_change',
-                'slide': 'null'
-            }
+            'event_type': 'slide_change',
+            'slide': 'null'
         }
         )
     }
@@ -90,22 +73,16 @@ export const updateSlideOnMonitors = async (slide: Slide) => {
         for (let id = 1; id <= settings.value.number_of_screens; id++) {
             //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])
             sendMonitorUpdate((id), {
-                'payload': {
-                    'event_type': 'slide_update',
-                    'slide': slide
-                }
-            }
-            )
+                'event_type': 'slide_update',
+                'slide': slide
+            })
         }
     } else {
         for (let id = 1; id <= settings.value.number_of_screens; id++) {
             sendMonitorUpdate((id), {
-                'payload': {
                     'event_type': 'slide_update',
                     'slide': 'null'
-                }
-            }
-            )
+            })
         }
     }
 }

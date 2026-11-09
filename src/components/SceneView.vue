@@ -57,6 +57,7 @@ const gridedSlides = computed(() => {
     width: 100%;
     height: 100%;
     align-items: center;
+    justify-content: center;
     padding-left: var(--space-medium);
     padding-right: var(--space-medium);
 

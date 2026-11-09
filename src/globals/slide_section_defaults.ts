@@ -43,7 +43,7 @@ export const slideSectionDefaults: Record<string, SlideSection> = {
         parameters: {},
         rules: [],
         url_pattern: "",
-        properties: { bg: "#ffffff" },
+        properties: { bg: "#1E1B22" },
     },
     vega: {
         view_type: "vega",
