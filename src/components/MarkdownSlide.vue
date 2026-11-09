@@ -13,36 +13,55 @@ const props = defineProps<{
 
 const marpDocument = ref<string>("");
 const isRendering = ref(false);
-const bgColor = computed(() => props.section.properties?.bg ?? 'transparent')
-const debouncedBgColor = ref(bgColor.value);
+const bgColor = computed(() => {
+    const color = props.section.properties?.bg?.trim() || 'transparent';
+    return /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color) ? `#${color}` : color;
+});
 let bgTimer: ReturnType<typeof setTimeout> | undefined;
+let renderVersion = 0;
 
-function toDocument(html: string, css: string): string {
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>${css}</style>
-        </head>
-        <body>
-            ${html}
-        </body>
-        </html>
+function toDocument(html: string, css: string | undefined, backgroundColor: string): string {
+    // The server can return a complete document or separate Marp HTML/CSS.
+    // Parse either form instead of nesting a full document inside another body.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    if (css) {
+        const themeStyle = doc.createElement('style');
+        themeStyle.textContent = css;
+        doc.head.append(themeStyle);
+    }
+
+    const frameStyle = doc.createElement('style');
+    frameStyle.textContent = `
+        :root { color-scheme: light; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent !important;
+        }
+        /* An iframe's outer background does not override the Marp theme inside it. */
+        .marpit > svg > foreignObject > section {
+            background-color: ${backgroundColor} !important;
+        }
     `;
+    doc.head.append(frameStyle);
+    return `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
 }
 
 async function getMarpContent() {
     const renderWidth = props.slide.width * props.sectionWidth;
+    const backgroundColor = bgColor.value;
+    const version = ++renderVersion;
     isRendering.value = true;
     try {
-        const content = await renderSlide(props.section.content, renderWidth, props.slide.height, bgColor.value);
-        marpDocument.value = toDocument(content.data.html, content.data.css);
+        const content = await renderSlide(props.section.content, renderWidth, props.slide.height, backgroundColor);
+        if (version === renderVersion) {
+            marpDocument.value = toDocument(content.data.html, content.data.css, backgroundColor);
+        }
     } catch (error) {
         console.error("Error rendering slide:", error);
     } finally {
-        isRendering.value = false;
+        if (version === renderVersion) isRendering.value = false;
     }
 }
 
@@ -52,12 +71,13 @@ watch(bgColor, () => {
 });
 
 
-onBeforeUnmount(
-    () => clearTimeout(bgTimer)
-);
+onBeforeUnmount(() => {
+    clearTimeout(bgTimer);
+    renderVersion += 1;
+});
 
 watch(
-    () => [props.section.content, props.sectionWidth],
+    () => [props.section.content, props.sectionWidth, props.slide.width, props.slide.height],
     () => { clearTimeout(bgTimer); getMarpContent(); },
     { immediate: true }
 );
@@ -91,6 +111,8 @@ watch(
 }
 
 .marp-iframe {
+    /* Keep the iframe canvas and its document on the same color scheme. */
+    color-scheme: light;
     background: transparent;
     display: block;
     box-sizing: border-box;

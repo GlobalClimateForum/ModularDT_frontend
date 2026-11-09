@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // Vue stuff
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -15,7 +15,8 @@ import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import { slideParameters, fetchSlideParameters } from '@/globals/slide_parameters';
 import { globalParameters, fetchGlobalParameter, getGlobalParametersAsJSON } from '@/globals/global_parameters';
-import { updateGlobalParameter, deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, type GlobalParameter } from '@/services/global_parameter_service'
+import { participants, fetchParticipants } from '@/globals/participants';
+import { updateGlobalParameter, deleteGlobalParameter, deleteGlobalParameters, saveGlobalParameter, LANGUAGE_PARAMETER_NAME, type GlobalParameter } from '@/services/global_parameter_service'
 import { useItemDeletion } from '@/generics/deleteItem'
 
 const { onConfirmDeleteItem } = useItemDeletion();
@@ -24,6 +25,11 @@ const confirm = useConfirm();
 const toast = useToast();
 
 const parameterChanges = ref<ParameterChange[]>([])
+
+// The automatically mirrored language parameter is not edited/displayed here
+const visibleGlobalParameters = computed(() =>
+  globalParameters.value.filter(p => p.name !== LANGUAGE_PARAMETER_NAME)
+)
 const addParameterActive = ref<Boolean>(false)
 const parameterName = ref<string>("");
 const selectedParameterType = ref<string | null>(null);
@@ -32,8 +38,34 @@ const parameterTypeOptions = ref<{ label: string; value: string }[]>([
     { label: 'Boolean', value: 'Boolean' },
     { label: 'Number', value: 'Number' },
     { label: 'String', value: 'String' },
-    { label: 'Selection', value: 'Selection' }
+    { label: 'Selection', value: 'Selection' },
+    { label: 'Participants', value: 'Participants' }
 ]);
+
+// Options for parameters of type 'Participants'. The "business as usual" (BAU) identifier is
+// always the first option; below it follow all participants that have a seat, sorted by seat.
+// The stored value of a participant is its name; the stored value of the BAU option is the
+// configured identifier itself (default "BAU").
+const participantBauValue = ref<string>("BAU");
+
+const seatedParticipantOptions = computed<{ label: string; value: string }[]>(() =>
+    participants.value
+        .filter(p => p.seat != null)
+        .sort((a, b) => (a.seat ?? 0) - (b.seat ?? 0))
+        .map(p => ({ label: `${p.seat} – ${p.name}`, value: p.name }))
+);
+
+// Options for the add dialog: the configured BAU identifier on top, then the seated participants.
+const participantOptions = computed<{ label: string; value: string }[]>(() =>
+    [{ label: participantBauValue.value, value: participantBauValue.value }, ...seatedParticipantOptions.value]
+);
+
+// Options for a table row: the BAU identifier stored on that row (pvalues[0]) on top, then the
+// seated participants.
+function rowParticipantOptions(row: GlobalParameter): { label: string; value: string }[] {
+    const bau = (row.pvalues && row.pvalues.length > 0) ? row.pvalues[0] : 'BAU';
+    return [{ label: bau, value: bau }, ...seatedParticipantOptions.value];
+}
 
 const parameterSelectionValueOption = ref<string>("");
 const parameterSelectionValueOptions = ref<string[]>([]);
@@ -46,6 +78,7 @@ const editingRows = ref<GlobalParameter[]>([]);
 
 onMounted(async () => {
     fetchGlobalParameter()
+    fetchParticipants()
     await fetchSlideParameters()
     const stop = parameterStore.subscribe((c) => parameterChanges.value.push(c))
     onUnmounted(() => {
@@ -72,6 +105,8 @@ function onRowEditSaveParameter(event: any) {
 }
 
 function onAddParameter() {
+    // Reset the BAU identifier to its default when starting to create a new parameter.
+    participantBauValue.value = "BAU"
     addParameterActive.value = true
 }
 
@@ -95,6 +130,7 @@ function onSaveParameter() {
     if (selectedParameterType.value === 'Number') my_current_value = "0" 
     if (selectedParameterType.value === 'Boolean') my_current_value = "0" 
     if (selectedParameterType.value === 'Selection') my_current_value = parameterSelectionValueOptions.value[0] 
+    if (selectedParameterType.value === 'Participants') my_current_value = participantBauValue.value 
 
     currentGlobalParameter.value = {
         id: currentGlobalParameter.value?.id ?? undefined,
@@ -102,7 +138,10 @@ function onSaveParameter() {
         current_value: my_current_value,
         name: parameterName.value,
         ptype: selectedParameterType.value ? selectedParameterType.value : "",
-        pvalues: (parameterSelectionValueOptions.value.length === 0) ? [] : parameterSelectionValueOptions.value,
+        // For the Participants type the BAU identifier is stored as the single pvalue.
+        pvalues: (selectedParameterType.value === 'Participants')
+            ? [participantBauValue.value]
+            : (parameterSelectionValueOptions.value.length === 0 ? [] : parameterSelectionValueOptions.value),
         connect_all: true,
         connected_slide_parameters: [],
         active: true
@@ -160,6 +199,10 @@ function setCurrentEdit(glob: GlobalParameter, name: string, id: number | undefi
     parameterName.value = name
     selectedParameterType.value = glob.ptype
     parameterSelectionValueOptions.value = glob.pvalues
+    // For the Participants type the BAU identifier is stored in pvalues[0].
+    participantBauValue.value = (glob.ptype === 'Participants' && glob.pvalues && glob.pvalues.length > 0)
+        ? glob.pvalues[0]
+        : 'BAU'
     addParameterActive.value = true
     currentGlobalParameter.value = {
         id: id,
@@ -256,6 +299,11 @@ function globalParameterChange(glob: GlobalParameter) {
                             </Column>
                         </DataTable>
                     </div>
+                    <div v-if="selectedParameterType === 'Participants'" class="label-container">
+                        <label for="inputParticipantBauValue" class="form-label">{{
+                            $t('moderator.parameters.participant_bau_identifier') }}</label>
+                        <InputText id="inputParticipantBauValue" v-model.trim="participantBauValue" type="text" fluid />
+                    </div>
                 </div>
             </SplitterPanel>
 
@@ -269,7 +317,7 @@ function globalParameterChange(glob: GlobalParameter) {
                     </div>
                 </div>
 
-                <DataTable v-if="globalParameters.length > 0" :value="globalParameters" dataKey="id" editMode="row"
+                <DataTable v-if="visibleGlobalParameters.length > 0" :value="visibleGlobalParameters" dataKey="id" editMode="row"
                     @row-edit-save="onRowEditSaveParameter" scrollable scrollHeight="flex" responsiveLayout="scroll"
                     v-model:editingRows="editingRows" tableStyle="width: 100%; table-layout: auto;">
 
@@ -302,6 +350,10 @@ function globalParameterChange(glob: GlobalParameter) {
                             <Select v-else-if="slotProps.data.ptype === 'Selection'"
                                 v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
                                 :options="slotProps.data.pvalues" @change="globalParameterChange(slotProps.data)" />
+                            <Select v-else-if="slotProps.data.ptype === 'Participants'"
+                                v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
+                                :options="rowParticipantOptions(slotProps.data)" optionLabel="label" optionValue="value"
+                                @change="globalParameterChange(slotProps.data)" />
                             <div v-else-if="slotProps.data.ptype === 'Boolean'">
                                 <Checkbox v-model="slotProps.data.current_value" :disabled="!slotProps.data.active"
                                     binary trueValue="1" falseValue="0"

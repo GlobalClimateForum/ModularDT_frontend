@@ -10,6 +10,8 @@ export interface Settings {
     background_image_on_empty_screens: boolean,
     background_image_on_welcome_screens: boolean,
     background_image_on_all_slides_per_default: boolean,
+    background_monitor_slide: string,
+    background_participant_slide: string,
     language: string;
     avatar_style: string;
     palette: string;

@@ -275,6 +275,7 @@ function updateDataForMonitor(monitorid: string) {
       'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
       'show_screen_id': settings.value.show_screen_id,
       'palette': settings.value.palette,
+      'background_monitor_slide': settings.value.background_monitor_slide,
     },
     'presentation': {
       'livePresentationActive': livePresentationState.value.active,

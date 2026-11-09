@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 // globals and services
 import { fetchSettings, settings } from '@/globals/settings'
 import { fetchGlobalParameter, globalParameters } from '@/globals/global_parameters';
+import { syncLanguageParameter } from '@/services/global_parameter_service';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { fetchScenes } from '@/globals/scenes';
 import { fetchSlides } from '@/globals/slides';
@@ -26,7 +27,7 @@ import { updatePrimaryPalette } from '@primeuix/themes';
 
 import palettes from '@/assets/palettes.json'
 
-// proxy ersetzt das klassische "this" im Setup-Skript
+// proxy replaces the classic "this" in the setup script
 const { proxy } = getCurrentInstance() as any;
 const paramstore = useParameterStore()
 
@@ -51,14 +52,24 @@ watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
 }, { immediate: true });
 
+const syncLanguage = (language: string) => {
+  // Mirrors the language into the parameter store as a global parameter (one-way)
+  syncLanguageParameter(language).catch(error => {
+    console.error("Error syncing language parameter:", error);
+  })
+}
+
 watch(() => settings.value?.language, (newLanguage) => {
-  if (newLanguage) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
+  if (newLanguage) { // Only set if a valid value is present    
     locale.value = newLanguage
+    // Only sync after the initial settings load, since the watcher
+    // already fires with 'en' (default) before fetchSettings
+    if (isSettingsLoaded.value) syncLanguage(newLanguage)
   }
 }, { immediate: true })
 
 watch(() => settings.value?.palette, (newPalette) => {
-  if (newPalette) { // Nur setzen, wenn ein gültiger Wert vorhanden ist    
+  if (newPalette) { // Only set if a valid value is present    
     updatePrimaryPalette(palettes[newPalette]);
   }
 }, { immediate: true })
@@ -89,6 +100,8 @@ onBeforeMount(async () => {
   })
 
   isSettingsLoaded.value = true
+  // Initial sync of the language setting into the parameter store
+  syncLanguage(settings.value.language)
   const appName = proxy.$APP_NAME || 'Default App Title';
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
 })

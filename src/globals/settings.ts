@@ -9,6 +9,8 @@ export const settings = ref<Settings>({
   background_image_on_empty_screens: true,
   background_image_on_welcome_screens: false,
   background_image_on_all_slides_per_default: true,
+  background_monitor_slide: '',
+  background_participant_slide: '',
   language: 'en',
   avatar_style: 'glyphs',
   palette: 'indigo', 
