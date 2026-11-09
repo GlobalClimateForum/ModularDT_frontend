@@ -12,12 +12,15 @@ import { useToast } from 'primevue/usetoast'
 import Popover from 'primevue/popover'
 import Draggable from 'vuedraggable'
 import Listbox from 'primevue/listbox'
+import Select from 'primevue/select'
+import { useI18n } from 'vue-i18n'
 
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service'
 import { SlideSectionTypes, validateFilename, renameSlide, type SlideSectionType } from '@/services/slide_service'
 import { getSlideSectionType } from '@/services/slide_service'
-import { createDefaultSlide, createDefaultSlideSection, updateSlideStore } from '@/globals/slides'
+import { createDefaultSlide, createDefaultSlideSection, updateSlideStore, slides, fetchSlides } from '@/globals/slides'
+import { settings } from '@/globals/settings'
 import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_service'
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
@@ -63,6 +66,31 @@ const slideSections = ref<EditorSection[]>([]) // Track the sections of the curr
 const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each section (default to 1.0 for a single section = fullscreen)
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const showSectionID = ref<boolean>(false) // Track whether to show the section ID overlay on the slide preview
+
+const { t: translate } = useI18n()
+
+// Which background slide (from the global settings) is shown behind the preview
+const previewBackgroundChoice = ref<'none' | 'monitor' | 'participant'>('none')
+
+const previewBackgroundOptions = computed(() => [
+    { label: translate('moderator.preview_background_none'), value: 'none' },
+    { label: translate('moderator.preview_background_monitor'), value: 'monitor' },
+    { label: translate('moderator.preview_background_participant'), value: 'participant' },
+])
+
+const previewBackgroundSlide = computed<Slide | null>(() => {
+    const name = previewBackgroundChoice.value === 'monitor'
+        ? settings.value.background_monitor_slide
+        : previewBackgroundChoice.value === 'participant'
+            ? settings.value.background_participant_slide
+            : ''
+    return name ? slides.value.find(slide => slide.name === name) ?? null : null
+})
+
+// Make sure the slide store is populated when a background is selected
+watch(previewBackgroundChoice, (choice) => {
+    if (choice !== 'none') fetchSlides()
+})
 const layout = ref<string>('fullscreen') // Track the current selected layout for the sections (fullscreen, golden, reversegolden, etc.)
 const sectionBgColor = computed(() => slideSections.value[currentSectionIndex.value]?.properties?.bg ?? '#ffffff') // Track the background color of the current section
 const sectionBgColorEditable = computed(() => SECTION_BG_COLOR_EDITING[slideSections.value[currentSectionIndex.value]?.view_type ?? 'markdown'] ?? false) // Track whether background editing is allowed for current section
@@ -651,13 +679,27 @@ onBeforeUnmount(() => {
 
                 <div class="preview-panel">
 
-                    <h1 class="dashboard_label">Preview</h1>
+                    <div class="preview-header">
+                        <h1 class="dashboard_label">Preview</h1>
+                        <Select v-model="previewBackgroundChoice" :options="previewBackgroundOptions"
+                            optionLabel="label" optionValue="value" class="preview-background-select" />
+                    </div>
 
                     <!-- Slide Preview -->
-                    <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
-                        :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
-                        :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap"
-                        :targetSlide="targetSlide" :previewBackground="true" />
+                    <div class="preview-stage" :class="{ 'with-background': !!previewBackgroundSlide }">
+                        <!-- Background slide layer (from global settings), if selected.
+                             Same previewBackground as the content slide so both use the
+                             identical bezel reservation and scaling and stay aligned. -->
+                        <div v-if="previewBackgroundSlide" class="background-slide">
+                            <SlideView :preview="true" :slide="previewBackgroundSlide"
+                                :sections="previewBackgroundSlide.sections ?? []" :showframe="false"
+                                :previewBackground="true" />
+                        </div>
+                        <SlideView class="slide-preview" v-if="currentSlide" :preview="true" :slide="currentSlide"
+                            :sections="slideSections.map((s, i) => ({ ...s, width_fraction: sectionWidths[i] }))"
+                            :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap"
+                            :targetSlide="targetSlide" :previewBackground="true" />
+                    </div>
 
                 </div>
 
@@ -813,6 +855,42 @@ onBeforeUnmount(() => {
     flex: 1;
     min-height: 0;
     width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-small);
+}
+
+.preview-background-select {
+    width: 220px;
+}
+
+.preview-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* The content SlideView root carries the opaque 'inset-control' panel style;
+   make it see-through when a background slide is shown behind it */
+.preview-stage.with-background :deep(.slide-outer) {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.background-slide {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
 }
 
 #slide-settings {
