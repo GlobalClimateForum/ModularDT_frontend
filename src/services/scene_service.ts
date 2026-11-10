@@ -14,7 +14,7 @@ export interface Scene {
 export type ScenePayload = Omit<Scene, "id" | "created_at" | "updated_at">;
 
 export const getScenes = () => api.get("/scenes/");
-export const saveScene = (scene: Omit<Scene, "id" | "created_at" | "updated_at">) => {
+export const storeScene = async (scene: Omit<Scene, "id" | "created_at" | "updated_at">) : Promise<{ id: number }>  => {
   const payload = {
     ...scene,
     slide_positions: scene.slides.map(slide => ({
@@ -23,7 +23,8 @@ export const saveScene = (scene: Omit<Scene, "id" | "created_at" | "updated_at">
     }))
   };
 
-  return api.post("/scenes/", payload);
+  const response = await api.post<{ id: number }>("/scenes/", payload);
+  return response.data;
 }
 
 export const updateScene = (id: number, scene: Partial<ScenePayload>) => {

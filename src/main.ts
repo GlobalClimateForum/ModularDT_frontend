@@ -16,7 +16,8 @@ import palettes from '@/assets/palettes.json'
 import Tooltip from 'primevue/tooltip';
 import i18n from './i18n/index.ts'
 
-const APP_NAME = "Decision Theatre"; 
+//const APP_NAME = "Decision Theatre"; 
+const APP_NAME = "Sofia"; 
 
 const primecolors = definePreset(Aura, {
   semantic: {

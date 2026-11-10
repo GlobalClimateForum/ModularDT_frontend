@@ -22,8 +22,8 @@ import { settings, fetchSettings } from '@/globals/settings'
 import { slides, fetchSlides } from '@/globals/slides'
 import { updateSettings, isModerator, clearModerator } from "@/services/settings_service";
 import { saveEvent, deleteEvent } from "@/services/event_service";
-import { sendMonitorsUpdate } from "@/services/monitor_service";
-import { sendParticipantsUpdate } from "@/services/participant_service";
+import { sendMonitorsMessage } from "@/services/monitor_service";
+import { sendParticipantsMessage } from "@/services/participant_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
 import { useParameterStore } from '@/services/parameterstore_service';
 import { styleNames, previewUri, prettyName } from '@/services/avatar_service';
@@ -62,7 +62,7 @@ const selectedEvent = ref<Event | null>(null);
 // Slide options for the background slide dropdowns; empty value = no background slide
 const slideOptions = computed(() => [
   { label: '(none)', value: '' },
-  ...slides.value.map(slide => ({ label: slide.name, value: slide.name }))
+  ...slides.value.map(slide => ({ label: slide.name, value: slide.id }))
 ]);
 
 const translatedLocales = computed(() => {
@@ -79,12 +79,10 @@ const saveSettings = async () => {
     cs_url: settings.value.cs_url,
     number_of_screens: settings.value.number_of_screens,
     show_screen_id: settings.value.show_screen_id,
-    background_image_on_empty_screens: settings.value.background_image_on_empty_screens,
-    background_image_on_welcome_screens: settings.value.background_image_on_welcome_screens,
-    background_image_on_all_slides_per_default: settings.value.background_image_on_all_slides_per_default,
-    background_image: settings.value.background_image,
     background_monitor_slide: settings.value.background_monitor_slide,
+    background_monitor_slide_on_welcome_screens: settings.value.background_monitor_slide_on_welcome_screens,
     background_participant_slide: settings.value.background_participant_slide,
+    background_participant_slide_on_welcome_screens: settings.value.background_participant_slide_on_welcome_screens,
     language: settings.value.language,
     palette: settings.value.palette,
     theme: settings.value.theme,
@@ -189,7 +187,7 @@ onMounted(async () => {
 });
 
 function updateSettingsForMonitors() {
-  sendMonitorsUpdate({
+  sendMonitorsMessage({
     'payload': {
       'event_type': 'settings_update',
       'settings': {
@@ -206,7 +204,7 @@ function updateSettingsForMonitors() {
 }
 
 function updateSettingsForParticipants() {
-  sendParticipantsUpdate({
+  sendParticipantsMessage({
     //'payload': {
     'event_type': 'settings_update',
     'settings': {
@@ -271,42 +269,31 @@ function copyParameterStoreToClipboard() {
           </h1>
 
           <div class="label-container">
-            <label for="background_url" class="form-label">{{ $t('moderator.settings.background_image') }}</label>
-            <InputText id="background_url" v-model.trim="settings.background_image" type="text" fluid />
-          </div>
-
-          <div class="labeled-checkbox">
-            <Checkbox v-model="settings.background_image_on_empty_screens" binary
-              inputId="background_image_on_empty_screens-checkbox" @change="updateSettingsForMonitors()" />
-            <Label for="background_image_on_empty_screens-checkbox"> {{
-              $t('moderator.settings.background_image_on_empty_screens') }} </Label>
-          </div>
-
-          <div class="labeled-checkbox">
-            <Checkbox v-model="settings.background_image_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox"
-              @change="updateSettingsForMonitors(); updateSettingsForParticipants()" />
-            <Label for="background_image_on_welcome_screens-checkbox"> {{
-              $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
-          </div>
-
-          <div class="labeled-checkbox">
-            <Checkbox v-model="settings.background_image_on_all_slides_per_default" binary
-              inputId="background_image_on_all_slides_per_default-checkbox" @change="updateSettingsForMonitors()" />
-            <Label for="background_image_on_all_slides_per_default-checkbox"> {{
-              $t('moderator.settings.background_image_on_all_slides_per_default') }} </Label>
-          </div>
-
-          <div class="label-container">
             <label>{{ $t('moderator.settings.background_monitor_slide') }}</label>
             <Select v-model="settings.background_monitor_slide" :options="slideOptions" optionLabel="label"
               optionValue="value" fluid @change="updateSettingsForMonitors()" />
+          </div>
+
+          <div class="labeled-checkbox">
+            <Checkbox v-model="settings.background_monitor_slide_on_welcome_screens" binary
+              inputId="background_image_on_welcome_screens-checkbox"
+              @change="updateSettingsForMonitors()" />
+            <Label for="background_image_on_welcome_screens-checkbox"> {{
+              $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
 
           <div class="label-container">
             <label>{{ $t('moderator.settings.background_participant_slide') }}</label>
             <Select v-model="settings.background_participant_slide" :options="slideOptions" optionLabel="label"
               optionValue="value" fluid @change="updateSettingsForParticipants()" />
+          </div>
+
+          <div class="labeled-checkbox">
+            <Checkbox v-model="settings.background_participant_slide_on_welcome_screens" binary
+              inputId="background_image_on_welcome_screens-checkbox"
+              @change="updateSettingsForParticipants()" />
+            <Label for="background_image_on_welcome_screens-checkbox"> {{
+              $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
 
           <div class="label-container">

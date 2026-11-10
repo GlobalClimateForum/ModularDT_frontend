@@ -1,6 +1,6 @@
 import { api } from "./api";
 import type { Slide } from "@/services/slide_service"
-import { sendParticipantUpdate } from "@/services/participant_service";
+import { sendParticipantMessage } from "@/services/participant_service";
 
 export interface Slideshow {
   id: number;
@@ -42,7 +42,7 @@ export const updateLiveSlideshow = (liveslideshow) => api.patch("/liveslideshow/
 
 export const startSlideshow = async (slideshow: Slideshow, participantseat: number) => {
     try {
-        await sendParticipantUpdate(participantseat, {
+        await sendParticipantMessage(participantseat, {
           event_type: "start_slideshow",
           receiver: participantseat,
           slideshow_id: slideshow.id,
@@ -56,7 +56,7 @@ export const startSlideshow = async (slideshow: Slideshow, participantseat: numb
 
 export const stopSlideshow = async (participantseat: number) => {
     try {
-        const response = await sendParticipantUpdate(participantseat, {
+        const response = await sendParticipantMessage(participantseat, {
           event_type: "stop_slideshow",
           receiver: participantseat
         });

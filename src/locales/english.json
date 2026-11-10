@@ -106,7 +106,8 @@
     "live_monitors": "Live monitors",
     "send_to_multiple_monitors": "Multiple monitors",
     "confirmation-message-all-parameters": "Delete all global parameters?",
-    "no_parameters_for_monitor": "There are currently no slide-specific parameters on Monitor "
+    "no_parameters_for_monitor": "There are currently no slide-specific parameters on Monitor ",
+    "name_already_exists": " name already exists"
   },
   "participant": {
     "name": "Participant",

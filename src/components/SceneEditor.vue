@@ -4,31 +4,23 @@ import { ref, onMounted, computed } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast'
-import ButtonGroup from 'primevue/buttongroup';
-import FloatLabel from 'primevue/floatlabel';
 import { useI18n } from 'vue-i18n';
-import { useConfirm } from "primevue/useconfirm";
 import { dialogService } from '@/services/dialog_service';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import type { Scene } from '@/services/scene_service';
 import { scenes, fetchScenes } from '@/globals/scenes';
 import { settings } from '@/globals/settings'
-import { saveScene, updateScene } from '@/services/scene_service';
+import { storeScene, updateScene } from '@/services/scene_service';
 import '@/assets/main.css'
 import { useItemUpdate } from '@/generics/updateItem'
+import { useItemSave } from '@/generics/saveItem'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
-
-
-const { t } = useI18n();
-const confirm = useConfirm();
-const nameEditing = ref(false);
-const { onConfirmedUpdateItem } = useItemUpdate();
+import SaveItemLine from './SaveItemLine.vue';
 
 // Define Input Proerties
 const props = defineProps({
@@ -43,41 +35,21 @@ const props = defineProps({
     }
 })
 
-const isSavedScene = computed(() => !!props.inp_scene?.id)
+const { t } = useI18n();
+const { onConfirmedUpdateItem } = useItemUpdate();
+const { onSaveItem } = useItemSave();
 
-const nameTaken = computed(() => {
-    const name = scenename.value.trim()
-    if (!name) return false
-    return scenes.value.some(s => s.name === name && s.id !== props.inp_scene?.id)
-})
-
-function cancelRename() {
-    nameEditing.value = false
-    scenename.value = props.inp_scene?.name ?? ''
-}
-
-function onRenameScene() {
-    const id = props.inp_scene?.id
-    const name = scenename.value.trim()
-    nameEditing.value = false
-    if (!id || !name || name === props.inp_scene?.name) return
-
-    updateScene(id, { name }).then(() => {
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Scene renamed successfully', life: 3000 })
-        fetchScenes()
-    }).catch(() => {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename scene', life: 3000 })
-        scenename.value = props.inp_scene?.name ?? ''
-    })
-}
-
-
-var scene = ref<(Slide | null)[]>([]);
+const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 const selectedSlide = ref<Slide | null>(null);
 
-// Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
+
+const nameExists = computed(() => {
+    const name = scenename.value.trim()
+    if (!name) return false
+    return scenes.value.some(s => s.name === name)
+})
 
 
 // on mount get all slides from backend and store in slides ref
@@ -113,7 +85,7 @@ function onDrop(event: DragEvent, index: number) {
     scene.value[index] = slide;
 }
 
-async function confirmUpdateScene(id: number) {
+async function confirmedUpdateScene(id: number) {
     const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
         .filter((s): s is (Slide & { position: number }) => s !== null);
 
@@ -126,13 +98,12 @@ async function confirmUpdateScene(id: number) {
     };
 
     const updated = await onConfirmedUpdateItem("scene", updateScene, scene_)
-
     if (updated) {
         // ? fetch scenes should not be neccessary? Or? With multiple moderator clients?
     }
 }
 
-function storeScene() {
+async function saveScene() {
 
     const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
         .filter((s): s is (Slide & { position: number }) => s !== null);
@@ -144,25 +115,17 @@ function storeScene() {
         slides: validSlidesWithPositions
     };
 
-    saveScene(scene_).then(_response => {
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide saved successfully', life: 3000 })
-        fetchScenes()
-    }).catch(error => {
-        console.error("Error saving scene:", error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-    });
-}
+    const saved = await onSaveItem("scene", storeScene, scene_)
+    if (saved) {
+        // ? fetch scenes should not be neccessary? Or? With multiple moderator clients?
+    }}
 
 // Handle saving the scene to the backend
 function onSaveScene() {
-    if (!scenename.value.trim()) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Scene name cannot be empty', life: 3000 })
-        return
-    }
-    if (isSavedScene.value) {
-        confirmUpdateScene(props.inp_scene!.id!)
+    if (nameExists.value) {
+        confirmedUpdateScene(props.inp_scene!.id!)
     } else {
-        storeScene()
+        saveScene()
     }
 }
 // Check if there are slides assinged to multiple monitors (duplicates)
@@ -193,59 +156,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 <template>
 
     <div class="scene-builder">
-        <div class="dashboard-header">
-
-            <FloatLabel variant="on" style="width: 400px;">
-                <InputText id="scenename_input" v-model="scenename" :placeholder="$t('moderator.enter_scene_name')"
-                    :disabled="isSavedScene && !nameEditing" :invalid="nameTaken" fluid />
-                <label v-if="nameTaken" for="scenename_input">Scene name already exists</label>
-            </FloatLabel>
-            <!-- <InputText v-model="scenename" :placeholder="$t('moderator.enter_scene_name')" :disabled="!props.name_edit_enabled" /> -->
-
-            <Transition name="fade" mode="out-in">
-                <div v-if="!nameEditing" key="view">
-                    <Button v-if="isSavedScene" outlined size="small" label="Rename" @click="nameEditing = true">
-                        <template #icon><i class="material-symbols-outlined">edit</i></template>
-                    </Button>
-                </div>
-                <div v-else key="edit">
-                    <ButtonGroup>
-                        <Button text @click="onRenameScene" :disabled="!scenename.trim() || nameTaken">
-                            <template #icon><i class="material-symbols-outlined">check</i></template>
-                        </Button>
-                        <Button text @click="cancelRename">
-                            <template #icon><i class="material-symbols-outlined">close</i></template>
-                        </Button>
-                    </ButtonGroup>
-                </div>
-            </Transition>
-
-            <Button :label="$t('moderator.save')" icon="pi pi-save" @click="onSaveScene"
-                :disabled="!scenename.trim() || nameEditing || nameTaken" />
-
-            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
-
-            <div class="dashboard-header-messages">
-
-                <Message info size="small">
-                    <template #icon>
-                        <i style="font-size: var(--fs-medium)" class="material-symbols-outlined">desktop_windows</i>
-                    </template>
-                    <template #default>
-                        {{ settings.number_of_screens }}
-                    </template>
-                </Message>
-
-                <Message v-if="duplicates()" severity="warn" size="small">
-                    {{ $t('moderator.duplicate_slides') }}
-                </Message>
-                <Message severity="warn" v-if="emptyScreens()" size="small">
-                    {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens')
-                    }}
-                </Message>
-            </div>
-
-        </div>
 
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
@@ -256,16 +166,44 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
             <!-- Scene Builder -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
 
+                <!-- <div class="dashboard-header"> -->
+                    <div>
+                    <SaveItemLine v-model:inp_itemname="scenename" :all_items="ref(scenes)" :name_edit_enabled="name_edit_enabled"
+                        :placeholder="$t('moderator.enter_scene_name')" :already_taken_message="$t('moderator.scene') + $t('moderator.name_already_exists')"  @save="onSaveScene"></SaveItemLine>
+                    </div>
                 <div class="scenebuilder-header">
                     <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
-                    <Button :disabled="selectedSlide == null" size="small"
-                        :label="$t('moderator.send_to_multiple_monitors')"
-                        @click="onSendSlideToMultipleMonitors(selectedSlide)">
-                        <template #icon>
-                            <i class="material-symbols-outlined">queue_play_next</i>
-                        </template>
+                    <div class="buttonbox">
+                        <div class="dashboard-header-messages">
 
-                    </Button>
+                            <!-- I think this is redundant 
+                             <Message info size="small">
+                                <template #icon>
+                                    <i style="font-size: var(--fs-medium)"
+                                        class="material-symbols-outlined">desktop_windows</i>
+                                </template>
+                                <template #default>
+                                    {{ settings.number_of_screens }}
+                                </template>
+                            </Message> -->
+
+                            <Message v-if="duplicates()" severity="warn" size="small">
+                                {{ $t('moderator.duplicate_slides') }}
+                            </Message>
+                            <Message severity="warn" v-if="emptyScreens()" size="small">
+                                {{ emptyScreens() === 1 ? $t('moderator.empty_screen') : $t('moderator.empty_screens')
+                                }}
+                            </Message>
+                        </div>
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
+                        <Button :disabled="selectedSlide == null" size="small"
+                            :label="$t('moderator.send_to_multiple_monitors')"
+                            @click="onSendSlideToMultipleMonitors(selectedSlide)">
+                            <template #icon>
+                                <i class="material-symbols-outlined">queue_play_next</i>
+                            </template>
+                        </Button>
+                    </div>
                 </div>
 
                 <div class="monitor_container">
@@ -321,18 +259,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-}
-
-.dashboard-header .p-floatlabel {
-    width: 30%;
-}
-
-.dashboard-header .p-inputtext {
-    width: 100%;
-}
-
-.dashboard-header .p-floatlabel label {
-    color: var(--p-floatlabel-invalid-color) !important;
 }
 
 .dashboard-header-messages {
@@ -419,5 +345,12 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+.buttonbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    margin-left: auto;
 }
 </style>

@@ -19,7 +19,7 @@ import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
 import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
-import { sendMonitorUpdate } from "@/services/monitor_service"
+import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
@@ -100,7 +100,7 @@ const items = computed(() => [
       },
       {
         key: 'live',
-        label: t('moderator.nav.presentation'),
+        label: t('moderator.nav.sceneshow'),
         materialIcon: 'live_tv',
         command: () => { currentDashboard.value = 'live'; }
       },
@@ -135,7 +135,7 @@ const items = computed(() => [
       },
       {
         key: 'scenecreate',
-        label: t('moderator.nav.builder'),
+        label: t('moderator.nav.editor'),
         materialIcon: 'slide_library',
         command: () => {
           currentScene.value = null;
@@ -266,7 +266,7 @@ provide('parameterStoreAsJSON', parameterStoreAsJSON);
 
 // 
 function updateDataForMonitor(monitorid: string) {
-  sendMonitorUpdate(Number(monitorid), {
+  sendMonitorMessage(Number(monitorid), {
     'event_type': 'data_update',
     'settings': {
       'number_of_screens': settings.value.number_of_screens,

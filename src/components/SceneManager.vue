@@ -11,7 +11,6 @@ import SceneView from '@/components/SceneView.vue';
 import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
-import { saveScene } from '@/services/scene_service'
 import draggable from 'vuedraggable';
 
 import { scenes, fetchScenes } from '@/globals/scenes';

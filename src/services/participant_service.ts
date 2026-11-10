@@ -12,5 +12,5 @@ export const updateParticipant = (participant: Participant) => api.put(`/partici
 export const createParticipant = (participant: Participant) => api.post("/participants/", participant);
 export const deleteParticipant = (participantId: number) => api.delete(`/participants/${participantId}/`);
 
-export const sendParticipantUpdate = (participantId: number, message: any) => api.patch(`/participants/${participantId}/`, message);
-export const sendParticipantsUpdate = (message: any) => api.patch("/participants/", message);
+export const sendParticipantMessage = (participantId: number, message: any) => api.patch(`/participants/${participantId}/`, message);
+export const sendParticipantsMessage = (message: any) => api.patch("/participants/", message);

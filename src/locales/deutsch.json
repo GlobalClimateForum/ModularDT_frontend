@@ -106,7 +106,8 @@
     "live_monitors": "Live Monitore",
     "send_to_multiple_monitors": "Mehrere Monitore",
     "confirmation-message-all-parameters": "Alle globalen parameter löschen?",
-    "no_parameters_for_monitor": "Derzeit gibt es keine Folien-spezifischen Parameter auf Monitor "
+    "no_parameters_for_monitor": "Derzeit gibt es keine Folien-spezifischen Parameter auf Monitor ",
+    "name_already_exists": ": Name existier bereits"
   },
   "participant": {
     "name": "Teilnehmer",
