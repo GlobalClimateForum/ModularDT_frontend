@@ -13,7 +13,7 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import draggable from 'vuedraggable';
 
-import { scenes, fetchScenes } from '@/globals/scenes';
+import { scenes } from '@/globals/scenes';
 import { presentations, fetchPresentations } from '@/globals/presentations';
 import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
 import { onMounted, ref, nextTick, toRaw } from 'vue';
@@ -26,11 +26,11 @@ import { startPresentation } from "@/services/live_presentation_service";
 import GenericSearch from '@/components/GenericSearch.vue';
 import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
+import { sendModeratorMessage } from '@/services/moderator_service'
 
 
 const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
-const confirm = useConfirm();
 const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
 const selectedScene = ref<Scene | null>(null);
@@ -130,7 +130,11 @@ async function onConfirmDeleteScene(scene: Scene) {
     const deleted = await onConfirmDeleteItem("scene", deleteScene, scene)
 
     if (deleted) {
-        scenes.value = scenes.value.filter(s => s.id !== scene.id);
+        sendModeratorMessage({
+            event_type: "delete",
+            command: "delete_scene",
+            sceneid: scene.id
+        })
         if (selectedScene.value?.id === scene.id) {
             selectedScene.value = null;
         }

@@ -14,6 +14,7 @@ export interface Scene {
 export type ScenePayload = Omit<Scene, "id" | "created_at" | "updated_at">;
 
 export const getScenes = () => api.get("/scenes/");
+export const getScene = (id: number) => api.get(`/scenes/${id}/`);
 export const storeScene = async (scene: Omit<Scene, "id" | "created_at" | "updated_at">) : Promise<{ id: number }>  => {
   const payload = {
     ...scene,
@@ -37,6 +38,19 @@ export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
   };
   return api.patch(`/scenes/${id}/`, payload);
 };
+
+/*
+export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
+  const payload = {
+    ...scene,
+    slide_positions: scene.slides?.map((slide, index) => ({
+      id: slide.id,
+      position: index  // Use the array index as position
+    }))
+  };
+  return api.patch(`/scenes/${id}/`, payload);
+};
+*/
 
 
 export const deleteScene = (id: number) => api.delete(`/scenes/${id}/`);

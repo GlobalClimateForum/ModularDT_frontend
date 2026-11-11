@@ -5,7 +5,6 @@ import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button'
 import Message from 'primevue/message';
-import { useToast } from 'primevue/usetoast'
 import { useI18n } from 'vue-i18n';
 import { dialogService } from '@/services/dialog_service';
 // globals and services
@@ -17,6 +16,7 @@ import { storeScene, updateScene } from '@/services/scene_service';
 import '@/assets/main.css'
 import { useItemUpdate } from '@/generics/updateItem'
 import { useItemSave } from '@/generics/saveItem'
+import { sendModeratorMessage } from '@/services/moderator_service'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -42,8 +42,6 @@ const { onSaveItem } = useItemSave();
 const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
 const selectedSlide = ref<Slide | null>(null);
-
-const toast = useToast()
 
 const nameExists = computed(() => {
     const name = scenename.value.trim()
@@ -99,7 +97,11 @@ async function confirmedUpdateScene(id: number) {
 
     const updated = await onConfirmedUpdateItem("scene", updateScene, scene_)
     if (updated) {
-        // ? fetch scenes should not be neccessary? Or? With multiple moderator clients?
+        sendModeratorMessage({
+            event_type: "update",
+            command: "update_scene",
+            sceneid: id
+        })
     }
 }
 
@@ -117,8 +119,13 @@ async function saveScene() {
 
     const saved = await onSaveItem("scene", storeScene, scene_)
     if (saved) {
-        // ? fetch scenes should not be neccessary? Or? With multiple moderator clients?
-    }}
+        sendModeratorMessage({
+            event_type: "add",
+            command: "add_scene",
+            sceneid: saved
+        })
+    }
+}
 
 // Handle saving the scene to the backend
 function onSaveScene() {
@@ -167,10 +174,12 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
 
                 <!-- <div class="dashboard-header"> -->
-                    <div>
-                    <SaveItemLine v-model:inp_itemname="scenename" :all_items="ref(scenes)" :name_edit_enabled="name_edit_enabled"
-                        :placeholder="$t('moderator.enter_scene_name')" :already_taken_message="$t('moderator.scene') + $t('moderator.name_already_exists')"  @save="onSaveScene"></SaveItemLine>
-                    </div>
+                <div>
+                    <SaveItemLine v-model:inp_itemname="scenename" :all_items="ref(scenes)"
+                        :name_edit_enabled="name_edit_enabled" :placeholder="$t('moderator.enter_scene_name')"
+                        :already_taken_message="$t('moderator.scene') + $t('moderator.name_already_exists')"
+                        @save="onSaveScene"></SaveItemLine>
+                </div>
                 <div class="scenebuilder-header">
                     <h2 class="dashboard_label">{{ $t('moderator.scene') }}</h2>
                     <div class="buttonbox">
@@ -182,10 +191,10 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                                     <i style="font-size: var(--fs-medium)"
                                         class="material-symbols-outlined">desktop_windows</i>
                                 </template>
-                                <template #default>
+<template #default>
                                     {{ settings.number_of_screens }}
                                 </template>
-                            </Message> -->
+</Message> -->
 
                             <Message v-if="duplicates()" severity="warn" size="small">
                                 {{ $t('moderator.duplicate_slides') }}

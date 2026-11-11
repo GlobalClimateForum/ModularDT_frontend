@@ -12,14 +12,27 @@ export function useItemSave() {
         item: T,
         ...args: unknown[]
     ): Promise<number | undefined> {
-        await saveFunction(item, ...args).then(response => {
-            toast.add({ severity: 'success', summary: 'Success', detail: `${itemTypeString} saved successfully`, life: 3000 })
+        try {
+            const response = await saveFunction(item, ...args);
+            toast.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: `${itemTypeString} saved successfully`,
+                life: 3000
+            });
             return response.id;
-        }).catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to save ${itemTypeString}`, life: 3000 })
-            console.error(`Error saving ${itemTypeString} :`, error);
-        });
-        return undefined;
+        } catch (error) {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: `Failed to save ${itemTypeString}`,
+                life: 3000
+            });
+            console.error(`Error saving ${itemTypeString}:`, error);
+            return undefined;
+        }
+
+
     }
     return { onSaveItem };
 }

@@ -23,7 +23,8 @@ import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
-import { saveDraft } from '@/services/draft_service'
+import { scenes } from '@/globals/scenes';
+import { updateScenes, fetchScenes } from '@/globals/scenes'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -215,17 +216,13 @@ onUnmounted(() => {
 })
 
 const handleMessage = (data) => {
+  console.log("message: ", data)
   try {
 
     if (data.event_type === 'update_participant_parameter' || data.message) {
       updateParticipantParameters(data.parameter_name, data.participant, data.value)
     }
-    if (data.event_type === 'monitor_request' || data.message) {
-      updateDataForMonitor(data.monitorid)
-    }
-    if (data.event_type === 'participant_request' || data.message) {
 
-    }
     if (data.event_type === 'update' || data.message) {
       if (data.command === 'update_participant_slideshow') {
         updateLiveParticipantsSlideshow({
@@ -233,6 +230,28 @@ const handleMessage = (data) => {
           slideshow_id: data.slideshow_id,
           current_slide_index: data.current_slide_index
         });
+      }
+
+      if (data.command === 'update_participant_parameter') {
+        updateParticipantParameters(data.parameter_name, data.participant, data.value)
+      }
+
+      if (data.command === 'update_scene') {
+        updateScenes(data.sceneid)
+      }
+    }
+
+    if (data.event_type === 'delete' || data.message) {
+      if (data.command === 'delete_scene') {
+        scenes.value = scenes.value.filter(s => s.id !== data.sceneid);
+      }
+    }
+
+    if (data.event_type === 'add' || data.message) {
+      if (data.command === 'add_scene') {
+        // Replace fetch scenes by something faster?
+        //fetchScenes()
+        updateScenes(data.sceneid)
       }
     }
 

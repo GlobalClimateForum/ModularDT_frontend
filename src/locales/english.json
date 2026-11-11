@@ -96,7 +96,7 @@
     "save_order": "Save order",
     "confirmation": "Confirmation",
     "confirmation-delete-message-head": "Are you sure you want to delete this ",
-    "confirmation-delete_message-tail": "?",
+    "confirmation-delete-message-tail": "?",
     "confirmation-update-message-head": "A ",
     "confirmation-update-message-middle": " with name ",
     "confirmation-update-message-tail": " already exits. Overwrite?",
