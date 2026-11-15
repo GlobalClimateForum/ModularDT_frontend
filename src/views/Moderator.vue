@@ -23,8 +23,9 @@ import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
-import { scenes } from '@/globals/scenes';
-import { updateScenes, fetchScenes } from '@/globals/scenes'
+import { scenes, updateSceneByID } from '@/globals/scenes'
+import { slides, updateSlideByID } from '@/globals/slides'
+import { startPresentation } from "@/services/live_presentation_service";
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -32,6 +33,7 @@ import ParticipantsManager from '@/components/ParticipantsManager.vue';
 import SlideEditor from '@/components/SlideEditor.vue';
 import SceneEditor from '@/components/SceneEditor.vue';
 import SceneManager from '@/components/SceneManager.vue';
+import SceneShowEditor from '@/components/SceneShowEditor.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
 import PresentationControl from '@/components/PresentationControl.vue';
 import LiveSlides from '@/components/LiveSlides.vue';
@@ -68,7 +70,7 @@ const dashboardViews = {
   liveslides: LiveSlides,
   scenes: SceneManager,
   scenecreate: SceneEditor,
-  sceneshow: null,
+  sceneshow: SceneShowEditor,
   live: PresentationControl,
   globalsettings: GlobalSettings,
   participants: ParticipantsManager,
@@ -216,12 +218,12 @@ onUnmounted(() => {
 })
 
 const handleMessage = (data) => {
-  console.log("message: ", data)
+  //console.log("message: ", data)
   try {
 
-    if (data.event_type === 'update_participant_parameter' || data.message) {
+    /*if (data.event_type === 'update_participant_parameter' || data.message) {
       updateParticipantParameters(data.parameter_name, data.participant, data.value)
-    }
+    }*/
 
     if (data.event_type === 'update' || data.message) {
       if (data.command === 'update_participant_slideshow') {
@@ -231,13 +233,14 @@ const handleMessage = (data) => {
           current_slide_index: data.current_slide_index
         });
       }
-
       if (data.command === 'update_participant_parameter') {
         updateParticipantParameters(data.parameter_name, data.participant, data.value)
       }
-
       if (data.command === 'update_scene') {
-        updateScenes(data.sceneid)
+        updateSceneByID(data.sceneid)
+      }
+      if (data.command === 'update_slide') {
+        updateSlideByID(data.slideid)
       }
     }
 
@@ -245,13 +248,16 @@ const handleMessage = (data) => {
       if (data.command === 'delete_scene') {
         scenes.value = scenes.value.filter(s => s.id !== data.sceneid);
       }
+      if (data.command === 'delete_slide') {
+        slides.value = slides.value.filter(s => s.id !== data.sceneid);
+      }
     }
 
     if (data.event_type === 'add' || data.message) {
       if (data.command === 'add_scene') {
-        // Replace fetch scenes by something faster?
-        //fetchScenes()
-        updateScenes(data.sceneid)
+        updateSceneByID(data.sceneid)
+      } else if (data.command === 'add_slide') {
+        updateSlideByID(data.slideid)
       }
     }
 
@@ -262,6 +268,12 @@ const handleMessage = (data) => {
       if (data.command === 'request_from_monitor') {
         updateDataForMonitor(data.monitorid)
       }
+    }
+
+    if (data.event_type === 'start' || data.message) {
+      if (data.command === 'start_scenceshow') {
+        startPresentation(data.presentationid)
+      } 
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)

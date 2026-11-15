@@ -13,7 +13,8 @@ export function fetchScenes() {
     });
 }
 
-export function updateScenes(id: number) {
+// fetch scene by id
+export function updateSceneByID(id: number) {
     getScene(id).then(response => {
         const sceneData = response.data;
         let sceneIndexFound = scenes.value.findIndex(scene => scene.id === id);
@@ -43,4 +44,14 @@ export function updateScenes(id: number) {
     }).catch(error => {
         console.error("Error fetching scene ", id, ":", error);
     });
+}
+
+// no fetching
+export function updateSceneByScene(updatedScene: Scene) {
+    const index = scenes.value.findIndex(scene => scene.id === updatedScene.id);
+    if (index !== -1) {
+        scenes.value[index] = updatedScene;
+    } else {
+        scenes.value.push(updatedScene);
+    }
 }

@@ -28,7 +28,7 @@ export const storeScene = async (scene: Omit<Scene, "id" | "created_at" | "updat
   return response.data;
 }
 
-export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
+export const updateScene = async (id: number, scene: Partial<ScenePayload>) => {
   const payload = {
     ...scene,
     slide_positions: scene.slides?.map(slide => ({
@@ -36,22 +36,8 @@ export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
       position: slide.position
     }))
   };
-  return api.patch(`/scenes/${id}/`, payload);
+  return await api.patch(`/scenes/${id}/`, payload);
 };
-
-/*
-export const updateScene = (id: number, scene: Partial<ScenePayload>) => {
-  const payload = {
-    ...scene,
-    slide_positions: scene.slides?.map((slide, index) => ({
-      id: slide.id,
-      position: index  // Use the array index as position
-    }))
-  };
-  return api.patch(`/scenes/${id}/`, payload);
-};
-*/
-
 
 export const deleteScene = (id: number) => api.delete(`/scenes/${id}/`);
 

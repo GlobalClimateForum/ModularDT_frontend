@@ -53,7 +53,7 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
     }
 }
 
-export const updateOneMonitor = async (slide: Slide, id: number) => {
+export const changeSlideOnOneMonitor = (slide: Slide, id: number) => {
     if (slide) {
         sendMonitorMessage((id), {
             'event_type': 'slide_change',
@@ -68,7 +68,7 @@ export const updateOneMonitor = async (slide: Slide, id: number) => {
     }
 }
 
-export const updateSlideOnMonitors = async (slide: Slide) => {
+export const updateSlideOnAllMonitors = (slide: Slide) => {
     if (slide) {
         for (let id = 1; id <= settings.value.number_of_screens; id++) {
             //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])

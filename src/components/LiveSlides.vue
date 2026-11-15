@@ -13,7 +13,7 @@ import { settings } from '@/globals/settings'
 import { slides, fetchSlides } from '@/globals/slides'
 import { dialogService } from '@/services/dialog_service';
 import { useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
-import { updateMonitorStatesFromGriddedSlides, updateOneMonitor } from '@/services/monitor_service'
+import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
 import '@/assets/main.css'
 // components
@@ -38,7 +38,7 @@ function onDrop(event: DragEvent, index: number) {
     startLiveSlides()
     const slide: Slide = JSON.parse(slideData);
     liveSlidesOnMonitors.value[index] = slide;
-    updateOneMonitor(slide, index + 1)
+    changeSlideOnOneMonitor(slide, index + 1)
 }
 
 // -- Background slide --
@@ -62,7 +62,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         startLiveSlides()
         for (const monitor of selected) {
             liveSlidesOnMonitors.value[monitor.id] = slide;
-            updateOneMonitor(slide, monitor.id + 1)
+            changeSlideOnOneMonitor(slide, monitor.id + 1)
         }
     }
 }
@@ -116,7 +116,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                             </div>
 
                             <Button size="small" text round
-                                @click="liveSlidesOnMonitors.splice(index, 1, null); updateOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
+                                @click="liveSlidesOnMonitors.splice(index, 1, null); changeSlideOnOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
                                 <template #icon>
                                     <i class="material-symbols-outlined">close</i>
                                 </template>

@@ -198,6 +198,7 @@ const handleMessage = (data) => {
       }
     }
 
+    // slide change only affects if the slide to be shown is not currently shown
     if (data.event_type === 'slide_change' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         if (data.slide != "null") {
@@ -210,6 +211,7 @@ const handleMessage = (data) => {
       }
     }
 
+    // slide update only affects if the slide to be updated is currently shown
     if (data.event_type === 'slide_update' || data.message) {
       if (data.slide != "null") {
         if (currentSlide.value != null && currentSlide.value.id == data.slide.id) {

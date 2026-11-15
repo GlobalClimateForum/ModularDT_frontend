@@ -12,8 +12,8 @@ import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import Chip from 'primevue/chip';
-import { slides, updateSlideStore } from '@/globals/slides'
-import { renameSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
+import { getSlideById, slides, updateSlideBySlide } from '@/globals/slides'
+import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
 import { ref, toRaw } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
@@ -21,6 +21,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
 import GenericSearch from '@/components/GenericSearch.vue';
 import { useItemDeletion } from '@/generics/deleteItem'
+import { sendModeratorMessage } from '@/services/moderator_service'
 
 
 const { onConfirmDeleteItem } = useItemDeletion();
@@ -43,23 +44,26 @@ const filters = ref<SearchFilters>({
 
 const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
-async function onRowEditSave(event: any) {
-
-    const oldSlide = event.data
+function onRowEditSaveSlide(event: any) {
     const { id, name } = event.newData
-    const trimmedName = name.trim()
-
-    if (trimmedName === oldSlide.name) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'New and old filenames are identical', life: 3000, })
-        return
-    }
-
-    try {
-        await renameSlide(id, trimmedName) // Wait for the backend to perform the rename operation
-        updateSlideStore({ ...oldSlide, name: trimmedName, }) // Rename the slide in the local store after successful backend operation
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
-    } catch {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename slide', life: 3000 })
+    if (name.trim() === event.data.name) {
+        toast.add({ severity: 'warn', summary: 'Warning', detail: t('moderator.names_are_identical'), life: 4000 });
+    } else if (name.trim() === "") {
+        toast.add({ severity: 'error', summary: 'Error', detail: t('moderator.name_is_empty'), life: 4000 });
+    } else if (slides.value.some(s => s.name === name.trim())) {
+        toast.add({ severity: 'error', summary: 'Error', detail: t('moderator.slide') + t('moderator.name_already_exists'), life: 4000 });
+    } else {
+        updateSlide(id, { name: name }, getSlideById(id)?.sections ?? []).then(() => {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Scene updated successfully', life: 3000 });
+            sendModeratorMessage({
+                event_type: "update",
+                command: "update_slide",
+                slideid: id
+            })
+        }).catch(error => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update scene', life: 3000 });
+            console.error("Error updating scene:", error)
+        })
     }
 }
 
@@ -68,7 +72,6 @@ const emit = defineEmits<{ 'edit-slide': [slide: Slide] }>()
 function onEditSlide(slide: Slide) {
     emit('edit-slide', { ...slide, sections: slide.sections || [] });
 }
-
 
 async function onConfirmDeleteSlide(slide: Slide) {
     const deleted = await onConfirmDeleteItem("slide", deleteSlide, slide)
@@ -111,8 +114,9 @@ function onTagAdded(addedTag: string) {
 
         <SplitterPanel class="sub-panel" :size="30">
             <DataTable v-if="filteredSlides.length > 0" dataKey="id" editMode="row" scrollable scrollHeight="flex"
-                :value="filteredSlides" @row-edit-save="onRowEditSave" responsiveLayout="scroll" class="slide-table"
-                v-model:editingRows="editingRows" v-model:selection="selectedSlide" selectionMode="single">
+                :value="filteredSlides" @row-edit-save="onRowEditSaveSlide" responsiveLayout="scroll"
+                class="slide-table" v-model:editingRows="editingRows" v-model:selection="selectedSlide"
+                selectionMode="single">
 
                 <Column field="name" header="">
                     <template #editor="slotProps">

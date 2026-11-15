@@ -5,10 +5,9 @@ import type { Slide } from '@/services/slide_service'
 
 const livePresentationState = useLivePresentationState()
 const currentPresentation = useCurrentPresentation()
-
-let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
-let sceneOnMonitors = useSceneOnMonitors()
-let currentScene = useCurrentScene()
+const liveSlidesOnMonitors = useLiveSlidesOnMonitors();
+const sceneOnMonitors = useSceneOnMonitors()
+const currentScene = useCurrentScene()
 
 //export const getLivePresentation = () => api.get("/livepresentation/");
 export const updateLivePresentation = (livepresentation) => api.patch("/livepresentation/", livepresentation);

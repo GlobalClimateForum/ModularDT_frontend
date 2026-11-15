@@ -97,7 +97,7 @@ export const SlideSectionTypes: SlideSectionType[] = [
     { value: "image", icon: "image", label: "Image", description: "Create a slide section with a local Image." },
     { value: "custom", icon: "code", label: "Custom", description: "Create a slide section using HTML or Vue." },
     { value: "dynamic", icon: "dynamic_feed", label: "Dynamic", description: "Create a slide section with dynamic content." },
-    
+
     // { value: "stylesheet", icon: "style", label: "Stylesheet", description: "Create a stylesheet for HTML or Markdown slides." },
 ];
 
@@ -118,11 +118,15 @@ export const getISlides = () => api.get("/slides/interactive/");
 export const getIPanels = () => api.get("/slides/ipanels/")
 export const getIPSlide = (slide_id: number) => api.get(`/slides/ipanels/${slide_id}/`)
 
-export const saveSlide = (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: SlideSection[]) =>
-    api.post("/slides/", { ...slide, sections });
 
-export const updateSlide = async (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) =>
-    await api.patch(`/slides/${id}/`, { ...slide, sections });
+export const saveSlide = async (slide: Omit<Slide, "id" | "created_at" | "updated_at">, sections: Omit<SlideSection, "_key">[]) => {
+    const response = await api.post("/slides/", { ...slide, sections });
+    return response.data;
+}
+
+export const updateSlide = async (id: number, slide: Partial<SlidePayload>, sections: SlideSection[]) => {
+    return await api.patch(`/slides/${id}/`, { ...slide, sections });
+}
 
 export const deleteSlide = (id: number) => api.delete(`/slides/${id}/`);
 

@@ -1,16 +1,16 @@
 import { useToast } from 'primevue/usetoast';
 import { type ItemInterface } from '@/generics/interfaceItem'
 
-type SaveFunction<I> = (item: I, ...args: unknown[]) => Promise<{ id: number }>;
+type SaveFunction<I, A extends unknown[] = []> = (item: I, ...args: A) => Promise<{ id: number }>;
 
 export function useItemSave() {
     const toast = useToast();
 
-    async function onSaveItem<T extends ItemInterface>(
+    async function onSaveItem<T extends ItemInterface, A extends unknown[]>(
         itemTypeString: string,
-        saveFunction: SaveFunction<T>,
+        saveFunction: SaveFunction<T, A>,
         item: T,
-        ...args: unknown[]
+        ...args: A
     ): Promise<number | undefined> {
         try {
             const response = await saveFunction(item, ...args);

@@ -2,9 +2,6 @@
 // Vue-stuff
 import { ref, watch, defineAsyncComponent, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import Button from 'primevue/button'
-import ButtonGroup from 'primevue/buttongroup'
-import InputText from 'primevue/inputtext'
-import FloatLabel from 'primevue/floatlabel'
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Message from 'primevue/message'
@@ -14,35 +11,33 @@ import Draggable from 'vuedraggable'
 import Listbox from 'primevue/listbox'
 import Select from 'primevue/select'
 import { useI18n } from 'vue-i18n'
-
+import { formatDate } from '@/utils/date_utils'
 // globals and services
 import type { Slide, SlideSection } from '@/services/slide_service'
-import { SlideSectionTypes, validateFilename, renameSlide, type SlideSectionType } from '@/services/slide_service'
+import { SlideSectionTypes, type SlideSectionType, saveSlide, updateSlide } from '@/services/slide_service'
 import { getSlideSectionType } from '@/services/slide_service'
-import { createDefaultSlide, createDefaultSlideSection, updateSlideStore, slides, fetchSlides } from '@/globals/slides'
+import { createDefaultSlide, createDefaultSlideSection, slides, fetchSlides, getSlideById } from '@/globals/slides'
 import { settings } from '@/globals/settings'
 import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_service'
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
-import { updateSlideOnMonitors } from '@/services/monitor_service'
+import { updateSlideOnAllMonitors } from '@/services/monitor_service'
 import { updateSlideViews } from '@/services/live_presentation_service';
-import { useSlide } from '@/globals/slides'
 import { identifyLayoutType } from '@/globals/slide_layout'
-
 import '@/assets/main.css'
+import { useItemUpdate } from '@/generics/updateItem'
+import { useItemSave } from '@/generics/saveItem'
+import { sendModeratorMessage } from '@/services/moderator_service'
 // components
 import LayoutEditor from '@/components/LayoutEditor.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import SlideView from '@/components/SlideView.vue'
+import SaveItemLine from './SaveItemLine.vue';
 
-import { formatDate } from '@/utils/date_utils'
 
 type EditorSection = SlideSection & { _key: string } // Add a unique key to each section to guard section content
 
 const edited = ref<boolean>(false)
-const validFilename = ref<boolean>(false)
-const nameEditing = ref<boolean>(false) // Track whether the user is currently editing the slide name
-const nameEditTimer = ref<number | undefined>(undefined) // Timer for debouncing filename validation
 const draftExists = ref<boolean>(false) // Track whether a draft exists for the current slide
 let ready = false
 
@@ -56,7 +51,17 @@ const SECTION_BG_COLOR_EDITING: Record<string, boolean> = {
     custom: false,
 }
 // Define Input Proerties
-const props = defineProps<{ slide?: Slide | null }>()
+const props = defineProps({
+    slide: {
+        type: Object as () => Slide | null,
+        required: false,
+        default: null
+    },
+    name_edit_enabled: {
+        type: Boolean,
+        default: true
+    }
+})
 
 // Define references
 const currentSlide = ref<Slide>(props.slide ?? createDefaultSlide()) // Init a new slide if no slide is passed as prop
@@ -67,7 +72,16 @@ const sectionWidths = ref<number[]>([1.0]) // Track the width fractions of each 
 const showFrame = ref<boolean>(false) // Track whether to show the frame around the slide preview
 const showSectionID = ref<boolean>(false) // Track whether to show the section ID overlay on the slide preview
 
+const slideName = ref<string>("");
+const nameExists = computed(() => {
+    const name = slideName.value.trim()
+    if (!name) return false
+    return slides.value.some(s => s.name === name)
+})
+
 const { t: translate } = useI18n()
+const { onConfirmedUpdateItem } = useItemUpdate();
+const { onSaveItem } = useItemSave();
 
 // Which background slide (from the global settings) is shown behind the preview
 const previewBackgroundChoice = ref<'none' | 'monitor' | 'participant'>('none')
@@ -99,7 +113,6 @@ const vegaProgress = ref<number | null>(null) // Track the progress of fetching 
 const autosizeVega = ref<boolean>(false) // Track whether to auto-size the Vega chart in the preview
 const basemap = ref<keyof typeof basemaps>('openfreemap_bright') // Track the selected basemap for map sections
 const targetSlide = ref<Slide | null>(null) // Track the target slide for interactive panel sections
-const { savingSlide, persist } = useSlide() // Use the useSlide composable to handle saving slides and sections to the server
 const sectionPopover = ref<InstanceType<typeof Popover> | null>(null) // Reference to the Popover component for section type selection
 
 const withKey = (s: SlideSection): EditorSection => ({ ...s, _key: `${s.id}-init-${Math.random().toString(36).substring(2, 11)}` })
@@ -118,6 +131,26 @@ const editorMapping: Record<string, any> = {
 
 // Import the toast notification composable from PrimeVue for displaying success/error messages
 const toast = useToast()
+
+// --------------------- Lifecycle Hooks ---------------------
+onMounted(() => {
+    // On mount, check whether a draft exists for the current slide and update the draftExists ref accordingly
+    draftExists.value = hasDraft(currentSlide.value.id)
+    if (props.slide) {
+        slideName.value = props.slide.name
+    }
+});
+
+onBeforeUnmount(() => {
+    // If there are unsaved changes when the component is about to unmount, 
+    // we save serialize the current slide and sections and save a draft to local storage for later retrieval
+    if (edited.value) {
+        const draftSlide = serializeCurrentSlide()
+        const draftSections = serializeCurrentSections()
+        saveDraft(draftSlide, draftSections)
+    }
+})
+
 
 // --------------------- Slide Helpers ---------------------
 
@@ -143,41 +176,14 @@ function loadSlide(slide?: Slide | null) {
 }
 
 // Helper function to apply a saved slide to the currentSlide and slideSections
-function applySavedSlide(slide: Slide) {
+/*function applySavedSlide(slide: Slide) {
     ready = false
     loadSlide(slide)
     edited.value = false
     nextTick(() => {
         ready = true
     })
-}
-
-// Function to handle renaming the current slide, updating the slide store, and showing success/error toasts
-function onRenameSlide() {
-    nameEditing.value = false
-    const slideID = currentSlide.value.id
-    const slideName = currentSlide.value.name?.trim()
-
-    // Guard to ensure that the slide name has changed and that the slide is a saved slide (has an ID)
-    const nameChanged = slideName !== props.slide?.name
-    const isSavedSlide = !!slideID
-    if (!nameChanged || !isSavedSlide) return
-
-    renameSlide(slideID, slideName).then(() => {
-        // If the server call is successful, update the slidestore locally
-        updateSlideStore({ ...currentSlide.value, name: slideName });
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Slide renamed successfully', life: 3000 })
-    }).catch((error) => {
-        // If the server call fails, log the error and show an error toast
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to rename slide', life: 3000 })
-    });
-}
-
-// Function to cancel renaming the current slide, resetting the nameEditing state and restoring the original slide name
-function cancelRename() {
-    nameEditing.value = false
-    currentSlide.value.name = props.slide?.name ?? ''
-}
+}*/
 
 // Serializes the current slide into a format suitable for saving to the server
 function serializeCurrentSlide(): Omit<Slide, 'sections'> {
@@ -398,26 +404,6 @@ function onSectionReorder(event: { moved?: { oldIndex: number, newIndex: number 
     }
 }
 
-// --------------------- Slide Persistence ---------------------
-
-// Handles saves (new slide) and updates (existing slides) of the current slide in the editor
-async function persistCurrentSlide() {
-    try {
-        const savedSlide = await persist(serializeCurrentSlide(), serializeCurrentSections())
-
-        if (!savedSlide) {
-            return
-        }
-
-        applySavedSlide(savedSlide)
-        updateSlideOnMonitors(savedSlide)
-        updateSlideViews(savedSlide)
-        edited.value = false
-    } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save slide', life: 3000 })
-    }
-}
-
 // --------------------- Editor ---------------------
 
 function clearEditor() {
@@ -464,18 +450,6 @@ watch(() => props.slide, async (slide) => {
     { immediate: true },
 )
 
-// To validate a new slide name, we watch for changes in the currentSlide.name and debounce the validation
-// request to the server to avoid excessive requests. If the name is empty or unchanged, we mark it as invalid.
-watch(() => currentSlide.value.name, (name) => {
-    clearTimeout(nameEditTimer.value)
-    const trimmed = name?.trim()
-    if (!trimmed || trimmed === props.slide?.name) { validFilename.value = false; return }
-    nameEditTimer.value = setTimeout(async () => {
-        const res = await validateFilename(trimmed)
-        validFilename.value = res.data.exists
-    }, 300)
-})
-
 // Watch for changes in general to keep track of whether the slide has been edited, and set the edited state accordingly
 watch(
     [currentSlide, slideSections, sectionWidths, layout, selectedTypes, autosizeVega, basemap, targetSlide],
@@ -483,93 +457,61 @@ watch(
     { deep: true }
 )
 
-// --------------------- Lifecycle Hooks ---------------------
+async function confirmedUpdateSlide(id: number) {
+    const slideToSave = serializeCurrentSlide()
+    slideToSave.name = slideName.value
+    const updated = await onConfirmedUpdateItem("slide", updateSlide, slideToSave, serializeCurrentSections())
+    if (updated) {
+        sendModeratorMessage({
+            event_type: "update",
+            command: "update_slide",
+            slideid: id
+        })
+        
+        currentSlide.value.sections = slideSections.value
+        // Is this necessary?
+        // applySavedSlide(currentSlide.value)
 
-onMounted(() => {
-    // On mount, check whether a draft exists for the current slide and update the draftExists ref accordingly
-    draftExists.value = hasDraft(currentSlide.value.id)
-});
-
-onBeforeUnmount(() => {
-    // If there are unsaved changes when the component is about to unmount, 
-    // we save serialize the current slide and sections and save a draft to local storage for later retrieval
-    if (edited.value) {
-        const draftSlide = serializeCurrentSlide()
-        const draftSections = serializeCurrentSections()
-        saveDraft(draftSlide, draftSections)
+        updateSlideOnAllMonitors(currentSlide.value)
+        updateSlideViews(currentSlide.value)
+        edited.value = false
     }
-})
+}
 
+async function storeSlide() {
+    const slideToSave = serializeCurrentSlide()
+    slideToSave.name = slideName.value
+    const saved = await onSaveItem("slide", saveSlide, slideToSave, serializeCurrentSections())
+    if (saved) {
+        sendModeratorMessage({
+            event_type: "add",
+            command: "add_slide",
+            slideid: saved
+        })
+
+        currentSlide.value.sections = slideSections.value
+        // Is this necessary?
+        //applySavedSlide(currentSlide.value)
+
+        updateSlideOnAllMonitors(currentSlide.value)
+        updateSlideViews(currentSlide.value)
+        edited.value = false
+    }
+}
+
+// Handle saving the scene to the backend
+function onSaveSlide() {
+    if (nameExists.value) {
+        confirmedUpdateSlide(currentSlide.value.id!)
+    } else {
+        storeSlide()
+    }
+}
 </script>
 
 <template>
 
     <div class="slide-creator-container">
-
-        <div class="dashboard-header">
-
-            <FloatLabel variant="on">
-                <InputText id="filename_input" v-model="currentSlide.name" :disabled="!!currentSlide.id && !nameEditing"
-                    :placeholder="$t('moderator.enter_slide_name')" :invalid="validFilename" />
-                <label v-if="validFilename" for="filename_input">Filename already exists</label>
-            </FloatLabel>
-
-            <Transition name="fade" mode="out-in">
-                <div v-if="!nameEditing">
-                    <Button outlined v-if="props.slide" size="small" @click="nameEditing = true" label="Rename">
-                        <template #icon><i class="material-symbols-outlined">edit</i></template>
-                    </Button>
-                </div>
-
-                <div v-else key="edit">
-                    <ButtonGroup>
-                        <Button text @click="onRenameSlide" :disabled="!currentSlide.name?.trim() || validFilename">
-                            <template #icon><i class="material-symbols-outlined">check</i></template>
-                        </Button>
-                        <Button text @click="cancelRename">
-                            <template #icon><i class="material-symbols-outlined">close</i></template>
-                        </Button>
-                    </ButtonGroup>
-                </div>
-            </Transition>
-
-            <Button outlined :label="$t('moderator.clear')" @click="clearEditor()" size="small">
-                <template #icon>
-                    <i class="material-symbols-outlined">delete</i>
-                </template>
-            </Button>
-
-            <Button :disabled="!currentSlide.name?.trim() || nameEditing || validFilename" size="small"
-                :label="savingSlide ? 'Saving…' : 'Save'" @click="persistCurrentSlide()">
-                <template #icon>
-                    <i class="material-symbols-outlined">save</i>
-                </template>
-            </Button>
-
-            <Button @click="loadDraftToEditor()" label="Load Draft" size="small" v-if="draftExists">
-                <template #icon>
-                    <i class="material-symbols-outlined">edit_note</i>
-                </template>
-            </Button>
-
-            <Message size="small" :closable="false" :severity="edited ? 'warn' : 'info'">
-                <template #icon>
-                    <i class="material-symbols-outlined">info</i>
-                </template>
-                <template #default>
-                    <template v-if="edited">
-                        Unsaved Changes.
-                        <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
-                    </template>
-                    <template v-else>
-                        No unsaved changes.
-                        <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at) }}</span>
-                    </template>
-                </template>
-            </Message>
-
-        </div>
-
 
         <!-- Editor -->
         <Splitter :gutter-size="2" class="dashboard">
@@ -577,6 +519,48 @@ onBeforeUnmount(() => {
             <SplitterPanel :size="50" class="sub-panel">
 
                 <h1 class="dashboard_label">Slide Editor</h1>
+
+                <div>
+                    <SaveItemLine v-model:inp_itemname="slideName" :all_items="ref(slides)"
+                        :name_edit_enabled="name_edit_enabled" :placeholder="$t('moderator.enter_slide_name')"
+                        :already_taken_message="$t('moderator.slide') + $t('moderator.name_already_exists')"
+                        @save="onSaveSlide"></SaveItemLine>
+                </div>
+
+                <div class="dashboard-header">
+
+                    <Button outlined :label="$t('moderator.clear')" @click="clearEditor()" size="small">
+                        <template #icon>
+                            <i class="material-symbols-outlined">delete</i>
+                        </template>
+                    </Button>
+
+
+                    <Button @click="loadDraftToEditor()" label="Load Draft" size="small" v-if="draftExists">
+                        <template #icon>
+                            <i class="material-symbols-outlined">edit_note</i>
+                        </template>
+                    </Button>
+
+                    <Message size="small" :closable="false" :severity="edited ? 'warn' : 'info'">
+                        <template #icon>
+                            <i class="material-symbols-outlined">info</i>
+                        </template>
+                        <template #default>
+                            <template v-if="edited">
+                                Unsaved Changes.
+                                <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at)
+                                }}</span>
+                            </template>
+                            <template v-else>
+                                No unsaved changes.
+                                <span style="font-weight: normal">Last saved {{ formatDate(currentSlide.updated_at)
+                                }}</span>
+                            </template>
+                        </template>
+                    </Message>
+                </div>
+
                 <div class="section-editor inset-control">
 
                     <Draggable v-model="slideSections" item-key="_key" tag="div" class="section-selector"
@@ -700,7 +684,6 @@ onBeforeUnmount(() => {
                             :showframe="showFrame" :showSectionID="showSectionID" :basemap="basemap"
                             :targetSlide="targetSlide" :previewBackground="true" />
                     </div>
-
                 </div>
 
                 <div>

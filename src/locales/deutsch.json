@@ -107,7 +107,9 @@
     "send_to_multiple_monitors": "Mehrere Monitore",
     "confirmation-message-all-parameters": "Alle globalen parameter löschen?",
     "no_parameters_for_monitor": "Derzeit gibt es keine Folien-spezifischen Parameter auf Monitor ",
-    "name_already_exists": ": Name existier bereits"
+    "name_already_exists": ": Name existier bereits",
+    "names_are_identical": "Neuer and alter Name sind identisch",
+    "name_is_empty": "Name ist leer"
   },
   "participant": {
     "name": "Teilnehmer",

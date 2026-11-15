@@ -49,7 +49,6 @@ const nameExists = computed(() => {
     return scenes.value.some(s => s.name === name)
 })
 
-
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
 
@@ -163,7 +162,6 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
 <template>
 
     <div class="scene-builder">
-
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
@@ -191,10 +189,10 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                                     <i style="font-size: var(--fs-medium)"
                                         class="material-symbols-outlined">desktop_windows</i>
                                 </template>
-<template #default>
+                                <template #default>
                                     {{ settings.number_of_screens }}
                                 </template>
-</Message> -->
+                             </Message> -->
 
                             <Message v-if="duplicates()" severity="warn" size="small">
                                 {{ $t('moderator.duplicate_slides') }}

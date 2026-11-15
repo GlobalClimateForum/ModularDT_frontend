@@ -3,17 +3,18 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { type ItemInterface } from '@/generics/interfaceItem'
 
-type UpdateFunction = (id: number, stuff) => Promise<unknown>;
+type UpdateFunction<I, A extends unknown[] = []> = (id: number, item: I, ...args: A) => Promise<unknown>;
 
 export function useItemUpdate() {
     const { t } = useI18n();
     const confirm = useConfirm();
     const toast = useToast();
 
-    async function onUpdateItem<T extends ItemInterface>(
+    async function onUpdateItem<T extends ItemInterface, A extends unknown[]>(
         itemTypeString: string,
-        updateFunction: UpdateFunction,        
-        item: T
+        updateFunction: UpdateFunction<T,A>, 
+        item: T,
+        ...args: A
     ): Promise<boolean> {
         if (!Number.isFinite(item.id)) {
             toast.add({
@@ -28,7 +29,7 @@ export function useItemUpdate() {
 
         if (item.id) {
             try {
-                await updateFunction(item.id, item);
+                await updateFunction(item.id, item, ...args);
                 toast.add({
                     severity: 'success',
                     summary: 'Success',
@@ -51,10 +52,11 @@ export function useItemUpdate() {
         }
     }
 
-    function onConfirmedUpdateItem<T extends ItemInterface>(
+    function onConfirmedUpdateItem<T extends ItemInterface, A extends unknown[]>(
         itemTypeString: string,
-        updateFunction: UpdateFunction,        
-        item: T
+        updateFunction: UpdateFunction<T,A>,        
+        item: T,
+        ...args: A
     ): Promise<boolean> {
         return new Promise((resolve) => {
             confirm.require({
@@ -63,7 +65,7 @@ export function useItemUpdate() {
                 acceptLabel: t('moderator.confirmation-ok'),
                 rejectLabel: t('moderator.confirmation-cancel'),
                 accept: async () => {
-                    resolve(await onUpdateItem(itemTypeString, updateFunction, item));
+                    resolve(await onUpdateItem(itemTypeString, updateFunction, item, ...args));
                 },
                 reject: () => resolve(false)
             });
