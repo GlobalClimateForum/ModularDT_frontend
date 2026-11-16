@@ -17,7 +17,7 @@ import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
-import { useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { useLiveSlidesActive, useWhatYouSeeOnMonitors, nextScene, previousScene, gotoScene, startPresentation, stopPresentation } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
@@ -25,7 +25,6 @@ import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
 import { scenes, updateSceneByID } from '@/globals/scenes'
 import { slides, updateSlideByID } from '@/globals/slides'
-import { startPresentation } from "@/services/live_presentation_service";
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -35,7 +34,7 @@ import SceneEditor from '@/components/SceneEditor.vue';
 import SceneManager from '@/components/SceneManager.vue';
 import SceneShowEditor from '@/components/SceneShowEditor.vue';
 import GlobalSettings from '@/components/GlobalSettings.vue';
-import PresentationControl from '@/components/PresentationControl.vue';
+import PresentationControl from '@/components/SceneShowControl.vue';
 import LiveSlides from '@/components/LiveSlides.vue';
 import ContentServerStatus from '@/components/ContentServerStatus.vue';
 import BackendServerStatus from '@/components/BackendServerStatus.vue';
@@ -218,7 +217,7 @@ onUnmounted(() => {
 })
 
 const handleMessage = (data) => {
-  //console.log("message: ", data)
+  console.log("message: ", data)
   try {
 
     /*if (data.event_type === 'update_participant_parameter' || data.message) {
@@ -241,6 +240,11 @@ const handleMessage = (data) => {
       }
       if (data.command === 'update_slide') {
         updateSlideByID(data.slideid)
+      }
+      if (data.command === 'update_sceneshow') {
+        if (data.scene === 'next') { nextScene() }
+        else if (data.scene === 'previous') { previousScene() }
+        else { gotoScene(data.scene) }
       }
     }
 
@@ -273,7 +277,14 @@ const handleMessage = (data) => {
     if (data.event_type === 'start' || data.message) {
       if (data.command === 'start_scenceshow') {
         startPresentation(data.presentationid)
-      } 
+      }
+    }
+
+    if (data.event_type === 'stop' || data.message) {
+      if (data.command === 'stop_sceneshow') {
+        stopPresentation();
+        livePresentationState.value.current_scene = 1;
+      }
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)

@@ -18,7 +18,6 @@ import { fetchPresentations } from '@/globals/presentations';
 import { fetchSlideshows } from '@/globals/slideshows';
 import { fetchParticipants } from '@/globals/participants';
 import { registerContentServer } from '@/services/cs_service.ts';
-import { stopPresentation } from "@/services/live_presentation_service";
 import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { fetchBackgoundImage } from '@/globals/background_image';
 import DynamicDialog from 'primevue/dynamicdialog';
@@ -34,19 +33,6 @@ const paramstore = useParameterStore()
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
 var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
-
-// const toast = useToast()
-
-// const unsubscribe = paramstore.subscribe((change) => {
-//   if (settings.value.dev_mode) {
-//     toast.add({
-//       severity: 'info',
-//       summary: 'Parameter Update',
-//       detail: `Parameter ${change.parameter} updated to ${change.value}`,
-//       life: 3000,
-//     });
-//   }
-// })
 
 watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
@@ -107,12 +93,11 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
+  //liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   await fetchSlides();
   fetchBackgoundImage(settings.value.background_image);
   fetchScenes();
   fetchPresentations();
-  stopPresentation();
   fetchSlideshows();
   fetchParticipants();
 })

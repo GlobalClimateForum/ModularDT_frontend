@@ -3,7 +3,6 @@ import type { Scene } from "@/services/scene_service";
 import type { Slide } from "@/services/slide_service";
 import { settings } from '@/globals/settings'
 
-
 export const sendMonitorMessage = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);
 export const sendMonitorsMessage = (message: any) => api.patch("/monitor/", message);
 

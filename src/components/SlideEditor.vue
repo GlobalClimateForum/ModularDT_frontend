@@ -22,7 +22,7 @@ import { saveDraft, hasDraft, loadDraft, clearDraft } from '@/services/draft_ser
 import { streamVegaSpec } from '@/utils/vega_utils'
 import { basemaps } from '@/utils/map_utils'
 import { updateSlideOnAllMonitors } from '@/services/monitor_service'
-import { updateSlideViews } from '@/services/live_presentation_service';
+import { updateSlideViews } from '@/globals/live_presentation';
 import { identifyLayoutType } from '@/globals/slide_layout'
 import '@/assets/main.css'
 import { useItemUpdate } from '@/generics/updateItem'
