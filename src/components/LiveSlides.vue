@@ -3,83 +3,120 @@
 import { ref, computed, watch } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
-import Toolbar from 'primevue/toolbar'
 import Button from 'primevue/button'
 import { useI18n } from 'vue-i18n';
-import Message from 'primevue/message';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
 import { slides, fetchSlides } from '@/globals/slides'
 import { dialogService } from '@/services/dialog_service';
-import { useLiveSlidesOnMonitors, useLiveSlidesActive, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { useLiveSlidesOnMonitors, useWhatYouSeeOnMonitors, liveSlidesActive } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
+import { sendModeratorMessage } from '@/services/moderator_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
 
-const liveSlidesActive = useLiveSlidesActive()
 const { t } = useI18n();
+
 const selectedSlide = ref<Slide | null>(null);
 
-let liveSlidesOnMonitors = useLiveSlidesOnMonitors();
-let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
+const liveSlidesOnMonitors = useLiveSlidesOnMonitors()
+const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
+//const liveSlideState = useLiveSlidesState()
 
 const handleDragStart = (item) => {
     // Track if needed, but actual drag setup happens in child
 };
 
+function startLiveSlidesIfNeccessary() {
+    if (!liveSlidesActive()) {
+        startLiveSlides()
+    }
+}
+
+function putLiveSlideOnMonitor(index: number, slide: Slide) {
+    liveSlidesOnMonitors.value[index] = slide;
+    changeSlideOnOneMonitor(slide, index + 1)
+}
+
+function updateLiveSlides(index: number, slide: Slide) {
+    sendModeratorMessage({
+        event_type: "update",
+        command: "update_liveslides",
+        slide: slide.id,
+        monitorid: index
+    })
+    putLiveSlideOnMonitor(index, slide)
+}
+
 function onDrop(event: DragEvent, index: number) {
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
-    startLiveSlides()
+    startLiveSlidesIfNeccessary()
     const slide: Slide = JSON.parse(slideData);
-    liveSlidesOnMonitors.value[index] = slide;
-    changeSlideOnOneMonitor(slide, index + 1)
+    updateLiveSlides(index, slide)
 }
 
 // -- Background slide --
 // Shown behind each monitor preview, so the dashboard shows the actual monitor picture.
 // Looked up by name in the global slide store, same as in the Monitor view.
+/*
 const backgroundSlide = computed<Slide | null>(() =>
-  settings.value.background_monitor_slide
-    ? slides.value.find(slide => slide.name === settings.value.background_monitor_slide) ?? null
-    : null
+    settings.value.background_monitor_slide
+        ? slides.value.find(slide => slide.id === settings.value.background_monitor_slide) ?? null
+        : null
 )
 
 watch(() => settings.value.background_monitor_slide, (name) => {
-  if (name) fetchSlides()
+    if (name) fetchSlides()
 }, { immediate: true })
+*/
 
-const onSendSlideToMultipleMonitors = async (slide: Slide) => {
+const onSendSlideToMultipleMonitors = async (slide: Slide | null) => {
+    if (!slide) return;
+
     const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m + 1}` }))
     const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
 
     if (selected) {
-        startLiveSlides()
+        startLiveSlidesIfNeccessary()
         for (const monitor of selected) {
-            liveSlidesOnMonitors.value[monitor.id] = slide;
-            changeSlideOnOneMonitor(slide, monitor.id + 1)
+            updateLiveSlides(monitor.id, slide)
         }
     }
+}
+
+function removeLiveSlide(index: number) {
+    liveSlidesOnMonitors.value[index] = null
+    sendModeratorMessage({
+        event_type: "remove",
+        command: "remove_liveslide",
+        slide_index: index
+    })
+    changeSlideOnOneMonitor(whatYouSeeOnMonitors.value[index], index + 1);
+    if (!liveSlidesActive()) {
+        stopLiveSlides()
+    }
+}
+
+function removeAllLiveSlides() {
+    liveSlidesOnMonitors.value.fill(null);
+    updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors);
+    sendModeratorMessage({
+        event_type: "remove",
+        command: "remove_liveslide",
+        slide_index: "all"
+    })
+    stopLiveSlides()
 }
 </script>
 
 <template>
     <div class="live-slides-container">
-        <div class="dashboard-header">
-            <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
-                @click="liveSlidesOnMonitors.fill(null); updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors); stopLiveSlides()" />
-            <Message info size="small" style="margin-left: auto">
-                <span style="display: flex; align-items: center; gap: 0.25rem;">
-                    <i class="material-symbols-outlined">desktop_windows</i>
-                    {{ settings.number_of_screens }}
-                </span>
-            </Message>
-        </div>
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
@@ -88,16 +125,20 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
             </SplitterPanel>
             <!-- Current view -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div class="header-row">
                     <h2 class="dashboard_label">{{ $t('moderator.live_monitors') }}</h2>
-                    <Button size="small" :disabled="selectedSlide == null"
-                        :label="$t('moderator.send_to_multiple_monitors')"
-                        @click="onSendSlideToMultipleMonitors(selectedSlide)">
+                    <div class="header-row-actions">
+                        <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
+                            @click="removeAllLiveSlides" />
+                        <Button size="small" :disabled="selectedSlide == null"
+                            :label="$t('moderator.send_to_multiple_monitors')"
+                            @click="onSendSlideToMultipleMonitors(selectedSlide)">
 
-                        <template #icon>
-                            <i class="material-symbols-outlined">queue_play_next</i>
-                        </template>
-                    </Button>
+                            <template #icon>
+                                <i class="material-symbols-outlined">queue_play_next</i>
+                            </template>
+                        </Button>
+                    </div>
                 </div>
 
                 <div class="monitor_container">
@@ -115,8 +156,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                                 <h3 class="assigned-slide-label" v-if="slot">{{ slot.name }}</h3>
                             </div>
 
-                            <Button size="small" text round
-                                @click="liveSlidesOnMonitors.splice(index, 1, null); changeSlideOnOneMonitor(whatYouSeeOnMonitors[index], index + 1); if (!liveSlidesActive) { stopLiveSlides() }">
+                            <Button size="small" text round @click="removeLiveSlide(index)">
                                 <template #icon>
                                     <i class="material-symbols-outlined">close</i>
                                 </template>
@@ -126,15 +166,14 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
                         <div v-if="slot" style="width: 100%; height:90%; pointer-events: none; position: relative;">
                             <!-- Background slide layer (from global settings), if configured -->
-                            <div v-if="backgroundSlide" class="background-slide">
+                            <!--                            <div v-if="backgroundSlide" class="background-slide">
                                 <SlideView :preview="true" :slide="backgroundSlide"
                                     :sections="backgroundSlide.sections ?? []" :showFrame="false">
                                 </SlideView>
-                            </div>
+                            </div>-->
                             <SlideView class="monitor-preview-content" :preview="true" :slide="slot"
-                                :sections="slot.sections ? slot.sections : []"
-                                :showFrame="false">
-                            </SlideView>
+                                :sections="slot.sections ? slot.sections : []" :showFrame="false">
+                            </SlideView> 
                         </div>
                         <div v-else class="monitor-symbol">
                             <i class="pi pi-desktop"></i>

@@ -10,10 +10,13 @@ import { useNow, useDateFormat } from '@vueuse/core'
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Scene } from "@/services/scene_service";
-import { useCurrentScene, useLivePresentationState, useScenesMap, updatePresentationState, updateMonitors} from '@/globals/live_presentation';
-import { useCurrentPresentation, useActiveSceneIdFromPresentation, useWhatYouSeeOnMonitors } from '@/globals/live_presentation';
+import { useCurrentScene, useLivePresentationState, useScenesMap, updateMonitors, stopPresentation } from '@/globals/live_presentation';
+import { useCurrentPresentation, useActiveSceneIdFromPresentation } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
 import { sendModeratorMessage } from '@/services/moderator_service'
+import { previousScene, nextScene, gotoScene } from '@/globals/live_presentation';
+import { sendStopLivePresentation } from '@/services/live_presentation_service';
+  
 // components
 import SlideView from '@/components/SlideView.vue';
 import SceneView from '@/components/SceneView.vue';
@@ -45,11 +48,11 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
 
 onMounted(() => {
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
-  //updatePresentationState();
-  //updateMonitors();
 });
 
-const previousScene = () => {
+const switchPreviousScene = () => {
+  previousScene()
+  updateMonitors();
   sendModeratorMessage({
     event_type: "update",
     command: "update_sceneshow",
@@ -57,7 +60,9 @@ const previousScene = () => {
   })
 };
 
-const nextScene = () => {
+const switchNextScene = () => {
+  nextScene()
+  updateMonitors();
   sendModeratorMessage({
     event_type: "update",
     command: "update_sceneshow",
@@ -65,7 +70,9 @@ const nextScene = () => {
   })
 };
 
-const clickScene = (index: number) => {
+const switchClickedScene = (index: number) => {
+  gotoScene(index)
+  updateMonitors();  
   sendModeratorMessage({
     event_type: "update",
     command: "update_sceneshow",
@@ -74,6 +81,9 @@ const clickScene = (index: number) => {
 }
 
 const abortPresentation = () => {
+  sendStopLivePresentation()
+  stopPresentation()
+  updateMonitors();
   sendModeratorMessage({
     event_type: "stop",
     command: "stop_sceneshow",
@@ -92,10 +102,10 @@ const choosePresentation = () => {
 function handleKey(e: KeyboardEvent) {
   const target = e.target as HTMLElement;
   if (target.tagName === 'INPUT') return;
-  if (e.key === 'ArrowLeft') previousScene();
+  if (e.key === 'ArrowLeft') switchPreviousScene();
   else if (e.key === 'ArrowRight' || e.key === ' ') {
     e.preventDefault();
-    nextScene()
+    switchNextScene()
   };
 }
 
@@ -124,7 +134,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
       <div class="slide_gallery_container">
         <div v-if="currentPresentation && livePresentationState.active">
           <div v-for="(scene, index) in currentPresentation.scenes" :key="scene.id" class="scene-card"
-            @click="clickScene(index)">
+            @click="switchClickedScene(index)">
             <div class="scene-info">
               <p class="scene-label">{{ scene.name }}</p>
               <!--<p class="scene-date">{{ formatDate(scene.created_at) }}</p>-->
@@ -143,7 +153,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
     <!-- Zweites Panel -->
     <SplitterPanel :size="75" :minSize="15" class="sub-panel">
       <h2 class="dashboard_label">{{ t('moderator.presentation_control.presentation_control') }}</h2>
-      <div class="presentation_container inset-control" @keydown.left="previousScene" @keydown.right="nextScene">
+      <div class="presentation_container inset-control" @keydown.left="switchPreviousScene" @keydown.right="switchNextScene">
 
         <div v-if="livePresentationState.active" class="scene-container">
           <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"

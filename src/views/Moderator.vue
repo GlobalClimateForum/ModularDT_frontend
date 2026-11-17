@@ -11,13 +11,14 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from "@/services/slide_service"
 import type { Scene } from "@/services/scene_service"
-import { useLivePresentationState, useLiveSlidesOnMonitors } from '@/globals/live_presentation';
 import { presentations } from '@/globals/presentations';
 import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
-import { useLiveSlidesActive, useWhatYouSeeOnMonitors, nextScene, previousScene, gotoScene, startPresentation, stopPresentation } from '@/globals/live_presentation';
+import { liveSlidesActive, useWhatYouSeeOnMonitors, useLiveSlidesOnMonitors, useLivePresentationState } from '@/globals/live_presentation';
+import { previousScene, nextScene, gotoScene, startPresentation, stopPresentation } from '@/globals/live_presentation';
+import { putLiveSlide, removeLiveSlide, removeAllLiveSlides } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
@@ -49,9 +50,8 @@ const { t } = useI18n();
 const wsService = useWebsocketService()
 
 const livePresentationState = useLivePresentationState()
-var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
-const liveSlidesActive = useLiveSlidesActive()
-let whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
+const liveSlidesOnMonitors = useLiveSlidesOnMonitors()
+const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 const channelId = `moderator/`
 const wsUrlMonitor = new URL('/ws/moderator/', API_BASE_URL)
@@ -246,6 +246,9 @@ const handleMessage = (data) => {
         else if (data.scene === 'previous') { previousScene() }
         else { gotoScene(data.scene) }
       }
+      if (data.command === 'update_liveslides') {
+        putLiveSlide(data.monitorid, data.slide)
+      }
     }
 
     if (data.event_type === 'delete' || data.message) {
@@ -254,6 +257,16 @@ const handleMessage = (data) => {
       }
       if (data.command === 'delete_slide') {
         slides.value = slides.value.filter(s => s.id !== data.sceneid);
+      }
+    }
+
+    if (data.event_type === 'remove' || data.message) {
+      if (data.command === 'remove_liveslide') {
+        if (data.slide_index === 'all') {
+          removeAllLiveSlides()
+        } else {
+          removeLiveSlide(data.slide_index)
+        }
       }
     }
 
@@ -321,7 +334,7 @@ function updateDataForMonitor(monitorid: string) {
     },
     'presentation': {
       'livePresentationActive': livePresentationState.value.active,
-      'liveSlidesActive': liveSlidesActive.value,
+      'liveSlidesActive': liveSlidesActive(),
       'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
     }
   })

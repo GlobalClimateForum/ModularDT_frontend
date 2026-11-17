@@ -392,26 +392,6 @@ function globalParameterChange(glob: GlobalParameter) {
 
 
 <style scoped>
-.header-row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-medium);
-    min-width: 0;
-}
-
-.header-row h1 {
-    margin: 0;
-}
-
-.header-row-actions {
-    display: flex;
-    /*align-items: center;*/
-    gap: var(--space-medium);
-}
-
-
 .scrollable-table {
     /*overflow: auto;*/
     flex: 1 1 auto;

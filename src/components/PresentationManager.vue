@@ -13,7 +13,7 @@ import { scenes, fetchScenes } from '@/globals/scenes';
 import { updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
 import { presentations, fetchPresentations } from '@/globals/presentations';
-import { startPresentation } from "@/services/live_presentation_service";
+import { startPresentation } from "@/globals/live_presentation";
 import { onMounted, ref } from 'vue';
 import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';

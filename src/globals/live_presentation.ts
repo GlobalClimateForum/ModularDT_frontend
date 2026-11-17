@@ -5,6 +5,7 @@ import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
 import type { Presentation } from "@/services/presentation_service";
 import { scenes } from '@/globals/scenes';
+import { getSlideById } from '@/globals/slides';
 import { settings } from '@/globals/settings'
 import { updateMonitorStatesFromGriddedSlides } from '@/services/monitor_service'
 import { updateLivePresentation } from "@/services/live_presentation_service";
@@ -34,6 +35,13 @@ const currentPresentation = ref<Presentation | null>(null);
 export function useCurrentPresentation() {
   return currentPresentation
 }
+
+const liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
+
+export function useLiveSlidesOnMonitors() {
+  return liveSlidesOnMonitors
+}
+
 
 const scenesMap = computed(() => {
   return new Map(scenes.value.map(scene => [scene.id, scene]));
@@ -67,22 +75,18 @@ export const sceneOnMonitors = computed(() => {
   return grid;
 });
 
-/*export function useSceneOnMonitors() {
+export function useSceneOnMonitors() {
   return sceneOnMonitors
-}*/
-
-export var liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
-
-export function useLiveSlidesOnMonitors() {
-  return liveSlidesOnMonitors
 }
 
-export function useLiveSlidesActive() {
-  return computed(() => {
-    const result = liveSlidesOnMonitors.value.reduce((memo, slide) => memo || (slide != null), false)
-    return result
-  })
+export function liveSlidesActive() {
+  let ret: boolean = false
+  for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
+    if (liveSlidesOnMonitors.value[sl_index]) { return true; }
+  }
+  return ret
 }
+
 
 export const whatYouSeeOnMonitors = computed(() => {
   const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
@@ -112,78 +116,58 @@ watch(
   { immediate: true }
 )
 
-export async function updatePresentationState() {
+function setCurrentScene() {
   currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
 }
 
 export function updateSlideViews(slide: Slide) {
-    for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
-        if (liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {
-            liveSlidesOnMonitors.value[sl_index] = slide
-        }
+  for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
+    if (liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {
+      liveSlidesOnMonitors.value[sl_index] = slide
     }
-    for (let sl_index = 0; sl_index < sceneOnMonitors.value.length; sl_index++) {
-        if (sceneOnMonitors.value[sl_index]?.id == slide.id) {
-            sceneOnMonitors.value[sl_index] = slide
-        }
+  }
+  for (let sl_index = 0; sl_index < sceneOnMonitors.value.length; sl_index++) {
+    if (sceneOnMonitors.value[sl_index]?.id == slide.id) {
+      sceneOnMonitors.value[sl_index] = slide
     }
-    if (currentScene.value?.slides) {
-        for (let sl_index = 0; sl_index < currentScene.value?.slides.length; sl_index++) {
-            if (currentScene.value.slides[sl_index].id == slide.id) {
-                currentScene.value.slides[sl_index].sections = slide.sections
-                currentScene.value.slides[sl_index].updated_at = slide.updated_at
-            }
-        }
+  }
+  if (currentScene.value?.slides) {
+    for (let sl_index = 0; sl_index < currentScene.value?.slides.length; sl_index++) {
+      if (currentScene.value.slides[sl_index].id == slide.id) {
+        currentScene.value.slides[sl_index].sections = slide.sections
+        currentScene.value.slides[sl_index].updated_at = slide.updated_at
+      }
     }
+  }
 }
 
-export const stopPresentation = async () => {
+export function stopPresentation() {
   livePresentationState.value.active = false;
   livePresentationState.value.presentation = -1;
   livePresentationState.value.current_scene = -1;
   currentPresentation.value = null
-
-  try {
-    await updateLivePresentation({
-      'event_type': 'presentation_stop'
-    });
-    console.log("Live Presentation stoped.");
-  } catch (error) {
-    console.error("Error stopping presentation:", error);
-  }
-  updateMonitors();
+  currentScene.value = null
 }
 
-export const startPresentation = async (presentationid) => {
+export function startPresentation(presentationid: number) {
   livePresentationState.value.active = true;
   livePresentationState.value.presentation = presentationid;
   livePresentationState.value.current_scene = 1;
   currentPresentation.value = presentations.value.find((pres) => pres.id == presentationid) ?? null;
-
-  if (currentPresentation.value) {
-    try {
-      await updateLivePresentation({
-        'event_type': 'presentation_start'
-      });
-      console.log("Live Presentation started.");
-    } catch (error) {
-      console.error("Error starting presentation:", error);
-    }
-  }
-  updateMonitors();
+  setCurrentScene()
 }
 
 
 export function updateMonitors() {
   if (whatYouSeeOnMonitors.value) {
-    updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors.value)
+    updateMonitorStatesFromGriddedSlides(whatYouSeeOnMonitors)
   }
 }
 
 export function previousScene() {
   if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
     livePresentationState.value.current_scene--;
-    updatePresentationState();
+    setCurrentScene();
     updateMonitors();
   }
 }
@@ -192,7 +176,7 @@ export function nextScene() {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
   if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
     livePresentationState.value.current_scene++;
-    updatePresentationState();
+    setCurrentScene();
     updateMonitors();
   }
 };
@@ -201,15 +185,21 @@ export function gotoScene(index: number) {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
   if (livePresentationState.value.active && (index < maxScenes) && (index > 1)) {
     livePresentationState.value.current_scene = index;
-    updatePresentationState();
+    setCurrentScene();
     updateMonitors();
   }
 }
 
-/*
-const abortPresentation = () => {
-  stopPresentation();
-  sceneToMonitorGrid();
-  livePresentationState.value.current_scene = 1;
-};
-*/
+export function putLiveSlide(index: number, slideID: number) {
+  const slide = getSlideById(slideID)
+  if (slide) { liveSlidesOnMonitors.value[index] = slide; }
+}
+
+export function removeLiveSlide(index: number) {
+  liveSlidesOnMonitors.value[index] = null;
+
+}
+
+export function removeAllLiveSlides() {
+  liveSlidesOnMonitors.value.fill(null);
+}

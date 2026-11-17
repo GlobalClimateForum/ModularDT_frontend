@@ -23,6 +23,8 @@ import GenericSearch from '@/components/GenericSearch.vue';
 import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
+import { sendStartLivePresentation } from '@/services/live_presentation_service'
+import { startPresentation, updateMonitors } from '@/globals/live_presentation';
 import '@/assets/main.css'
 // components
 import SceneView from '@/components/SceneView.vue';
@@ -219,18 +221,18 @@ function onAddPresentation() {
     });
 }
 
-async function onPlayPresentation(presentation: Presentation) {
-    console.log("presentation:", presentation);
-    const presentationId = presentation.id;
-    if (presentationId === undefined) {
+function onPlayPresentation(presentation: Presentation) {
+    if (presentation.id === undefined) {
         console.error("Error starting presentation: no valid presentation id");
         return;
     }
-
+    sendStartLivePresentation()
+    startPresentation(presentation.id)
+    updateMonitors();
     sendModeratorMessage({
         event_type: "start",
         command: "start_scenceshow",
-        presentationid: presentationId
+        presentationid: presentation.id
     })
     emit('live')
 }

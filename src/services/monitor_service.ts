@@ -1,3 +1,4 @@
+import { type Ref } from "vue";
 import { api } from "./api";
 import type { Scene } from "@/services/scene_service";
 import type { Slide } from "@/services/slide_service";
@@ -6,7 +7,7 @@ import { settings } from '@/globals/settings'
 export const sendMonitorMessage = (monitorID: number, message: any) => api.patch("/monitor/" + monitorID + "/", message);
 export const sendMonitorsMessage = (message: any) => api.patch("/monitor/", message);
 
-export const updateMonitorStatesFromScene = async (scene: Scene) => {
+export function updateMonitorStatesFromScene(scene: Scene) {
     const grid = Array(settings.value.number_of_screens).fill(null)
 
     scene.slides.forEach(slide => {
@@ -29,17 +30,16 @@ export const updateMonitorStatesFromScene = async (scene: Scene) => {
                 'slide': 'null'
             })
         }
-
     }
 }
 
-export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | null)[]>) => {
-    for (let index in slides) {
-        if (slides[index]) {
-            console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", slides[index])
+export function updateMonitorStatesFromGriddedSlides(slides: Ref<(Slide | null)[]>) {
+    for (let index in slides.value) {
+        if (slides.value[index]) {
+            console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", slides.value[index])
             sendMonitorMessage((Number(index) + 1), {
                 'event_type': 'slide_change',
-                'slide': slides[index]
+                'slide': slides.value[index]
             })
         } else {
             console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project no slide ")
@@ -52,7 +52,7 @@ export const updateMonitorStatesFromGriddedSlides = async (slides: ref<(Slide | 
     }
 }
 
-export const changeSlideOnOneMonitor = (slide: Slide, id: number) => {
+export function changeSlideOnOneMonitor(slide: Slide, id: number) {
     if (slide) {
         sendMonitorMessage((id), {
             'event_type': 'slide_change',
@@ -67,7 +67,7 @@ export const changeSlideOnOneMonitor = (slide: Slide, id: number) => {
     }
 }
 
-export const updateSlideOnAllMonitors = (slide: Slide) => {
+export function updateSlideOnAllMonitors(slide: Slide) {
     if (slide) {
         for (let id = 1; id <= settings.value.number_of_screens; id++) {
             //console.debug("updateMonitorStates: Monitor ", (Number(index) + 1), " project slide ", grid[index])

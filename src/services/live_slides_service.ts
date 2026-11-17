@@ -6,19 +6,18 @@ export interface LiveSlides {
 
 export const updateLiveSlides = (liveslides: Partial<LiveSlides>) => api.patch("/liveslides/", liveslides);
 
-export const stopLiveSlides = async () => {
+export function stopLiveSlides() {
     try {
-        await updateLiveSlides({ active: false });
+        updateLiveSlides({ active: false });
         //console.log("Live slides stoped.");
     } catch (error) {
         console.error("Error stopping live slides:", error);
     }
 }
 
-export const startLiveSlides = async () => {
+export function startLiveSlides() {
     try {
-        await updateLiveSlides({ active: true });
-        //console.log("Live slides started.");
+        updateLiveSlides({ active: true });
     } catch (error) {
         console.error("Error starting live slides:", error);
     }
