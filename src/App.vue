@@ -18,8 +18,6 @@ import { fetchPresentations } from '@/globals/presentations';
 import { fetchSlideshows } from '@/globals/slideshows';
 import { fetchParticipants } from '@/globals/participants';
 import { registerContentServer } from '@/services/cs_service.ts';
-import { useLiveSlidesOnMonitors } from '@/globals/live_presentation';
-import { fetchBackgoundImage } from '@/globals/background_image';
 import DynamicDialog from 'primevue/dynamicdialog';
 import OptionDialog from '@/components/OptionDialog.vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
@@ -32,7 +30,6 @@ const paramstore = useParameterStore()
 
 const { locale } = useI18n()
 const isSettingsLoaded = ref(false)
-var liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 
 watch(() => settings.value?.cs_url, (url) => {
   if (url) registerContentServer();
@@ -95,7 +92,6 @@ onBeforeMount(async () => {
 onMounted(async () => {
   //liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   await fetchSlides();
-  fetchBackgoundImage(settings.value.background_image);
   fetchScenes();
   fetchPresentations();
   fetchSlideshows();
@@ -142,7 +138,7 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotateX(10deg);
-  font-size: clamp(3.5rem, 12vw, 9rem);
+  font-size: clamp(4rem, 14vw, 10.5rem);
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--p-primary-550);

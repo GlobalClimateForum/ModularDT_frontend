@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { computed, defineAsyncComponent, onMounted, ref, provide } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { updatePrimaryPalette } from '@primeuix/themes';
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast';
@@ -9,7 +9,6 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select'; // In v4 heißt Dropdown jetzt "Select"
 import Button from 'primevue/button';
-import Toolbar from 'primevue/toolbar';
 import SelectButton from 'primevue/selectbutton';
 import Password from 'primevue/password';
 import Textarea from 'primevue/textarea';
@@ -27,6 +26,7 @@ import { sendParticipantsMessage } from "@/services/participant_service";
 import { getEventOptions, getEventById, type Event, type EventOption } from '@/services/event_service'
 import { useParameterStore } from '@/services/parameterstore_service';
 import { styleNames, previewUri, prettyName } from '@/services/avatar_service';
+import { sendModeratorMessage } from '@/services/moderator_service'
 // @ts-ignore: module has no declaration file
 import { LANGUAGE_NAMES } from '@/constants/languages.ts'
 import palettes from '@/assets/palettes.json'
@@ -61,7 +61,7 @@ const selectedEvent = ref<Event | null>(null);
 
 // Slide options for the background slide dropdowns; empty value = no background slide
 const slideOptions = computed(() => [
-  { label: '(none)', value: '' },
+  { label: '(none)', value: '-1' },
   ...slides.value.map(slide => ({ label: slide.name, value: slide.id }))
 ]);
 
@@ -89,7 +89,9 @@ const saveSettings = async () => {
     carto_api_key: settings.value.carto_api_key,
     event_id: selectedEvent.value ? selectedEvent.value.id : null,
     dev_mode: settings.value.dev_mode,
-    avatar_style: settings.value.avatar_style
+    avatar_style: settings.value.avatar_style,
+    pin_set: settings.value.pin_set,
+    pin_length: settings.value.pin_length
   };
 
   await updateSettings(current_settings).then(response => {
@@ -104,7 +106,6 @@ const saveSettings = async () => {
 }
 
 function saveEventSettings() {
-
   if (!selectedEvent.value?.id) return Promise.resolve();
 
   const updatedEvent = {
@@ -133,7 +134,10 @@ async function removeEvent(eventID: number) {
 }
 
 const onPaletteChange = ({ value }: { value: string }) => {
-  updatePrimaryPalette(palettes[value]);
+  const palette = palettes[value as keyof typeof palettes];
+  if (palette) {
+    updatePrimaryPalette(palette);
+  }
   settings.value.palette = value;
   updateSettingsForMonitors()
   updateSettingsForParticipants()
@@ -192,28 +196,43 @@ function updateSettingsForMonitors() {
       'event_type': 'settings_update',
       'settings': {
         'number_of_screens': settings.value.number_of_screens,
-        'background_image': settings.value.background_image,
-        'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
-        'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
-        'show_screen_id': settings.value.show_screen_id,
-        'palette': settings.value.palette,
         'background_monitor_slide': settings.value.background_monitor_slide,
+        'background_monitor_slide_on_welcome_screens': settings.value.background_monitor_slide_on_welcome_screens,
+        'show_screen_id': settings.value.show_screen_id,
+        'palette': settings.value.palette
       }
+    }
+  })
+  sendModeratorMessage({
+    'event_type': 'update',
+    'command': 'update_monitor_settings',
+    'settings': {
+      'number_of_screens': settings.value.number_of_screens,
+      'background_monitor_slide': settings.value.background_monitor_slide,
+      'background_monitor_slide_on_welcome_screens': settings.value.background_monitor_slide_on_welcome_screens,
+      'show_screen_id': settings.value.show_screen_id,
+      'palette': settings.value.palette
     }
   })
 }
 
 function updateSettingsForParticipants() {
   sendParticipantsMessage({
-    //'payload': {
     'event_type': 'settings_update',
     'settings': {
       'palette': settings.value.palette,
-      'background_image': settings.value.background_image,
-      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
-      'background_participant_slide': settings.value.background_participant_slide
+      'background_participant_slide': settings.value.background_participant_slide,
+      'background_participant_slide_on_welcome_screens': settings.value.background_participant_slide_on_welcome_screens
     }
-    //}
+  })
+  sendModeratorMessage({
+    'event_type': 'update',
+    'command': 'update_participant_settings',
+    'settings': {
+      'palette': settings.value.palette,
+      'background_participant_slide': settings.value.background_participant_slide,
+      'background_participant_slide_on_welcome_screens': settings.value.background_participant_slide_on_welcome_screens
+    }
   })
 }
 
@@ -276,8 +295,7 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_monitor_slide_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox"
-              @change="updateSettingsForMonitors()" />
+              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
             <Label for="background_image_on_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
@@ -290,8 +308,7 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_participant_slide_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox"
-              @change="updateSettingsForParticipants()" />
+              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForParticipants()" />
             <Label for="background_image_on_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>

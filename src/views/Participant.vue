@@ -14,7 +14,7 @@ import { getParticipants } from '@/services/participant_service'
 import palettes from '@/assets/palettes.json'
 import type { Slide } from "@/services/slide_service"
 import { sendModeratorMessage } from "@/services/moderator_service";
-import { background_image, fetchBackgoundImage } from '@/globals/background_image';
+import { backgroundSlideParticipant } from '@/globals/background';
 import { slides, fetchSlides } from '@/globals/slides'
 // components
 import SlideView from '@/components/SlideView.vue'
@@ -74,20 +74,6 @@ function updateParticipantParameter(parameter_name: string, value: string) {
 
 provide('updateParticipantParameter', updateParticipantParameter);
 
-// -- Background slide --
-// The slide selected in the global settings is rendered as a layer behind the
-// current slide. It is looked up by name in the global slide store.
-const backgroundSlide = computed<Slide | null>(() =>
-  settings.value.background_participant_slide
-    ? slides.value.find(slide => slide.name === settings.value.background_participant_slide) ?? null
-    : null
-)
-
-// Make sure the slide store is populated whenever a background slide is configured
-watch(() => settings.value.background_participant_slide, (name) => {
-  if (name) fetchSlides()
-}, { immediate: true })
-
 function participantSlideLinkHandler(href: string, event: Event) {
   console.log('Handler für Link:', href);
   const index = mySlideshow.value?.findIndex(slide => slide.name === href)
@@ -134,15 +120,12 @@ const handleMessage = (data) => {
         updatePrimaryPalette(palettes[settings.value.palette]);
       }
 
-      if (settings.value.background_image != data.settings.background_image) {
-        console.log("New Background image: ", data.settings.background_image)
-        settings.value.background_image = data.settings.background_image
-        fetchBackgoundImage(settings.value.background_image);
+      if (settings.value.background_participant_slide != data.settings.background_participant_slide) {
+        settings.value.background_participant_slide = data.settings.background_participant_slide
       }
 
-
-      if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
-        settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
+      if (settings.value.background_participant_slide_on_welcome_screens != data.settings.background_participant_slide_on_welcome_screens) {
+        settings.value.background_participant_slide_on_welcome_screens = data.settings.background_participant_slide_on_welcome_screens
       }
 
       // Only update if the payload actually carries the field, so older/other payloads
@@ -222,9 +205,9 @@ const handleSwipe = () => {
 <template>
   <div v-if="(slideshowActive)" class="slideshow-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
     <!-- Background slide layer (from global settings), if configured -->
-    <div v-if="backgroundSlide" class="background-slide">
-      <SlideView :preview="false" :slide="backgroundSlide" :showframe="false"
-        :sections="backgroundSlide.sections ?? []" />
+    <div v-if="backgroundSlideParticipant" class="background-slide">
+      <SlideView :preview="false" :slide="backgroundSlideParticipant" :showframe="false"
+        :sections="backgroundSlideParticipant.sections ?? []" />
     </div>
     <SlideView :preview="false" :slide="myCurrentSlide" :showframe="false"
       :sections="myCurrentSlide?.sections ? myCurrentSlide?.sections : []" class="slide-preview" />
@@ -235,10 +218,11 @@ const handleSwipe = () => {
     </div>
   </div>
   <div v-else>
-    <div v-if="settings.background_image_on_welcome_screens && background_image">
-      <img class="bg_image" :src="background_image?.src || ''" alt="">
-    </div>
-    <div v-else class="welcome show-bg-text">
+    <div v-if="settings.background_participant_slide_on_welcome_screens && backgroundSlideParticipant" class="background-slide">
+        <SlideView :preview="false" :slide="backgroundSlideParticipant" :showframe="false"
+          :sections="backgroundSlideParticipant.sections ?? []" />
+      </div>
+    <div class="welcome show-bg-text">
     </div>
     <div class="centered">
       <h2 style="font-size: 2rem;">{{ t('participant.greeting') }} {{ currentParticipantName }}</h2>

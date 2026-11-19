@@ -1,5 +1,5 @@
-//
-import { ref, computed, watch } from 'vue';
+// Vue-stuff
+import { ref, computed, watch, type ComputedRef } from 'vue';
 //
 import type { Slide } from "@/services/slide_service";
 import type { Scene } from "@/services/scene_service";
@@ -8,7 +8,7 @@ import { scenes } from '@/globals/scenes';
 import { getSlideById } from '@/globals/slides';
 import { settings } from '@/globals/settings'
 import { updateMonitorStatesFromGriddedSlides } from '@/services/monitor_service'
-import { updateLivePresentation } from "@/services/live_presentation_service";
+//import { updateLivePresentation } from "@/services/live_presentation_service";
 import { presentations } from '@/globals/presentations';
 
 
@@ -24,26 +24,12 @@ export function useLivePresentationState() {
   return livePresentationState
 }
 
-const currentScene = ref<Scene | null>();
+export const currentScene = ref<Scene | null>();
+export const currentPresentation = ref<Presentation | null>(null);
+export const liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
+export const liveSlidesActive: ComputedRef<boolean> = computed<boolean> (() => liveSlidesOnMonitors.value.some(slide => slide))
 
-export function useCurrentScene() {
-  return currentScene
-}
-
-const currentPresentation = ref<Presentation | null>(null);
-
-export function useCurrentPresentation() {
-  return currentPresentation
-}
-
-const liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
-
-export function useLiveSlidesOnMonitors() {
-  return liveSlidesOnMonitors
-}
-
-
-const scenesMap = computed(() => {
+const scenesMap: ComputedRef<Map<number | undefined, Scene>> = computed<Map<number | undefined, Scene>>(() => {
   return new Map(scenes.value.map(scene => [scene.id, scene]));
 });
 
@@ -51,7 +37,11 @@ export function useScenesMap() {
   return scenesMap
 }
 
-const activeSceneIdFromPresentation = computed(() => {
+function setCurrentScene() {
+  currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
+}
+
+const activeSceneIdFromPresentation: ComputedRef<number | null> = computed<number | null>(() => {
   const index = livePresentationState.value.current_scene - 1;
   return currentPresentation.value?.scenes?.[index]?.id || null;
 });
@@ -59,8 +49,6 @@ const activeSceneIdFromPresentation = computed(() => {
 export function useActiveSceneIdFromPresentation() {
   return activeSceneIdFromPresentation
 }
-
-//var sceneOnMonitors = ref<(Slide | null)[]>([]);
 
 export const sceneOnMonitors = computed(() => {
   const grid = Array(settings.value.number_of_screens).fill(null)
@@ -78,15 +66,6 @@ export const sceneOnMonitors = computed(() => {
 export function useSceneOnMonitors() {
   return sceneOnMonitors
 }
-
-export function liveSlidesActive() {
-  let ret: boolean = false
-  for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
-    if (liveSlidesOnMonitors.value[sl_index]) { return true; }
-  }
-  return ret
-}
-
 
 export const whatYouSeeOnMonitors = computed(() => {
   const maxLen = Math.max(liveSlidesOnMonitors.value.length, sceneOnMonitors.value.length);
@@ -116,24 +95,20 @@ watch(
   { immediate: true }
 )
 
-function setCurrentScene() {
-  currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
-}
-
 export function updateSlideViews(slide: Slide) {
   for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
-    if (liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {
+    if (liveSlidesOnMonitors.value[sl_index] && liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {
       liveSlidesOnMonitors.value[sl_index] = slide
     }
   }
   for (let sl_index = 0; sl_index < sceneOnMonitors.value.length; sl_index++) {
-    if (sceneOnMonitors.value[sl_index]?.id == slide.id) {
+    if (sceneOnMonitors.value[sl_index] && sceneOnMonitors.value[sl_index]?.id == slide.id) {
       sceneOnMonitors.value[sl_index] = slide
     }
   }
   if (currentScene.value?.slides) {
     for (let sl_index = 0; sl_index < currentScene.value?.slides.length; sl_index++) {
-      if (currentScene.value.slides[sl_index].id == slide.id) {
+      if (currentScene.value.slides[sl_index] && currentScene.value.slides[sl_index].id == slide.id) {
         currentScene.value.slides[sl_index].sections = slide.sections
         currentScene.value.slides[sl_index].updated_at = slide.updated_at
       }
@@ -197,7 +172,6 @@ export function putLiveSlide(index: number, slideID: number) {
 
 export function removeLiveSlide(index: number) {
   liveSlidesOnMonitors.value[index] = null;
-
 }
 
 export function removeAllLiveSlides() {

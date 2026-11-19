@@ -23,7 +23,7 @@ export function useItemUpdate() {
                 detail: `${itemTypeString} ID is missing`,
                 life: 3000
             });
-            console.error(`Error deleting ${itemTypeString}: no valid ID`);
+            console.error(`Error updating ${itemTypeString}: no valid ID`);
             return false;
         }
 

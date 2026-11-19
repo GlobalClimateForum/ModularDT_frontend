@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, computed, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button'
@@ -8,12 +8,12 @@ import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
-import { slides, fetchSlides } from '@/globals/slides'
 import { dialogService } from '@/services/dialog_service';
-import { useLiveSlidesOnMonitors, useWhatYouSeeOnMonitors, liveSlidesActive } from '@/globals/live_presentation';
+import { useWhatYouSeeOnMonitors, liveSlidesActive, useSceneOnMonitors, liveSlidesOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
+import { backgroundSlideMonitor } from "@/globals/background"
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -23,16 +23,17 @@ const { t } = useI18n();
 
 const selectedSlide = ref<Slide | null>(null);
 
-const liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
-//const liveSlideState = useLiveSlidesState()
+const sceneOnMonitors = useSceneOnMonitors()
 
 const handleDragStart = (item) => {
     // Track if needed, but actual drag setup happens in child
 };
 
+onMounted(async () => {})
+
 function startLiveSlidesIfNeccessary() {
-    if (!liveSlidesActive()) {
+    if (!liveSlidesActive) {
         startLiveSlides()
     }
 }
@@ -61,22 +62,7 @@ function onDrop(event: DragEvent, index: number) {
     updateLiveSlides(index, slide)
 }
 
-// -- Background slide --
-// Shown behind each monitor preview, so the dashboard shows the actual monitor picture.
-// Looked up by name in the global slide store, same as in the Monitor view.
-/*
-const backgroundSlide = computed<Slide | null>(() =>
-    settings.value.background_monitor_slide
-        ? slides.value.find(slide => slide.id === settings.value.background_monitor_slide) ?? null
-        : null
-)
-
-watch(() => settings.value.background_monitor_slide, (name) => {
-    if (name) fetchSlides()
-}, { immediate: true })
-*/
-
-const onSendSlideToMultipleMonitors = async (slide: Slide | null) => {
+async function onSendSlideToMultipleMonitors(slide: Slide | null) {
     if (!slide) return;
 
     const options = Array.from({ length: settings.value.number_of_screens }, (_, i) => i).map(m => ({ id: m, label: `${t('monitor.name')} ${m + 1}` }))
@@ -98,7 +84,7 @@ function removeLiveSlide(index: number) {
         slide_index: index
     })
     changeSlideOnOneMonitor(whatYouSeeOnMonitors.value[index], index + 1);
-    if (!liveSlidesActive()) {
+    if (!liveSlidesActive) {
         stopLiveSlides()
     }
 }
@@ -166,11 +152,11 @@ function removeAllLiveSlides() {
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
                         <div v-if="slot" style="width: 100%; height:90%; pointer-events: none; position: relative;">
                             <!-- Background slide layer (from global settings), if configured -->
-                            <!--                            <div v-if="backgroundSlide" class="background-slide">
-                                <SlideView :preview="true" :slide="backgroundSlide"
-                                    :sections="backgroundSlide.sections ?? []" :showFrame="false">
+                            <div v-if="backgroundSlideMonitor" class="background-slide">
+                                <SlideView :preview="true" :slide="backgroundSlideMonitor"
+                                    :sections="backgroundSlideMonitor.sections ?? []" :showFrame="false">
                                 </SlideView>
-                            </div>-->
+                            </div>
                             <SlideView class="monitor-preview-content" :preview="true" :slide="slot"
                                 :sections="slot.sections ? slot.sections : []" :showFrame="false">
                             </SlideView> 

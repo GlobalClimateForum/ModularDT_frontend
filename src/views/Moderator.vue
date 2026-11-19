@@ -16,7 +16,7 @@ import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
-import { liveSlidesActive, useWhatYouSeeOnMonitors, useLiveSlidesOnMonitors, useLivePresentationState } from '@/globals/live_presentation';
+import { liveSlidesActive, useWhatYouSeeOnMonitors, liveSlidesOnMonitors, useLivePresentationState } from '@/globals/live_presentation';
 import { previousScene, nextScene, gotoScene, startPresentation, stopPresentation } from '@/globals/live_presentation';
 import { putLiveSlide, removeLiveSlide, removeAllLiveSlides } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
@@ -50,7 +50,6 @@ const { t } = useI18n();
 const wsService = useWebsocketService()
 
 const livePresentationState = useLivePresentationState()
-const liveSlidesOnMonitors = useLiveSlidesOnMonitors()
 const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 
 const channelId = `moderator/`
@@ -249,6 +248,17 @@ const handleMessage = (data) => {
       if (data.command === 'update_liveslides') {
         putLiveSlide(data.monitorid, data.slide)
       }
+      if (data.command === 'update_monitor_settings') {
+        settings.value.number_of_screens = data.settings.number_of_screens
+        settings.value.background_monitor_slide = data.settings.background_monitor_slide
+        settings.value.background_monitor_slide_on_welcome_screens = data.settings.background_monitor_slide_on_welcome_screens
+        settings.value.show_screen_id = data.settings.show_screen_id
+      }
+      if (data.command === 'update_participant_settings') {
+        settings.value.palette = data.settings.palette
+        settings.value.background_participant_slide = data.settings.background_participant_slide
+        settings.value.background_participant_slide_on_welcome_screens = data.settings.background_participant_slide_on_welcome_screens
+      }
     }
 
     if (data.event_type === 'delete' || data.message) {
@@ -325,16 +335,14 @@ function updateDataForMonitor(monitorid: string) {
     'event_type': 'data_update',
     'settings': {
       'number_of_screens': settings.value.number_of_screens,
-      'background_image': settings.value.background_image,
-      'background_image_on_empty_screens': settings.value.background_image_on_empty_screens,
-      'background_image_on_welcome_screens': settings.value.background_image_on_welcome_screens,
       'show_screen_id': settings.value.show_screen_id,
       'palette': settings.value.palette,
       'background_monitor_slide': settings.value.background_monitor_slide,
+      'background_monitor_slide_on_welcome_screens': settings.value.background_monitor_slide_on_welcome_screens
     },
     'presentation': {
       'livePresentationActive': livePresentationState.value.active,
-      'liveSlidesActive': liveSlidesActive(),
+      'liveSlidesActive': liveSlidesActive.value,
       'slide': whatYouSeeOnMonitors.value[Number(monitorid) - 1]
     }
   })

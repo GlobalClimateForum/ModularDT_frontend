@@ -10,8 +10,8 @@ import { settings } from '@/globals/settings'
 import { type ParameterChange } from '@/services/parameterstore_service'
 import parameterStore from '@/services/parameterstore_service'
 import { useWebsocketService } from '@/services/websocket_service'
-import { background_image, fetchBackgoundImage } from '@/globals/background_image';
-import { slides, fetchSlides } from '@/globals/slides'
+import { backgroundSlideMonitor } from '@/globals/background';
+// import { slides, fetchSlides } from '@/globals/slides'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { useParameterStore } from '@/services/parameterstore_service';
 import '@/assets/main.css'
@@ -43,7 +43,7 @@ const activeMonitor = computed(() => {
   return 1 <= idAsNumber && idAsNumber <= settings.value.number_of_screens
 })
 
-function parameterStoreAsJSON() { 
+function parameterStoreAsJSON() {
   return paramStore.asJSONString.value;
 }
 
@@ -54,7 +54,6 @@ onBeforeMount(() => {
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
   sendModeratorAMonitorRequest(`${currentId.value}`)
-  fetchBackgoundImage(settings.value.background_image);
 })
 
 // important: close the socket when the component is unmounted to avoid memory leaks
@@ -92,20 +91,6 @@ const displaySlide = computed(() => {
   return updatedSlide
 })
 
-// -- Background slide --
-// The slide selected in the global settings is rendered as a layer behind the
-// current slide. It is looked up by name in the global slide store.
-const backgroundSlide = computed<Slide | null>(() =>
-  settings.value.background_monitor_slide
-    ? slides.value.find(slide => slide.name === settings.value.background_monitor_slide) ?? null
-    : null
-)
-
-// Make sure the slide store is populated whenever a background slide is configured
-watch(() => settings.value.background_monitor_slide, (name) => {
-  if (name) fetchSlides()
-}, { immediate: true })
-
 function getSlideMode(sections: SlideSection[]): string {
   return sections.some(section => section.mode === 'interactive') ? 'interactive' : 'static';
 }
@@ -136,36 +121,25 @@ function applyParameterChange(slide: Slide, change: ParameterChange | undefined)
 }
 
 function updateSettings(data) {
-  // This is probably unneccessary
-  let need_to_rerender = false
-
-  settings.value.background_image_on_empty_screens = data.settings.background_image_on_empty_screens
+  if (settings.value.background_monitor_slide_on_welcome_screens != data.settings.background_monitor_slide_on_welcome_screens) {
+    settings.value.background_monitor_slide_on_welcome_screens = data.settings.background_monitor_slide_on_welcome_screens
+  }
 
   if (settings.value.number_of_screens != data.settings.number_of_screens) {
     settings.value.number_of_screens = data.settings.number_of_screens
-    need_to_rerender = true
-  }
-
-  if (settings.value.background_image_on_welcome_screens != data.settings.background_image_on_welcome_screens) {
-    settings.value.background_image_on_welcome_screens = data.settings.background_image_on_welcome_screens
-    need_to_rerender = true
   }
 
   if (settings.value.show_screen_id != data.settings.show_screen_id) {
     settings.value.show_screen_id = data.settings.show_screen_id
-    need_to_rerender = true
   }
 
   if (settings.value.palette != data.settings.palette) {
     settings.value.palette = data.settings.palette
     updatePrimaryPalette(palettes[settings.value.palette]);
-    //need_to_rerender = true
   }
 
-  if (settings.value.background_image != data.settings.background_image) {
-    settings.value.background_image = data.settings.background_image
-    fetchBackgoundImage(settings.value.background_image);
-    //need_to_rerender = true
+  if (settings.value.background_monitor_slide != data.settings.background_monitor_slide) {
+    settings.value.background_monitor_slide = data.settings.background_monitor_slide
   }
 
   // Only update if the payload actually carries the field, so older/other payloads
@@ -173,13 +147,6 @@ function updateSettings(data) {
   if (data.settings.background_monitor_slide !== undefined
     && settings.value.background_monitor_slide != data.settings.background_monitor_slide) {
     settings.value.background_monitor_slide = data.settings.background_monitor_slide
-  }
-
-  if (need_to_rerender) {
-    const instance = getCurrentInstance();
-    if (instance?.proxy) {
-      instance.proxy.$forceUpdate();
-    }
   }
 }
 
@@ -244,7 +211,6 @@ const handleMessage = (data) => {
       liveSlidesActive.value = data.presentation.liveSlidesActive
       livePresentationActive.value = data.presentation.livePresentationActive
       currentSlide.value = data.presentation.slide
-      //ready_to_render.value = true
     }
   } catch (e) {
     console.error('Error processing WebSocket message:', e)
@@ -254,47 +220,43 @@ const handleMessage = (data) => {
 
 <template>
   <!-- <div v-if="ready_to_render"> -->
-    <div v-if="settings.show_screen_id" class="monitor_ID">
-      {{ currentId }}
-    </div>
-    <div v-if="(livePresentationActive || liveSlidesActive)" class="slideshow">
-      <div v-if="currentSlide === null && livePresentationActive">
-        <div v-if="settings.background_image_on_empty_screens && background_image">
-          <img class="bg_image" :src="background_image?.src || ''" alt="">
-        </div>
-      </div>
-      <div v-else-if="currentSlide === null && !livePresentationActive" class="welcome show-bg-text">
-        style="width: 100vw; height: 100vh; overflow: hidden;">
-      </div>
-      <div v-else style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
-        <!-- Background slide layer (from global settings), if configured -->
-        <div v-if="backgroundSlide" class="background-slide">
-          <SlideView :preview="false" :slide="backgroundSlide" :showframe="false"
-            :sections="backgroundSlide.sections ?? []" />
-        </div>
-        <SlideView :preview="false" :slide="displaySlide" :showframe="false"
-          :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
-      </div>
-    </div>
-    <div v-else>
-      <div v-if="settings.background_image_on_welcome_screens && background_image">
-        <img class="bg_image" :src="background_image?.src || ''" alt="">
-      </div>
-      <div v-else class="welcome show-bg-text">
+  <div v-if="settings.show_screen_id" class="monitor_ID">
+    {{ currentId }}
+  </div>
+  <div v-if="currentSlide === null" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
+    <div v-if="!livePresentationActive" class="welcome show-bg-text">
+      <div v-if="settings.background_monitor_slide_on_welcome_screens && backgroundSlideMonitor" class="background-slide">
+        <SlideView :preview="false" :slide="backgroundSlideMonitor" :showframe="false"
+          :sections="backgroundSlideMonitor.sections ?? []" />
       </div>
       <div class="centered">
         <h2 style="font-size: 2rem;">{{ t('monitor.greeting') }}</h2>
         <!-- Monitor ID is between 1 and the number of screens -->
         <div v-if="activeMonitor">
-          <p>{{ t('monitor.waiting') }}</p>
+          <p class="monitor-message">{{ t('monitor.waiting') }}</p>
         </div>
         <!-- Monitor ID is 0 or exceeds the number of screens -->
         <div v-else>
-          <p>{{ t('monitor.invalid') }}</p>
+          <p class="monitor-message">{{ t('monitor.invalid') }}</p>
         </div>
       </div>
     </div>
-  <!-- </div> -->
+    <div v-else class="welcome show-bg-text">
+      <div v-if="backgroundSlideMonitor" class="background-slide">
+        <SlideView :preview="false" :slide="backgroundSlideMonitor" :showframe="false"
+          :sections="backgroundSlideMonitor.sections ?? []" />
+      </div>
+    </div>
+  </div>
+  <div v-else style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
+    <!-- Background slide layer (from global settings), if configured -->
+    <div v-if="backgroundSlideMonitor" class="background-slide">
+      <SlideView :preview="false" :slide="backgroundSlideMonitor" :showframe="false"
+        :sections="backgroundSlideMonitor.sections ?? []" />
+    </div>
+    <SlideView :preview="false" :slide="displaySlide" :showframe="false"
+      :sections="displaySlide?.sections ? displaySlide?.sections : []" class="slide-preview" />
+  </div>
 </template>
 
 
@@ -339,13 +301,7 @@ const handleMessage = (data) => {
   pointer-events: none;
 }
 
-.bg_image {
-  position: fixed;
-  top: 0;
-  left: 0;
-
-  /* Preserve aspet ratio */
-  min-width: 100%;
-  min-height: 100%;
+.monitor-message {
+  font-size: 150%;
 }
 </style>

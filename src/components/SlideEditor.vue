@@ -460,6 +460,7 @@ watch(
 async function confirmedUpdateSlide(id: number) {
     const slideToSave = serializeCurrentSlide()
     slideToSave.name = slideName.value
+    slideToSave.id = id
     const updated = await onConfirmedUpdateItem("slide", updateSlide, slideToSave, serializeCurrentSections())
     if (updated) {
         sendModeratorMessage({
@@ -502,7 +503,8 @@ async function storeSlide() {
 // Handle saving the scene to the backend
 function onSaveSlide() {
     if (nameExists.value) {
-        confirmedUpdateSlide(currentSlide.value.id!)
+        const id = slides.value.find(s => s.name === slideName.value.trim())?.id!
+        confirmedUpdateSlide(id)
     } else {
         storeSlide()
     }

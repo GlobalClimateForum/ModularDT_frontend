@@ -10,8 +10,8 @@ import { useNow, useDateFormat } from '@vueuse/core'
 import { useI18n } from 'vue-i18n';
 // globals and services
 import type { Scene } from "@/services/scene_service";
-import { useCurrentScene, useLivePresentationState, useScenesMap, updateMonitors, stopPresentation } from '@/globals/live_presentation';
-import { useCurrentPresentation, useActiveSceneIdFromPresentation } from '@/globals/live_presentation';
+import { currentScene, useLivePresentationState, useScenesMap, updateMonitors, stopPresentation } from '@/globals/live_presentation';
+import { currentPresentation, useActiveSceneIdFromPresentation } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { previousScene, nextScene, gotoScene } from '@/globals/live_presentation';
@@ -32,12 +32,10 @@ const posLeft = ref(0)
 const posTop = ref(0)
 
 const livePresentationState = useLivePresentationState()
-const currentPresentation = useCurrentPresentation()
-const currentScene = useCurrentScene()
 const scenesMap = useScenesMap()
-const activeSceneIdFromPresentation = useActiveSceneIdFromPresentation()
+//const activeSceneIdFromPresentation = useActiveSceneIdFromPresentation()
 
-
+/*
 watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
   if (newSceneId) {
     currentScene.value = scenesMap.value.get(newSceneId);
@@ -45,9 +43,10 @@ watch([activeSceneIdFromPresentation, scenesMap], ([newSceneId]) => {
     currentScene.value = undefined;
   }
 }, { immediate: true }); // immediate to execute also at start
+*/
 
 onMounted(() => {
-  currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
+  //currentScene.value = scenesMap.value.get(currentPresentation.value?.scenes?.[livePresentationState.value.current_scene - 1]?.id)
 });
 
 const switchPreviousScene = () => {
