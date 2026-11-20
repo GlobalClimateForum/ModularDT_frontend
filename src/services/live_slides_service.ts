@@ -4,6 +4,7 @@ export interface LiveSlides {
     active: boolean;
 }
 
+/*
 export const updateLiveSlides = (liveslides: Partial<LiveSlides>) => api.patch("/liveslides/", liveslides);
 
 export function stopLiveSlides() {
@@ -22,3 +23,4 @@ export function startLiveSlides() {
         console.error("Error starting live slides:", error);
     }
 }
+    */

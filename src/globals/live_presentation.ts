@@ -27,7 +27,7 @@ export function useLivePresentationState() {
 export const currentScene = ref<Scene | null>();
 export const currentPresentation = ref<Presentation | null>(null);
 export const liveSlidesOnMonitors = ref<(Slide | null)[]>([]);
-export const liveSlidesActive: ComputedRef<boolean> = computed<boolean> (() => liveSlidesOnMonitors.value.some(slide => slide))
+export const liveSlidesActive: ComputedRef<boolean> = computed<boolean>(() => liveSlidesOnMonitors.value.some(slide => slide))
 
 const scenesMap: ComputedRef<Map<number | undefined, Scene>> = computed<Map<number | undefined, Scene>>(() => {
   return new Map(scenes.value.map(scene => [scene.id, scene]));
@@ -176,4 +176,24 @@ export function removeLiveSlide(index: number) {
 
 export function removeAllLiveSlides() {
   liveSlidesOnMonitors.value.fill(null);
+}
+
+export function removeLiveSlideById(id: number) {
+  for (let i = 0; i < liveSlidesOnMonitors.value.length; i++) {
+    if (liveSlidesOnMonitors.value[i]?.id === id) {
+      removeLiveSlide(i);
+    }
+  }
+}
+
+export function updateLiveSlideById(id: number) {
+  const slide = getSlideById(id)
+
+  if (slide) {
+    for (let i = 0; i < liveSlidesOnMonitors.value.length; i++) {
+      if (liveSlidesOnMonitors.value[i]?.id === id) {
+        liveSlidesOnMonitors.value[i] = slide
+      }
+    }
+  }
 }

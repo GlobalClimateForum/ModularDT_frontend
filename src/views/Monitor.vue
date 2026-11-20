@@ -34,8 +34,6 @@ const wsService = useWebsocketService()
 const paramStore = useParameterStore()
 
 let livePresentationActive = ref<Boolean>(false)
-let liveSlidesActive = ref<Boolean>(false)
-//let ready_to_render = ref<Boolean>(false)
 
 // is the monitor ID between 1 and the number of screens?
 const activeMonitor = computed(() => {
@@ -187,20 +185,14 @@ const handleMessage = (data) => {
       }
     }
 
-    if (data.event_type === 'live_slides_start' || data.message) {
-      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        liveSlidesActive.value = true
-      }
-    }
-
-    if (data.event_type === 'live_slides_stop' || data.message) {
+    /*if (data.event_type === 'live_slides_stop' || data.message) {
       if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
         liveSlidesActive.value = false
         if (!livePresentationActive.value) {
           currentSlide.value = null
         }
       }
-    }
+    }*/
 
     if (data.event_type === 'settings_update' || data.message) {
       updateSettings(data)
@@ -208,7 +200,6 @@ const handleMessage = (data) => {
 
     if (data.event_type === 'data_update' || data.message) {
       updateSettings(data)
-      liveSlidesActive.value = data.presentation.liveSlidesActive
       livePresentationActive.value = data.presentation.livePresentationActive
       currentSlide.value = data.presentation.slide
     }
