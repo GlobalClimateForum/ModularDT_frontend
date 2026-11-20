@@ -295,8 +295,8 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_monitor_slide_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
-            <Label for="background_image_on_welcome_screens-checkbox"> {{
+              inputId="background_image_on_monitor_welcome_screens-checkbox" @change="updateSettingsForMonitors()" />
+            <Label for="background_image_on_monitor_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
 
@@ -308,8 +308,8 @@ function copyParameterStoreToClipboard() {
 
           <div class="labeled-checkbox">
             <Checkbox v-model="settings.background_participant_slide_on_welcome_screens" binary
-              inputId="background_image_on_welcome_screens-checkbox" @change="updateSettingsForParticipants()" />
-            <Label for="background_image_on_welcome_screens-checkbox"> {{
+              inputId="background_image_on_participant_welcome_screens-checkbox" @change="updateSettingsForParticipants()" />
+            <Label for="background_image_on_participant_welcome_screens-checkbox"> {{
               $t('moderator.settings.background_image_on_welcome_screens') }} </Label>
           </div>
 

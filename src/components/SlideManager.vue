@@ -12,7 +12,7 @@ import TagView from '@/components/TagView.vue';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import Chip from 'primevue/chip';
-import { getSlideById, slides, updateSlideBySlide } from '@/globals/slides'
+import { getSlideById, slides, updateSlideBySlide, selectedSlideInSlideManager } from '@/globals/slides'
 import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
 import { ref, toRaw } from 'vue';
 import '@/assets/main.css'
@@ -29,7 +29,6 @@ const confirm = useConfirm();
 const { t } = useI18n();
 const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const selectedSlide = ref<Slide | null>(null);
 const selectedTags = ref<string[]>([]);
 const editingRows = ref<Slide[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
@@ -77,11 +76,20 @@ async function onConfirmDeleteSlide(slide: Slide) {
     const deleted = await onConfirmDeleteItem("slide", deleteSlide, slide)
 
     if (deleted) {
-        slides.value = slides.value.filter(s => s.id !== slide.id);
-        if (selectedSlide.value?.id === slide.id) {
-            selectedSlide.value = null;
+        sendModeratorMessage({
+            event_type: "delete",
+            command: "delete_slide",
+            slideid: slide.id
+        })
+        if (selectedSlideInSlideManager.value?.id === slide.id) {
+            selectedSlideInSlideManager.value = null;
         }
     }
+
+    /*
+    slides.value = slides.value.filter(s => s.id !== slide.id);
+
+    }*/
 }
 
 function onDuplicateEditSlide(slide: Slide) {
@@ -94,15 +102,15 @@ function onDuplicateEditSlide(slide: Slide) {
 }
 
 function onTagRemoved(removedTag: string) {
-    if (selectedSlide.value) {
-        selectedSlide.value.tags = selectedSlide.value.tags.filter(tag => tag !== removedTag);
+    if (selectedSlideInSlideManager.value) {
+        selectedSlideInSlideManager.value.tags = selectedSlideInSlideManager.value.tags.filter(tag => tag !== removedTag);
     }
     searchComponent.value?.fetchTags()
 }
 
 function onTagAdded(addedTag: string) {
-    if (selectedSlide.value) {
-        selectedSlide.value.tags = [...selectedSlide.value.tags, addedTag];
+    if (selectedSlideInSlideManager.value) {
+        selectedSlideInSlideManager.value.tags = [...selectedSlideInSlideManager.value.tags, addedTag];
     }
     searchComponent.value?.fetchTags()
 }
@@ -112,10 +120,10 @@ function onTagAdded(addedTag: string) {
 <template>
     <Splitter class="dashboard" :gutterSize="2" stateKey="slide-manager-splitter" stateStorage="local">
 
-        <SplitterPanel class="sub-panel" :size="30">
+        <SplitterPanel class="sub-panel" :size="35">
             <DataTable v-if="filteredSlides.length > 0" dataKey="id" editMode="row" scrollable scrollHeight="flex"
                 :value="filteredSlides" @row-edit-save="onRowEditSaveSlide" responsiveLayout="scroll"
-                class="slide-table" v-model:editingRows="editingRows" v-model:selection="selectedSlide"
+                class="slide-table" v-model:editingRows="editingRows" v-model:selection="selectedSlideInSlideManager"
                 selectionMode="single">
 
                 <Column field="name" header="">
@@ -167,11 +175,11 @@ function onTagAdded(addedTag: string) {
         </SplitterPanel>
 
         <SplitterPanel class="sub-panel">
-            <SlideView v-if="selectedSlide" :preview="true" :slide="selectedSlide" :showframe="false"
-                :sections="selectedSlide.sections ? selectedSlide.sections : []" :previewBackground="true"
+            <SlideView v-if="selectedSlideInSlideManager" :preview="true" :slide="selectedSlideInSlideManager" :showframe="false"
+                :sections="selectedSlideInSlideManager.sections ? selectedSlideInSlideManager.sections : []" :previewBackground="true"
                 class="slide-preview" />
 
-            <TagView :item="selectedSlide ? selectedSlide : null" :onAddTagApi="addTagToSlide" v-if="selectedSlide"
+            <TagView :item="selectedSlideInSlideManager ? selectedSlideInSlideManager : null" :onAddTagApi="addTagToSlide" v-if="selectedSlideInSlideManager"
                 :onRemoveTagApi="removeTagFromSlide" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
 
             <div v-else class="slide-preview"

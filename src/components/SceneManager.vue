@@ -120,7 +120,7 @@ function onTagAdded(addedTag: string) {
 <template>
     <div style="display: flex; flex-direction: column; height: 100vh; gap: var(--space-small);"> <!-- Obere Reihe -->
         <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
-            <Splitter layout="horizontal" style="width: 100%; height: 100%">
+            <Splitter layout="horizontal" style="width: 100%; height: 94%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
                         scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"

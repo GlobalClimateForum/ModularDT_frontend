@@ -97,6 +97,7 @@ function onRowEditDelete(event: { data: DraftParticipant; index: number }) {
         severity: 'success',
         summary: 'Participant deleted',
         detail: `Participant ${row.name} has been deleted.`,
+        life: 3000 
       });
     });
     fetchParticipants(); // Refresh the participants list after deletion

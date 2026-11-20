@@ -12,16 +12,15 @@ import { dialogService } from '@/services/dialog_service';
 import { useWhatYouSeeOnMonitors, liveSlidesActive, useSceneOnMonitors, liveSlidesOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
 import { sendModeratorMessage } from '@/services/moderator_service'
-import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
+//import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
 import { backgroundSlideMonitor } from "@/globals/background"
+import { selectedSlideInLiveSlides } from "@/globals/slides"
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
 
 const { t } = useI18n();
-
-const selectedSlide = ref<Slide | null>(null);
 
 const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
 const sceneOnMonitors = useSceneOnMonitors()
@@ -31,12 +30,13 @@ const handleDragStart = (item) => {
 };
 
 onMounted(async () => {})
-
+/*
 function startLiveSlidesIfNeccessary() {
     if (!liveSlidesActive) {
         startLiveSlides()
     }
 }
+*/
 
 function putLiveSlideOnMonitor(index: number, slide: Slide) {
     liveSlidesOnMonitors.value[index] = slide;
@@ -57,7 +57,7 @@ function onDrop(event: DragEvent, index: number) {
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
-    startLiveSlidesIfNeccessary()
+    // startLiveSlidesIfNeccessary()
     const slide: Slide = JSON.parse(slideData);
     updateLiveSlides(index, slide)
 }
@@ -69,7 +69,7 @@ async function onSendSlideToMultipleMonitors(slide: Slide | null) {
     const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
 
     if (selected) {
-        startLiveSlidesIfNeccessary()
+        // startLiveSlidesIfNeccessary()
         for (const monitor of selected) {
             updateLiveSlides(monitor.id, slide)
         }
@@ -85,7 +85,7 @@ function removeLiveSlide(index: number) {
     })
     changeSlideOnOneMonitor(whatYouSeeOnMonitors.value[index], index + 1);
     if (!liveSlidesActive) {
-        stopLiveSlides()
+        // stopLiveSlides()
     }
 }
 
@@ -97,7 +97,7 @@ function removeAllLiveSlides() {
         command: "remove_liveslide",
         slide_index: "all"
     })
-    stopLiveSlides()
+    //stopLiveSlides()
 }
 </script>
 
@@ -106,7 +106,7 @@ function removeAllLiveSlides() {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery style="flex: 1; min-height: 0;" v-model:selectedSlide="selectedSlide"
+                <SlideGallery style="flex: 1; min-height: 0;" v-model:selectedSlide="selectedSlideInLiveSlides"
                     @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Current view -->
@@ -116,9 +116,9 @@ function removeAllLiveSlides() {
                     <div class="header-row-actions">
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')"
                             @click="removeAllLiveSlides" />
-                        <Button size="small" :disabled="selectedSlide == null"
+                        <Button size="small" :disabled="selectedSlideInLiveSlides == null"
                             :label="$t('moderator.send_to_multiple_monitors')"
-                            @click="onSendSlideToMultipleMonitors(selectedSlide)">
+                            @click="onSendSlideToMultipleMonitors(selectedSlideInLiveSlides)">
 
                             <template #icon>
                                 <i class="material-symbols-outlined">queue_play_next</i>

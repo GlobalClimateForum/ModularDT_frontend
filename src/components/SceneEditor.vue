@@ -17,6 +17,7 @@ import '@/assets/main.css'
 import { useItemUpdate } from '@/generics/updateItem'
 import { useItemSave } from '@/generics/saveItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
+import { selectedSlideInSceneEditor } from '@/globals/slides'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -41,7 +42,6 @@ const { onSaveItem } = useItemSave();
 
 const scene = ref<(Slide | null)[]>([]);
 const scenename = ref<string>("");
-const selectedSlide = ref<Slide | null>(null);
 
 const nameExists = computed(() => {
     const name = scenename.value.trim()
@@ -165,7 +165,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlide"
+                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlideInSceneEditor"
                     @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Scene Builder -->
@@ -203,9 +203,9 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                             </Message>
                         </div>
                         <Button icon="pi pi-trash" outlined :label="$t('moderator.clear')" @click="scene.fill(null)" />
-                        <Button :disabled="selectedSlide == null" size="small"
+                        <Button :disabled="selectedSlideInSceneEditor == null" size="small"
                             :label="$t('moderator.send_to_multiple_monitors')"
-                            @click="onSendSlideToMultipleMonitors(selectedSlide)">
+                            @click="selectedSlideInSceneEditor && onSendSlideToMultipleMonitors(selectedSlideInSceneEditor)">
                             <template #icon>
                                 <i class="material-symbols-outlined">queue_play_next</i>
                             </template>
