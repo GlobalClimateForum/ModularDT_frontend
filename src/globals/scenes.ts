@@ -16,6 +16,10 @@ export function fetchScenes() {
     });
 }
 
+export function getSceneById(id: number): Scene | undefined {
+    return scenes.value.find(scene => scene.id === id);
+}
+
 // fetch scene by id
 export async function updateSceneByID(id: number) {
     try {
@@ -43,5 +47,14 @@ export function updateSceneByScene(updatedScene: Scene) {
         scenes.value[index] = updatedScene;
     } else {
         scenes.value.push(updatedScene);
+    }
+}
+
+export function removeSlideFromScenesById(id: number) {
+    for (let scene of scenes.value) {
+        const slideIndex = scene.slides.findIndex(slide => slide.id === id);
+        if (slideIndex !== -1) {
+            scene.slides.splice(slideIndex, 1);
+        }
     }
 }

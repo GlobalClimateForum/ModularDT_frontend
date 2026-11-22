@@ -16,7 +16,7 @@ import { settings } from '@/globals/settings'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { previousScene, nextScene, gotoScene } from '@/globals/live_presentation';
 import { sendStopLivePresentation } from '@/services/live_presentation_service';
-  
+
 // components
 import SlideView from '@/components/SlideView.vue';
 import SceneView from '@/components/SceneView.vue';
@@ -50,28 +50,17 @@ onMounted(() => {
 });
 
 const switchPreviousScene = () => {
-  previousScene()
-  updateMonitors();
-  sendModeratorMessage({
-    event_type: "update",
-    command: "update_sceneshow",
-    scene: "previous"
-  })
+  switchClickedScene(livePresentationState.value.current_scene - 2)
 };
 
 const switchNextScene = () => {
-  nextScene()
-  updateMonitors();
-  sendModeratorMessage({
-    event_type: "update",
-    command: "update_sceneshow",
-    scene: "next"
-  })
+  switchClickedScene(livePresentationState.value.current_scene)
 };
 
 const switchClickedScene = (index: number) => {
-  gotoScene(index)
-  updateMonitors();  
+  console.log("index: ", index)
+  gotoScene(index+1)
+  updateMonitors();
   sendModeratorMessage({
     event_type: "update",
     command: "update_sceneshow",
@@ -152,7 +141,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
     <!-- Zweites Panel -->
     <SplitterPanel :size="75" :minSize="15" class="sub-panel">
       <h2 class="dashboard_label">{{ t('moderator.presentation_control.presentation_control') }}</h2>
-      <div class="presentation_container inset-control" @keydown.left="switchPreviousScene" @keydown.right="switchNextScene">
+      <div class="presentation_container inset-control" @keydown.left="switchPreviousScene"
+        @keydown.right="switchNextScene">
 
         <div v-if="livePresentationState.active" class="scene-container">
           <SceneView v-if="currentScene" :preview="false" :key="currentScene.id" :scene="currentScene"
@@ -164,7 +154,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
         </div>
 
         <div class="controls glass">
-          <Button @click="previousScene" rounded>
+          <Button @click="switchPreviousScene" rounded>
             <template #icon>
               <i class="material-symbols-outlined">chevron_left</i>
             </template>
@@ -172,7 +162,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKey));
 
           <InputNumber v-model="livePresentationState.current_scene" :min="1" class="scene_indicator" />
 
-          <Button @click="nextScene" rounded>
+          <Button @click="switchNextScene" rounded>
             <template #icon>
               <i class="material-symbols-outlined">chevron_right</i>
             </template>

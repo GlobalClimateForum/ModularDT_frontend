@@ -140,29 +140,11 @@ export function updateMonitors() {
   }
 }
 
-export function previousScene() {
-  if (livePresentationState.value.active && (livePresentationState.value.current_scene > 1)) {
-    livePresentationState.value.current_scene--;
-    setCurrentScene();
-    updateMonitors();
-  }
-}
-
-export function nextScene() {
-  const maxScenes = currentPresentation.value?.scenes?.length || 0;
-  if (livePresentationState.value.active && (livePresentationState.value.current_scene < maxScenes)) {
-    livePresentationState.value.current_scene++;
-    setCurrentScene();
-    updateMonitors();
-  }
-};
-
 export function gotoScene(index: number) {
   const maxScenes = currentPresentation.value?.scenes?.length || 0;
-  if (livePresentationState.value.active && (index < maxScenes) && (index > 1)) {
+  if (livePresentationState.value.active && (index <= maxScenes) && (index >= 1)) {
     livePresentationState.value.current_scene = index;
     setCurrentScene();
-    updateMonitors();
   }
 }
 

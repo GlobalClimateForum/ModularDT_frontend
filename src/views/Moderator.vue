@@ -17,14 +17,14 @@ import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/gl
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
 import { liveSlidesActive, useWhatYouSeeOnMonitors, liveSlidesOnMonitors, useLivePresentationState, updateLiveSlideById } from '@/globals/live_presentation';
-import { previousScene, nextScene, gotoScene, startPresentation, stopPresentation, removeLiveSlideById } from '@/globals/live_presentation';
+import { gotoScene, startPresentation, stopPresentation, removeLiveSlideById } from '@/globals/live_presentation';
 import { putLiveSlide, removeLiveSlide, removeAllLiveSlides } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
-import { scenes, updateSceneByID, selectedSceneInSceneManager, selectedSceneInSceneShowEditor } from '@/globals/scenes'
+import { scenes, updateSceneByID, selectedSceneInSceneManager, selectedSceneInSceneShowEditor, removeSlideFromScenesById, getSceneById } from '@/globals/scenes'
 import { slides, updateSlideByID, selectedSlideInSlideManager, selectedSlideInLiveSlides, selectedSlideInSceneEditor, selectedSlideInParticipantSlideshow } from '@/globals/slides'
 import '@/assets/main.css'
 // components
@@ -236,16 +236,20 @@ const handleMessage = async (data) => {
         updateParticipantParameters(data.parameter_name, data.participant, data.value)
       }
       if (data.command === 'update_scene') {
-        updateSceneByID(data.sceneid)
+        await updateSceneByID(data.sceneid)
+        if (selectedSceneInSceneManager.value?.id === data.sceneid) {
+          selectedSceneInSceneManager.value = getSceneById(data.sceneid) ?? null
+        }
+        if (selectedSceneInSceneShowEditor.value?.id === data.sceneid) {
+          selectedSceneInSceneShowEditor.value = getSceneById(data.sceneid) ?? null
+        }
       }
       if (data.command === 'update_slide') {
         await updateSlideByID(data.slideid)
         updateLiveSlideById(data.slideid)
       }
       if (data.command === 'update_sceneshow') {
-        if (data.scene === 'next') { nextScene() }
-        else if (data.scene === 'previous') { previousScene() }
-        else { gotoScene(data.scene) }
+        gotoScene(data.scene)
       }
       if (data.command === 'update_liveslides') {
         putLiveSlide(data.monitorid, data.slide)
@@ -274,7 +278,6 @@ const handleMessage = async (data) => {
         }
       }
       if (data.command === 'delete_slide') {
-        console.log("I do delete_slide!")
         slides.value = slides.value.filter(s => s.id !== data.slideid);
         if (selectedSlideInSlideManager.value?.id === data.slideid) {
           selectedSlideInSlideManager.value = null;
@@ -288,6 +291,7 @@ const handleMessage = async (data) => {
         if (selectedSlideInParticipantSlideshow.value?.id === data.slideid) {
           selectedSlideInParticipantSlideshow.value = null;
         }
+        removeSlideFromScenesById(data.slideid)
         removeLiveSlideById(data.slideid)
       }
     }
