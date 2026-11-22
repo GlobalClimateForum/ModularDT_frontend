@@ -16,7 +16,7 @@ export type ScenePayload = Omit<Scene, "id" | "created_at" | "updated_at">;
 export const getScenes = () => api.get("/scenes/");
 export const getScene = (id: number) => api.get(`/scenes/${id}/`);
 export const storeScene = async (scene: Omit<Scene, "id" | "created_at" | "updated_at">) : Promise<{ id: number }>  => {
-  const payload = {
+  const message = {
     ...scene,
     slide_positions: scene.slides.map(slide => ({
       id: slide.id,
@@ -24,7 +24,8 @@ export const storeScene = async (scene: Omit<Scene, "id" | "created_at" | "updat
     }))
   };
 
-  const response = await api.post<{ id: number }>("/scenes/", payload);
+  const response = await api.post<{ id: number }>("/scenes/", message);
+  console.log("storeScene response: ", response.data);
   return response.data;
 }
 

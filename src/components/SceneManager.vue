@@ -13,7 +13,7 @@ import Button from 'primevue/button';
 import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 // globals and services
-import { scenes } from '@/globals/scenes';
+import { scenes, selectedSceneInSceneManager } from '@/globals/scenes';
 import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
 import GenericSearch from '@/components/GenericSearch.vue';
 import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
@@ -29,7 +29,6 @@ const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 //const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const selectedScene = ref<Scene | null>(null);
 const selectedTags = ref<string[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
 
@@ -88,8 +87,8 @@ async function onConfirmDeleteScene(scene: Scene) {
             command: "delete_scene",
             sceneid: scene.id
         })
-        if (selectedScene.value?.id === scene.id) {
-            selectedScene.value = null;
+        if (selectedSceneInSceneManager.value?.id === scene.id) {
+            selectedSceneInSceneManager.value = null;
         }
     }
 }
@@ -104,14 +103,14 @@ function onDuplicateEditScene(scene: Scene) {
 }
 
 function onTagRemoved(removedTag: string) {
-    if (selectedScene.value) {
-        selectedScene.value.tags = selectedScene.value.tags.filter(tag => tag !== removedTag);
+    if (selectedSceneInSceneManager.value) {
+        selectedSceneInSceneManager.value.tags = selectedSceneInSceneManager.value.tags.filter(tag => tag !== removedTag);
     }
 }
 
 function onTagAdded(addedTag: string) {
-    if (selectedScene.value) {
-        selectedScene.value.tags = [...selectedScene.value.tags, addedTag];
+    if (selectedSceneInSceneManager.value) {
+        selectedSceneInSceneManager.value.tags = [...selectedSceneInSceneManager.value.tags, addedTag];
     }
 }
 </script>
@@ -124,7 +123,7 @@ function onTagAdded(addedTag: string) {
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
                         scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"
-                        class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedScene"
+                        class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedSceneInSceneManager"
                         selectionMode="single">
 
                         <Column field="name" header="" style="text-align: left">
@@ -170,9 +169,9 @@ function onTagAdded(addedTag: string) {
                     </DataTable>
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
-                    <SceneView v-if="selectedScene" :preview="true" :key="selectedScene.id" :scene="selectedScene"
+                    <SceneView v-if="selectedSceneInSceneManager" :preview="true" :key="selectedSceneInSceneManager.id" :scene="selectedSceneInSceneManager"
                         :showframe="false" class="scene-preview" />
-                    <TagView v-if="selectedScene" :item="selectedScene ? selectedScene : null"
+                    <TagView v-if="selectedSceneInSceneManager" :item="selectedSceneInSceneManager ? selectedSceneInSceneManager : null"
                         :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene" @tagRemoved="onTagRemoved"
                         @tagAdded="onTagAdded" />
                 </SplitterPanel>

@@ -51,7 +51,6 @@ const nameExists = computed(() => {
 
 // on mount get all slides from backend and store in slides ref
 onMounted(() => {
-
     if (props.inp_scene && props.inp_scene.slides) {
         const grid = Array(settings.value.number_of_screens).fill(null)
 
@@ -105,10 +104,10 @@ async function confirmedUpdateScene(id: number) {
 }
 
 async function saveScene() {
-
     const validSlidesWithPositions = scene.value.map((s, index) => s ? { ...s, position: index + 1 } : null)
         .filter((s): s is (Slide & { position: number }) => s !== null);
 
+    console.log("validSlidesWithPositions: ", validSlidesWithPositions)
     const scene_ = {
         name: scenename.value,
         description: "",

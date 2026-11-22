@@ -95,6 +95,7 @@ watch(
   { immediate: true }
 )
 
+// probably unesseccary once mulit-moderators is implemented cleanly
 export function updateSlideViews(slide: Slide) {
   for (let sl_index = 0; sl_index < liveSlidesOnMonitors.value.length; sl_index++) {
     if (liveSlidesOnMonitors.value[sl_index] && liveSlidesOnMonitors.value[sl_index]?.id == slide.id) {

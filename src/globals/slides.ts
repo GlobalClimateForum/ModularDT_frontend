@@ -3,11 +3,12 @@ import type { Slide, SlideSection } from "@/services/slide_service"
 import { getSlides, getSlide } from "@/services/slide_service";
 import { slideSectionDefaults } from './slide_section_defaults';
 
-// globale reactive variable
+// globale reactive variables
 export const slides = ref<Slide[]>([]);
 export const selectedSlideInSlideManager = ref<Slide | null>(null);
 export const selectedSlideInLiveSlides = ref<Slide | null>(null);
 export const selectedSlideInSceneEditor = ref<Slide | null>(null);
+export const selectedSlideInParticipantSlideshow = ref<Slide | null>(null);
 
 export function createDefaultSlideSection(viewType: string = 'markdown'): SlideSection {
     const defaults = slideSectionDefaults[viewType] ?? slideSectionDefaults['markdown'];

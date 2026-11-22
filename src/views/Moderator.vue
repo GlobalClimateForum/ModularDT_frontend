@@ -24,8 +24,8 @@ import { sendMonitorMessage } from "@/services/monitor_service"
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
-import { scenes, updateSceneByID } from '@/globals/scenes'
-import { slides, updateSlideByID, selectedSlideInSlideManager, selectedSlideInLiveSlides, selectedSlideInSceneEditor } from '@/globals/slides'
+import { scenes, updateSceneByID, selectedSceneInSceneManager, selectedSceneInSceneShowEditor } from '@/globals/scenes'
+import { slides, updateSlideByID, selectedSlideInSlideManager, selectedSlideInLiveSlides, selectedSlideInSceneEditor, selectedSlideInParticipantSlideshow } from '@/globals/slides'
 import '@/assets/main.css'
 // components
 import SlideManager from '@/components/SlideManager.vue';
@@ -207,6 +207,7 @@ onMounted(() => {
   liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   currentDashboard.value = 'slides';
   updateDataForMonitors();
+
 });
 
 // important: close the socket when the component is unmounted to avoid memory leaks
@@ -238,7 +239,6 @@ const handleMessage = async (data) => {
         updateSceneByID(data.sceneid)
       }
       if (data.command === 'update_slide') {
-        //console.log("")
         await updateSlideByID(data.slideid)
         updateLiveSlideById(data.slideid)
       }
@@ -266,6 +266,12 @@ const handleMessage = async (data) => {
     if (data.event_type === 'delete' || data.message) {
       if (data.command === 'delete_scene') {
         scenes.value = scenes.value.filter(s => s.id !== data.sceneid);
+        if (selectedSceneInSceneManager.value?.id === data.sceneid) {
+          selectedSceneInSceneManager.value = null;
+        }
+        if (selectedSceneInSceneShowEditor.value?.id === data.sceneid) {
+          selectedSceneInSceneShowEditor.value = null;
+        }
       }
       if (data.command === 'delete_slide') {
         console.log("I do delete_slide!")
@@ -278,6 +284,9 @@ const handleMessage = async (data) => {
         }
         if (selectedSlideInSceneEditor.value?.id === data.slideid) {
           selectedSlideInSceneEditor.value = null;
+        }
+        if (selectedSlideInParticipantSlideshow.value?.id === data.slideid) {
+          selectedSlideInParticipantSlideshow.value = null;
         }
         removeLiveSlideById(data.slideid)
       }
