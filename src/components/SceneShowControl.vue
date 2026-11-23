@@ -14,9 +14,8 @@ import { currentScene, useLivePresentationState, useScenesMap, updateMonitors, s
 import { currentPresentation, useActiveSceneIdFromPresentation } from '@/globals/live_presentation';
 import { settings } from '@/globals/settings'
 import { sendModeratorMessage } from '@/services/moderator_service'
-import { previousScene, nextScene, gotoScene } from '@/globals/live_presentation';
+import { gotoScene } from '@/globals/live_presentation';
 import { sendStopLivePresentation } from '@/services/live_presentation_service';
-
 // components
 import SlideView from '@/components/SlideView.vue';
 import SceneView from '@/components/SceneView.vue';
