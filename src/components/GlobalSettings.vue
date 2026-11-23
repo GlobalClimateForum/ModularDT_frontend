@@ -192,7 +192,6 @@ onMounted(async () => {
 
 function updateSettingsForMonitors() {
   sendMonitorsMessage({
-    'payload': {
       'event_type': 'settings_update',
       'settings': {
         'number_of_screens': settings.value.number_of_screens,
@@ -200,7 +199,6 @@ function updateSettingsForMonitors() {
         'background_monitor_slide_on_welcome_screens': settings.value.background_monitor_slide_on_welcome_screens,
         'show_screen_id': settings.value.show_screen_id,
         'palette': settings.value.palette
-      }
     }
   })
   sendModeratorMessage({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Vue-stuff
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted, onBeforeMount, ref, provide, getCurrentInstance, watch } from 'vue'
+import { computed, onMounted, onUnmounted, onBeforeMount, ref, provide } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { updatePrimaryPalette } from '@primeuix/themes';
 // globals and services
@@ -142,8 +142,7 @@ function updateSettings(data) {
 
   // Only update if the payload actually carries the field, so older/other payloads
   // cannot wipe the locally loaded setting back to ''
-  if (data.settings.background_monitor_slide !== undefined
-    && settings.value.background_monitor_slide != data.settings.background_monitor_slide) {
+  if (data.settings.background_monitor_slide !== undefined && settings.value.background_monitor_slide != data.settings.background_monitor_slide) {
     settings.value.background_monitor_slide = data.settings.background_monitor_slide
   }
 }
@@ -185,14 +184,6 @@ const handleMessage = (data) => {
       }
     }
 
-    /*if (data.event_type === 'live_slides_stop' || data.message) {
-      if (1 <= Number(route.params.id) && Number(route.params.id) <= settings.value.number_of_screens) {
-        liveSlidesActive.value = false
-        if (!livePresentationActive.value) {
-          currentSlide.value = null
-        }
-      }
-    }*/
 
     if (data.event_type === 'settings_update' || data.message) {
       updateSettings(data)
