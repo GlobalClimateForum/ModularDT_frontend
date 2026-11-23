@@ -12,7 +12,6 @@ import { dialogService } from '@/services/dialog_service';
 import { useWhatYouSeeOnMonitors, liveSlidesActive, useSceneOnMonitors, liveSlidesOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
 import { sendModeratorMessage } from '@/services/moderator_service'
-//import { startLiveSlides, stopLiveSlides } from "@/services/live_slides_service";
 import { backgroundSlideMonitor } from "@/globals/background"
 import { selectedSlideInLiveSlides } from "@/globals/slides"
 import '@/assets/main.css'
