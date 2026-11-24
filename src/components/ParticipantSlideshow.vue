@@ -23,6 +23,7 @@ import { dialogService } from '@/services/dialog_service';
 import { participants } from '@/globals/participants';
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { useItemDeletion } from '@/generics/deleteItem'
+import { selectedTagsInParticipantSlideshow } from '@/globals/tags'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -51,11 +52,6 @@ const colRightSize = ref(65);
 const emit = defineEmits<{
     'liveparticipants': [];
 }>();
-
-onMounted(() => {
-    //fetchSlides();
-    fetchSlideshows();
-});
 
 function onRowClick(event: any) {
     const slideshow = event.data;
@@ -242,12 +238,14 @@ const handleDragStart = (item) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%;">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <SlideGallery v-model:selectedSlide="selectedSlideInParticipantSlideshow" @slide-drag-start="handleDragStart"
-                        :slide_preview="false" />
+                    <SlideGallery v-model:selectedSlide="selectedSlideInParticipantSlideshow"
+                        v-model:selectedTags="selectedTagsInParticipantSlideshow" :slide_preview="false"
+                        @slide-drag-start="handleDragStart" />
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
-                    <SlideView v-if="selectedSlideInParticipantSlideshow" :preview="true" :slide="selectedSlideInParticipantSlideshow" :showframe="false"
-                        :previewBackground="true" :sections="selectedSlideInParticipantSlideshow.sections ? selectedSlideInParticipantSlideshow.sections : []"
+                    <SlideView v-if="selectedSlideInParticipantSlideshow" :preview="true"
+                        :slide="selectedSlideInParticipantSlideshow" :showframe="false" :previewBackground="true"
+                        :sections="selectedSlideInParticipantSlideshow.sections ? selectedSlideInParticipantSlideshow.sections : []"
                         class="slide-preview" />
                 </SplitterPanel>
             </Splitter>

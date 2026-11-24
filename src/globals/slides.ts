@@ -6,6 +6,7 @@ import { slideSectionDefaults } from './slide_section_defaults';
 // globale reactive variables
 export const slides = ref<Slide[]>([]);
 export const selectedSlideInSlideManager = ref<Slide | null>(null);
+export const selectedSlideInSceneManager = ref<Slide | null>(null);
 export const selectedSlideInLiveSlides = ref<Slide | null>(null);
 export const selectedSlideInSceneEditor = ref<Slide | null>(null);
 export const selectedSlideInParticipantSlideshow = ref<Slide | null>(null);
@@ -20,8 +21,8 @@ export function createDefaultSlideSection(viewType: string = 'markdown'): SlideS
 }
 
 // Fetch slides from the backend and update the reactive variable
-export async function fetchSlides() {
-    await getSlides().then(response => {
+export function fetchSlides() {
+    return getSlides().then(response => {
         slides.value = response.data;
         response.data.forEach((slide: Slide) => {
             if (slide.sections && slide.sections.length > 0) {
@@ -31,6 +32,21 @@ export async function fetchSlides() {
     }).catch(error => {
         console.error("Error fetching slides:", error);
     });
+}
+
+// Fetch slides from the backend and update the reactive variable
+export async function asyncFetchSlides() {
+    try {
+        const response = await getSlides()
+        slides.value = response.data;
+        response.data.forEach((slide: Slide) => {
+            if (slide.sections && slide.sections.length > 0) {
+                slide.mode = getSlideMode(slide.sections);
+            }
+        })
+    } catch (error) {
+        console.error("Error fetching slides:", error);
+    }
 }
 
 // fetch slide by id

@@ -18,6 +18,7 @@ import { useItemUpdate } from '@/generics/updateItem'
 import { useItemSave } from '@/generics/saveItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { selectedSlideInSceneEditor } from '@/globals/slides'
+import { selectedTagsInSceneEditor } from '@/globals/tags'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -164,7 +165,7 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlideInSceneEditor"
+                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlideInSceneEditor" v-model:selectedTags="selectedTagsInSceneEditor"
                     @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Scene Builder -->

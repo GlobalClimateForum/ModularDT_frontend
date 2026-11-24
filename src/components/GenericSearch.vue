@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
 import OverlayBadge from 'primevue/overlaybadge';
@@ -9,8 +9,8 @@ import { FilterMatchMode } from '@primevue/core/api'
 import MultiSelect from 'primevue/multiselect';
 import { useI18n } from 'vue-i18n';
 // globals and services
-import { getAvailableTags } from '@/services/slide_service';
 import { type SearchFilters } from '@/globals/filters';
+import { existingTags } from '@/globals/tags';
 import '@/assets/main.css'
 
 const props = defineProps({
@@ -29,17 +29,10 @@ const filters = defineModel<SearchFilters>('filters', {
     }),
 })
 
-const existingTags = ref<string[]>([]);
 const doFilter = ref(false);
 const activeFilterCount = computed(() =>
     (filters.value.global.value ? 1 : 0) + selectedTags.value.length
 );
-
-async function fetchTags() {
-    await getAvailableTags().then(tags => {
-        existingTags.value = tags.data.tags;
-    });
-}
 
 function toggleFilter() {
     if (doFilter.value) {
@@ -49,12 +42,8 @@ function toggleFilter() {
     doFilter.value = !doFilter.value;
 }
 
-onMounted(() => {
-    fetchTags()
-});
-
 defineExpose({
-    fetchTags
+    //fetchTags
 })
 </script>
 

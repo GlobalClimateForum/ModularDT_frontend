@@ -16,7 +16,8 @@ import draggable from 'vuedraggable';
 // globals and services
 import { scenes, selectedSceneInSceneShowEditor } from '@/globals/scenes';
 import { presentations, fetchPresentations } from '@/globals/presentations';
-import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
+import { updateScene, deleteScene } from "@/services/scene_service";
+import { addTagToScene, removeTagFromScene } from "@/services/tag_service";
 import { updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
 import GenericSearch from '@/components/GenericSearch.vue';
@@ -25,6 +26,7 @@ import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { sendStartLivePresentation } from '@/services/live_presentation_service'
 import { startPresentation, updateMonitors } from '@/globals/live_presentation';
+import { existingTags, selectedTagsInSceneShowEditor, collectAllExistingTags } from '@/globals/tags';
 import '@/assets/main.css'
 // components
 import SceneView from '@/components/SceneView.vue';
@@ -35,7 +37,6 @@ const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 //const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const selectedTags = ref<string[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
 
 const filters = ref<SearchFilters>({
@@ -52,7 +53,7 @@ interface SelectedScene {
     description: string;
 }
 
-const filteredScenes = useFilteredScenes(filters, selectedTags, filterLogic)
+const filteredScenes = useFilteredScenes(filters, selectedTagsInSceneShowEditor, filterLogic)
 const editingRows = ref<Scene[]>([]);
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
@@ -159,11 +160,17 @@ function onTagRemoved(removedTag: string) {
     if (selectedSceneInSceneShowEditor.value) {
         selectedSceneInSceneShowEditor.value.tags = selectedSceneInSceneShowEditor.value.tags.filter(tag => tag !== removedTag);
     }
+    existingTags.value = collectAllExistingTags()
 }
 
 function onTagAdded(addedTag: string) {
     if (selectedSceneInSceneShowEditor.value) {
         selectedSceneInSceneShowEditor.value.tags = [...selectedSceneInSceneShowEditor.value.tags, addedTag];
+    }
+
+    let index = existingTags.value.findIndex(tag => tag.toLowerCase() === addedTag.toLowerCase());
+    if (index === -1) {
+        existingTags.value.push(addedTag);
     }
 }
 
@@ -186,7 +193,7 @@ function onDuplicatePresentation(presentation: Presentation) {
             description: presentation.description,
             scenes: presentation.scenes
         };
-
+ 
         savePresentation(new_presentation).then(() => {
             toast.add({ severity: 'success', summary: 'Success', detail: 'Presentation saved successfully', life: 3000 })
             fetchPresentations();
@@ -308,8 +315,8 @@ const removeItem = (index: number) => {
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
                         scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"
-                        class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedSceneInSceneShowEditor"
-                        selectionMode="single">
+                        class="my-table" v-model:editingRows="editingRows"
+                        v-model:selection="selectedSceneInSceneShowEditor" selectionMode="single">
 
                         <Column field="name" header="" style="text-align: left">
                             <template #editor="slotProps">
@@ -346,7 +353,7 @@ const removeItem = (index: number) => {
                         </Column>
 
                         <template #header>
-                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags"
+                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSceneShowEditor"
                                 v-model:filterLogic="filterLogic" v-model:filters="filters"
                                 :title="$t('moderator.available_scenes')" />
                         </template>
@@ -354,9 +361,11 @@ const removeItem = (index: number) => {
                     </DataTable>
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
-                    <SceneView v-if="selectedSceneInSceneShowEditor" :preview="true" :key="selectedSceneInSceneShowEditor.id" :scene="selectedSceneInSceneShowEditor"
+                    <SceneView v-if="selectedSceneInSceneShowEditor" :preview="true"
+                        :key="selectedSceneInSceneShowEditor.id" :scene="selectedSceneInSceneShowEditor"
                         :showframe="false" class="scene-preview" />
-                    <TagView v-if="selectedSceneInSceneShowEditor" :item="selectedSceneInSceneShowEditor ? selectedSceneInSceneShowEditor : null"
+                    <TagView v-if="selectedSceneInSceneShowEditor"
+                        :item="selectedSceneInSceneShowEditor ? selectedSceneInSceneShowEditor : null"
                         :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene" @tagRemoved="onTagRemoved"
                         @tagAdded="onTagAdded" />
                 </SplitterPanel>

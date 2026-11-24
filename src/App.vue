@@ -17,6 +17,7 @@ import { fetchSlides } from '@/globals/slides';
 import { fetchPresentations } from '@/globals/presentations';
 import { fetchSlideshows } from '@/globals/slideshows';
 import { fetchParticipants } from '@/globals/participants';
+import { fetchTags } from '@/globals/tags';
 import { registerContentServer } from '@/services/cs_service.ts';
 import DynamicDialog from 'primevue/dynamicdialog';
 import OptionDialog from '@/components/OptionDialog.vue';
@@ -89,13 +90,14 @@ onBeforeMount(async () => {
   document.documentElement.style.setProperty('--app-title', `"${appName}"`);
 })
 
-onMounted(async () => {
-  //liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-  await fetchSlides();
+onMounted(() => {
+  //await asyncFetchSlides();
+  fetchSlides();
   fetchScenes();
   fetchPresentations();
   fetchSlideshows();
   fetchParticipants();
+  fetchTags();
 })
 
 onUnmounted(() => {

@@ -14,7 +14,6 @@ import Password from 'primevue/password';
 import Textarea from 'primevue/textarea';
 import DatePicker from 'primevue/datepicker';
 import Checkbox from 'primevue/checkbox';
-
 // globals and services
 import { useRouter } from 'vue-router';
 import { settings, fetchSettings } from '@/globals/settings'

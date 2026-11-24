@@ -141,7 +141,3 @@ export const renderSlide = (content: string, width: number, height: number, bgCo
 
 export const validateFilename = (name: string) => api.get(`/slides/filename/${name}/`);
 export const renameSlide = (id: number, name: string) => api.patch(`/slides/filename/${id}/${encodeURIComponent(name)}/`);
-
-export const removeTagFromSlide = (slideId: number, tag: string) => api.delete(`/tags/${tag}/slide/${slideId}/`);
-export const addTagToSlide = (slideId: number, tag: string) => api.post(`/tags/${tag}/slide/${slideId}/`);
-export const getAvailableTags = () => api.get("/tags/available/");

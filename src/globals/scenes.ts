@@ -7,14 +7,25 @@ export const scenes = ref<Scene[]>([]);
 export const selectedSceneInSceneManager = ref<Scene | null>(null);
 export const selectedSceneInSceneShowEditor = ref<Scene | null>(null);
 
-// fetch all scenes
+// Fetch scenes from the backend and update the reactive variable 
 export function fetchScenes() {
-    getScenes().then(response => {
+    return getScenes().then(response => {
         scenes.value = response.data.scenes
     }).catch(error => {
         console.error("Error fetching scenes:", error);
     });
 }
+
+// async fetch
+export async function asyncFetchScenes() {
+    try {
+        const response = await getScenes()
+        scenes.value = response.data.scenes
+    } catch (error) {
+        console.error("Error asynchronous fetching scenes:", error);
+    }
+}
+
 
 export function getSceneById(id: number): Scene | undefined {
     return scenes.value.find(scene => scene.id === id);

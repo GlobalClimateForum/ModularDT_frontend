@@ -41,6 +41,3 @@ export const updateScene = async (id: number, scene: Partial<ScenePayload>) => {
 };
 
 export const deleteScene = (id: number) => api.delete(`/scenes/${id}/`);
-
-export const removeTagFromScene = (sceneId: number, tag: string) => api.delete(`/tags/${tag}/scene/${sceneId}/`);
-export const addTagToScene = (sceneId: number, tag: string) => api.post(`/tags/${tag}/scene/${sceneId}/`);

@@ -29,10 +29,11 @@ const filters = ref<SearchFilters>({
         matchMode: FilterMatchMode.CONTAINS,
     },
 })
-const selectedTags = ref<string[]>([]);
+
 const filterLogic = ref<'and' | 'or'>('and');
 
 const { t } = useI18n();
+const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
 const selectedSlide = defineModel<Slide | null>('selectedSlide', { default: null });
 const draggedSlide = defineModel<Slide | null>('draggedSlide', { default: null });
 
@@ -60,11 +61,12 @@ function onDragEnd(e: DragEvent) {
 </script>
 
 <template>
-    <DataTable v-if="filteredSlides.length > 0" :value="filteredSlides" dataKey="id" editMode="row" scrollable
+    <!-- v-if="filteredSlides.length > 0" -->
+    <DataTable :value="filteredSlides" dataKey="id" editMode="row" scrollable
         scrollHeight="flex" responsiveLayout="scroll" class="slide-table" v-model:selection="selectedSlide"
         selectionMode="single">
 
-        <Column field="name" header="" class="slide-column">
+        <Column v-if="filteredSlides.length > 0" field="name" header="" class="slide-column">
             <template #editor="slotProps">
                 <InputText v-model="slotProps.data.name" />
             </template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // Vue-stuff
-import { ref, onMounted } from 'vue';
 import Splitter from 'primevue/splitter'
 import SplitterPanel from 'primevue/splitterpanel'
 import Button from 'primevue/button'
@@ -9,11 +8,12 @@ import { useI18n } from 'vue-i18n';
 import type { Slide } from '@/services/slide_service'
 import { settings } from '@/globals/settings'
 import { dialogService } from '@/services/dialog_service';
-import { useWhatYouSeeOnMonitors, liveSlidesActive, useSceneOnMonitors, liveSlidesOnMonitors } from '@/globals/live_presentation';
+import { useWhatYouSeeOnMonitors, liveSlidesOnMonitors } from '@/globals/live_presentation';
 import { updateMonitorStatesFromGriddedSlides, changeSlideOnOneMonitor } from '@/services/monitor_service'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { backgroundSlideMonitor } from "@/globals/background"
 import { selectedSlideInLiveSlides } from "@/globals/slides"
+import { selectedTagsInLiveSlides } from "@/globals/tags"
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -22,20 +22,11 @@ import SlideGallery from '@/components/SlideGallery.vue';
 const { t } = useI18n();
 
 const whatYouSeeOnMonitors = useWhatYouSeeOnMonitors()
-const sceneOnMonitors = useSceneOnMonitors()
 
 const handleDragStart = (item) => {
     // Track if needed, but actual drag setup happens in child
 };
 
-onMounted(async () => {})
-/*
-function startLiveSlidesIfNeccessary() {
-    if (!liveSlidesActive) {
-        startLiveSlides()
-    }
-}
-*/
 
 function putLiveSlideOnMonitor(index: number, slide: Slide) {
     liveSlidesOnMonitors.value[index] = slide;
@@ -56,7 +47,6 @@ function onDrop(event: DragEvent, index: number) {
     const slideData = event.dataTransfer?.getData('slide');
     if (!slideData) return;
 
-    // startLiveSlidesIfNeccessary()
     const slide: Slide = JSON.parse(slideData);
     updateLiveSlides(index, slide)
 }
@@ -68,7 +58,6 @@ async function onSendSlideToMultipleMonitors(slide: Slide | null) {
     const selected = await dialogService.openOptionDialog(options, `${t('select_monitors')}`);
 
     if (selected) {
-        // startLiveSlidesIfNeccessary()
         for (const monitor of selected) {
             updateLiveSlides(monitor.id, slide)
         }
@@ -77,15 +66,12 @@ async function onSendSlideToMultipleMonitors(slide: Slide | null) {
 
 function removeLiveSlide(index: number) {
     liveSlidesOnMonitors.value[index] = null
+    changeSlideOnOneMonitor(whatYouSeeOnMonitors.value[index], index + 1);
     sendModeratorMessage({
         event_type: "remove",
         command: "remove_liveslide",
         slide_index: index
     })
-    changeSlideOnOneMonitor(whatYouSeeOnMonitors.value[index], index + 1);
-    if (!liveSlidesActive) {
-        // stopLiveSlides()
-    }
 }
 
 function removeAllLiveSlides() {
@@ -96,7 +82,6 @@ function removeAllLiveSlides() {
         command: "remove_liveslide",
         slide_index: "all"
     })
-    //stopLiveSlides()
 }
 </script>
 
@@ -106,7 +91,7 @@ function removeAllLiveSlides() {
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
                 <SlideGallery style="flex: 1; min-height: 0;" v-model:selectedSlide="selectedSlideInLiveSlides"
-                    @slide-drag-start="handleDragStart" />
+                    v-model:selectedTags="selectedTagsInLiveSlides" @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Current view -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -132,6 +117,13 @@ function removeAllLiveSlides() {
                         @dragover.prevent @drop="onDrop($event, index)">
 
                         <!-- Monitor Info: Name, Index, and Clear Button -->
+                        <div v-if="backgroundSlideMonitor && settings.background_monitor_slide_on_welcome_screens"
+                            style="width: 100%; height:85%; pointer-events: none;"
+                            class="background-slide">
+                            <SlideView :preview="true" :slide="backgroundSlideMonitor"
+                                :sections="backgroundSlideMonitor.sections ?? []" :showFrame="false">
+                            </SlideView>
+                        </div>
                         <div class="monitor-info">
                             <div class="monitor-label-container">
                                 <h3 class="monitor-label">
@@ -149,7 +141,7 @@ function removeAllLiveSlides() {
                         </div>
 
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                        <div v-if="slot" style="width: 100%; height:90%; pointer-events: none; position: relative;">
+                        <div v-if="slot" style="width: 100%; height: 85%; inset: 0; pointer-events: none; position: relative">
                             <!-- Background slide layer (from global settings), if configured -->
                             <div v-if="backgroundSlideMonitor" class="background-slide">
                                 <SlideView :preview="true" :slide="backgroundSlideMonitor"
@@ -158,7 +150,7 @@ function removeAllLiveSlides() {
                             </div>
                             <SlideView class="monitor-preview-content" :preview="true" :slide="slot"
                                 :sections="slot.sections ? slot.sections : []" :showFrame="false">
-                            </SlideView> 
+                            </SlideView>
                         </div>
                         <div v-else class="monitor-symbol">
                             <i class="pi pi-desktop"></i>
@@ -213,7 +205,7 @@ function removeAllLiveSlides() {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 200px;
+    height: 220px;
     position: relative;
     overflow: hidden;
 }

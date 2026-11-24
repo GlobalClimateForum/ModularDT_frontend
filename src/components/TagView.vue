@@ -1,13 +1,15 @@
 <script setup lang="ts" generic="T extends { id?: number; tags: string[] }">
+// Vue-stuff
+import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import Chip from 'primevue/chip';
 import Inplace from 'primevue/inplace';
 import AutoComplete from 'primevue/autocomplete';
-import { ref, onMounted } from 'vue';
-import { getAvailableTags } from '@/services/slide_service';
-import Button from 'primevue/button';
+// globals and services
+import { getAvailableTags } from '@/services/tag_service';
 
-// Definiere die Props unter Verwendung des generischen Typs T
+
+// T is either Slider or Scene in our case ... 
 const props = defineProps<{
     item: T | null;
     onAddTagApi: (id: number, tag: string) => Promise<any>;
@@ -71,18 +73,6 @@ function search(event: { query: string }) {
     console.log(suggestions.value.length, event.query)
     console.log(JSON.stringify(suggestions.value))
 }
-
-onMounted(() => {
-    // Fetch available tags from the backend
-    getAvailableTags()
-        .then(response => {
-            existingTags.value = response.data.tags;
-        })
-        .catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch available tags' });
-            console.error("Error fetching available tags:", error);
-        });
-});
 </script>
 
 <template>
@@ -96,14 +86,10 @@ onMounted(() => {
             </template>
 
             <template #content="{ closeCallback }">
-
                 <AutoComplete v-model="newTag" placeholder="add a tag..." inputClass="w-full md:w-56"
                     emptySearchMessage="All matching tags already added" scrollHeight="14rem" :suggestions="suggestions"
                     @complete="search" :min-length="0" @keyup.enter="onAddTag(); closeCallback()"
                     @keydown.escape="closeCallback(); newTag = ''" />
-
-              
-
             </template>
         </Inplace>
 

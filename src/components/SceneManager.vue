@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, ref, toRaw } from 'vue';
+import { ref, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -14,11 +14,13 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 // globals and services
 import { scenes, selectedSceneInSceneManager } from '@/globals/scenes';
-import { updateScene, deleteScene, addTagToScene, removeTagFromScene } from "@/services/scene_service";
+import { updateScene, deleteScene } from "@/services/scene_service";
+import { addTagToScene, removeTagFromScene } from "@/services/tag_service";
 import GenericSearch from '@/components/GenericSearch.vue';
 import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
+import { existingTags, collectAllExistingTags, selectedTagsInSceneManager } from '@/globals/tags';
 import '@/assets/main.css'
 // components
 import SceneView from '@/components/SceneView.vue';
@@ -29,7 +31,6 @@ const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 //const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const selectedTags = ref<string[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
 
 const filters = ref<SearchFilters>({
@@ -39,7 +40,7 @@ const filters = ref<SearchFilters>({
     },
 })
 
-const filteredScenes = useFilteredScenes(filters, selectedTags, filterLogic)
+const filteredScenes = useFilteredScenes(filters, selectedTagsInSceneManager, filterLogic)
 const editingRows = ref<Scene[]>([]);
 
 const toast = useToast();
@@ -106,11 +107,17 @@ function onTagRemoved(removedTag: string) {
     if (selectedSceneInSceneManager.value) {
         selectedSceneInSceneManager.value.tags = selectedSceneInSceneManager.value.tags.filter(tag => tag !== removedTag);
     }
+    existingTags.value = collectAllExistingTags()
 }
 
 function onTagAdded(addedTag: string) {
     if (selectedSceneInSceneManager.value) {
         selectedSceneInSceneManager.value.tags = [...selectedSceneInSceneManager.value.tags, addedTag];
+    }
+
+    let index = existingTags.value.findIndex(tag => tag.toLowerCase() === addedTag.toLowerCase());
+    if (index === -1) {
+        existingTags.value.push(addedTag);
     }
 }
 </script>
@@ -121,10 +128,10 @@ function onTagAdded(addedTag: string) {
         <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
             <Splitter layout="horizontal" style="width: 100%; height: 94%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
+                    <DataTable :value="filteredScenes" dataKey="id" editMode="row"
                         scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"
-                        class="my-table" v-model:editingRows="editingRows" v-model:selection="selectedSceneInSceneManager"
-                        selectionMode="single">
+                        class="my-table" v-model:editingRows="editingRows"
+                        v-model:selection="selectedSceneInSceneManager" selectionMode="single">
 
                         <Column field="name" header="" style="text-align: left">
                             <template #editor="slotProps">
@@ -161,7 +168,7 @@ function onTagAdded(addedTag: string) {
                         </Column>
 
                         <template #header>
-                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags"
+                            <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSceneManager"
                                 v-model:filterLogic="filterLogic" v-model:filters="filters"
                                 :title="$t('moderator.available_scenes')" />
                         </template>
@@ -169,9 +176,10 @@ function onTagAdded(addedTag: string) {
                     </DataTable>
                 </SplitterPanel>
                 <SplitterPanel class="sub-panel" :size="colRightSize">
-                    <SceneView v-if="selectedSceneInSceneManager" :preview="true" :key="selectedSceneInSceneManager.id" :scene="selectedSceneInSceneManager"
-                        :showframe="false" class="scene-preview" />
-                    <TagView v-if="selectedSceneInSceneManager" :item="selectedSceneInSceneManager ? selectedSceneInSceneManager : null"
+                    <SceneView v-if="selectedSceneInSceneManager" :preview="true" :key="selectedSceneInSceneManager.id"
+                        :scene="selectedSceneInSceneManager" :showframe="false" class="scene-preview" />
+                    <TagView v-if="selectedSceneInSceneManager"
+                        :item="selectedSceneInSceneManager ? selectedSceneInSceneManager : null"
                         :onAddTagApi="addTagToScene" :onRemoveTagApi="removeTagFromScene" @tagRemoved="onTagRemoved"
                         @tagAdded="onTagAdded" />
                 </SplitterPanel>

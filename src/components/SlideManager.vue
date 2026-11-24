@@ -3,33 +3,36 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
-import type { Slide } from "@/services/slide_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-import SlideView from '@/components/SlideView.vue';
-import TagView from '@/components/TagView.vue';
-import { FilterMatchMode } from '@primevue/core/api'
-import { formatDate } from '@/utils/date_utils';
+//import { useConfirm } from "primevue/useconfirm";
 import Chip from 'primevue/chip';
+import { FilterMatchMode } from '@primevue/core/api'
+// globals and services
+import { formatDate } from '@/utils/date_utils';
 import { getSlideById, slides, updateSlideBySlide, selectedSlideInSlideManager } from '@/globals/slides'
-import { updateSlide, deleteSlide, addTagToSlide, removeTagFromSlide } from "@/services/slide_service";
+import { updateSlide, deleteSlide } from "@/services/slide_service";
+import { addTagToSlide, removeTagFromSlide } from "@/services/tag_service";
 import { ref, toRaw } from 'vue';
-import '@/assets/main.css'
 import { useI18n } from 'vue-i18n';
-import { useConfirm } from "primevue/useconfirm";
 import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
-import GenericSearch from '@/components/GenericSearch.vue';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
+import type { Slide } from "@/services/slide_service"
+import { existingTags, collectAllExistingTags, selectedTagsInSlideManager } from '@/globals/tags';
+import '@/assets/main.css'
+// components
+import SlideView from '@/components/SlideView.vue';
+import TagView from '@/components/TagView.vue';
+import GenericSearch from '@/components/GenericSearch.vue';
 
 
 const { onConfirmDeleteItem } = useItemDeletion();
-const confirm = useConfirm();
+//const confirm = useConfirm();
 const { t } = useI18n();
 const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const selectedTags = ref<string[]>([]);
 const editingRows = ref<Slide[]>([]);
 const filterLogic = ref<'and' | 'or'>('and');
 const toast = useToast();
@@ -41,7 +44,7 @@ const filters = ref<SearchFilters>({
     },
 })
 
-const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
+const filteredSlides = useFilteredSlides(filters, selectedTagsInSlideManager, filterLogic)
 
 function onRowEditSaveSlide(event: any) {
     const { id, name } = event.newData
@@ -105,14 +108,18 @@ function onTagRemoved(removedTag: string) {
     if (selectedSlideInSlideManager.value) {
         selectedSlideInSlideManager.value.tags = selectedSlideInSlideManager.value.tags.filter(tag => tag !== removedTag);
     }
-    searchComponent.value?.fetchTags()
+    existingTags.value = collectAllExistingTags()
 }
 
 function onTagAdded(addedTag: string) {
     if (selectedSlideInSlideManager.value) {
         selectedSlideInSlideManager.value.tags = [...selectedSlideInSlideManager.value.tags, addedTag];
     }
-    searchComponent.value?.fetchTags()
+
+    let index = existingTags.value.findIndex(tag => tag.toLowerCase() === addedTag.toLowerCase());
+    if (index === -1) {
+        existingTags.value.push(addedTag);
+    }
 }
 </script>
 
@@ -168,7 +175,7 @@ function onTagAdded(addedTag: string) {
                 </Column>
 
                 <template #header>
-                    <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTags"
+                    <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSlideManager"
                         v-model:filterLogic="filterLogic" v-model:filters="filters" />
                 </template>
             </DataTable>
@@ -179,7 +186,7 @@ function onTagAdded(addedTag: string) {
                 :sections="selectedSlideInSlideManager.sections ? selectedSlideInSlideManager.sections : []" :previewBackground="true"
                 class="slide-preview" />
 
-            <TagView :item="selectedSlideInSlideManager ? selectedSlideInSlideManager : null" :onAddTagApi="addTagToSlide" v-if="selectedSlideInSlideManager"
+            <TagView v-if="selectedSlideInSlideManager" :item="selectedSlideInSlideManager ? selectedSlideInSlideManager : null" :onAddTagApi="addTagToSlide" 
                 :onRemoveTagApi="removeTagFromSlide" @tagRemoved="onTagRemoved" @tagAdded="onTagAdded" />
 
             <div v-else class="slide-preview"
