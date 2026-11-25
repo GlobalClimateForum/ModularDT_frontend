@@ -23,23 +23,22 @@ const props = defineProps({
     }
 })
 
-const filters = ref<SearchFilters>({
-    global: {
-        value: null,
-        matchMode: FilterMatchMode.CONTAINS,
-    },
-})
-
-const filterLogic = ref<'and' | 'or'>('and');
-
 const { t } = useI18n();
 const selectedTags = defineModel<string[]>('selectedTags', { default: () => [] });
 const selectedSlide = defineModel<Slide | null>('selectedSlide', { default: null });
 const draggedSlide = defineModel<Slide | null>('draggedSlide', { default: null });
+const filters = defineModel<SearchFilters>('filters', {
+    default: () => ({
+        global: {
+            value: null,
+            matchMode: FilterMatchMode.CONTAINS,
+        },
+    }),
+})
+const filterLogic = defineModel<'and' | 'or'>('filterLogic', { default: 'and' });
 
 const filteredSlides = useFilteredSlides(filters, selectedTags, filterLogic)
 
-// Handle drag-and-drop events for slides and monitors
 // Handle drag-and-drop events for slides and monitors
 function onDragStart(e: DragEvent, slide: Slide) {
     selectedSlide.value = slide;          // CHANGED: was null → no flicker

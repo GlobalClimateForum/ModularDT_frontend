@@ -14,6 +14,7 @@ import { sendModeratorMessage } from '@/services/moderator_service'
 import { backgroundSlideMonitor } from "@/globals/background"
 import { selectedSlideInLiveSlides } from "@/globals/slides"
 import { selectedTagsInLiveSlides } from "@/globals/tags"
+import { filtersLiveSlides, filterLogicLiveSlides } from "@/globals/filters"
 import '@/assets/main.css'
 // components
 import SlideView from '@/components/SlideView.vue';
@@ -91,7 +92,8 @@ function removeAllLiveSlides() {
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
                 <SlideGallery style="flex: 1; min-height: 0;" v-model:selectedSlide="selectedSlideInLiveSlides"
-                    v-model:selectedTags="selectedTagsInLiveSlides" @slide-drag-start="handleDragStart" />
+                    v-model:filterLogic="filterLogicLiveSlides" v-model:selectedTags="selectedTagsInLiveSlides"
+                    v-model:filters="filtersLiveSlides" @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Current view -->
             <SplitterPanel :size="75" :minSize="15" class="sub-panel">
@@ -118,8 +120,7 @@ function removeAllLiveSlides() {
 
                         <!-- Monitor Info: Name, Index, and Clear Button -->
                         <div v-if="backgroundSlideMonitor && settings.background_monitor_slide_on_welcome_screens"
-                            style="width: 100%; height:85%; pointer-events: none;"
-                            class="background-slide">
+                            style="width: 100%; height:85%; pointer-events: none;" class="background-slide">
                             <SlideView :preview="true" :slide="backgroundSlideMonitor"
                                 :sections="backgroundSlideMonitor.sections ?? []" :showFrame="false">
                             </SlideView>
@@ -141,7 +142,8 @@ function removeAllLiveSlides() {
                         </div>
 
                         <!-- If Slide assigned to Monitor show SlideView component, else show monitor symbol -->
-                        <div v-if="slot" style="width: 100%; height: 85%; inset: 0; pointer-events: none; position: relative">
+                        <div v-if="slot"
+                            style="width: 100%; height: 85%; inset: 0; pointer-events: none; position: relative">
                             <!-- Background slide layer (from global settings), if configured -->
                             <div v-if="backgroundSlideMonitor" class="background-slide">
                                 <SlideView :preview="true" :slide="backgroundSlideMonitor"

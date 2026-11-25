@@ -27,6 +27,7 @@ import { sendModeratorMessage } from '@/services/moderator_service'
 import { sendStartLivePresentation } from '@/services/live_presentation_service'
 import { startPresentation, updateMonitors } from '@/globals/live_presentation';
 import { existingTags, selectedTagsInSceneShowEditor, collectAllExistingTags } from '@/globals/tags';
+import { filtersSceneShowEditor, filterLogicSceneShowEditor } from "@/globals/filters"
 import '@/assets/main.css'
 // components
 import SceneView from '@/components/SceneView.vue';
@@ -37,15 +38,6 @@ const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
 //const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const filterLogic = ref<'and' | 'or'>('and');
-
-const filters = ref<SearchFilters>({
-    global: {
-        value: null,
-        matchMode: FilterMatchMode.CONTAINS,
-    },
-})
-
 interface SelectedScene {
     id: string;
     uniqueId: string;
@@ -53,7 +45,7 @@ interface SelectedScene {
     description: string;
 }
 
-const filteredScenes = useFilteredScenes(filters, selectedTagsInSceneShowEditor, filterLogic)
+const filteredScenes = useFilteredScenes(filtersSceneShowEditor, selectedTagsInSceneShowEditor, filterLogicSceneShowEditor)
 const editingRows = ref<Scene[]>([]);
 const selectedPresentation = ref<Presentation | null>(null);
 const presentationName = ref<string>("");
@@ -313,7 +305,7 @@ const removeItem = (index: number) => {
         <div style="height: 300px; flex: 1; display: flex; width: 100%; ">
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
-                    <DataTable v-if="filteredScenes.length > 0" :value="filteredScenes" dataKey="id" editMode="row"
+                    <DataTable :value="filteredScenes" dataKey="id" editMode="row"
                         scrollable scrollHeight="flex" @row-edit-save="onRowEditSaveScene" responsiveLayout="scroll"
                         class="my-table" v-model:editingRows="editingRows"
                         v-model:selection="selectedSceneInSceneShowEditor" selectionMode="single">
@@ -354,7 +346,7 @@ const removeItem = (index: number) => {
 
                         <template #header>
                             <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSceneShowEditor"
-                                v-model:filterLogic="filterLogic" v-model:filters="filters"
+                                v-model:filterLogic="filterLogicSceneShowEditor" v-model:filters="filtersSceneShowEditor"
                                 :title="$t('moderator.available_scenes')" />
                         </template>
 

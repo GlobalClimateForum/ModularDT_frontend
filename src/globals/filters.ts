@@ -1,6 +1,7 @@
-import { type Ref, computed } from 'vue';
+import { ref, type Ref, computed } from 'vue';
 import { slides } from '@/globals/slides';
 import { scenes } from '@/globals/scenes';
+import { FilterMatchMode } from '@primevue/core/api'
 
 export type SearchFilters = {
     global: {
@@ -8,6 +9,30 @@ export type SearchFilters = {
         matchMode: string
     }
 }
+
+function createDefaultFilters(): SearchFilters {
+    return {
+        global: {
+            value: null,
+            matchMode: FilterMatchMode.CONTAINS,
+        },
+    }
+}
+
+export const filtersSceneEditor = ref(createDefaultFilters())
+export const filtersSceneManager = ref(createDefaultFilters())
+export const filtersSceneShowEditor = ref(createDefaultFilters())
+export const filtersSlideManager = ref(createDefaultFilters())
+export const filtersLiveSlides = ref(createDefaultFilters())
+export const filtersParticipantSlideshow = ref(createDefaultFilters())
+
+export const filterLogicSceneEditor = ref<'and' | 'or'>('and');
+export const filterLogicSceneManager = ref<'and' | 'or'>('and');
+export const filterLogicSceneShowEditor = ref<'and' | 'or'>('and');
+export const filterLogicSlideManager = ref<'and' | 'or'>('and');
+export const filterLogicLiveSlides = ref<'and' | 'or'>('and');
+export const filterLogicParticipantSlideshow = ref<'and' | 'or'>('and');
+
 
 export function useFilteredSlides(
     filters: Ref<SearchFilters>,

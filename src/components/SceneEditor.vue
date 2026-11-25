@@ -10,7 +10,7 @@ import { dialogService } from '@/services/dialog_service';
 // globals and services
 import type { Slide } from '@/services/slide_service'
 import type { Scene } from '@/services/scene_service';
-import { scenes, fetchScenes } from '@/globals/scenes';
+import { scenes } from '@/globals/scenes';
 import { settings } from '@/globals/settings'
 import { storeScene, updateScene } from '@/services/scene_service';
 import '@/assets/main.css'
@@ -19,6 +19,7 @@ import { useItemSave } from '@/generics/saveItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { selectedSlideInSceneEditor } from '@/globals/slides'
 import { selectedTagsInSceneEditor } from '@/globals/tags'
+import { filterLogicSceneEditor, filtersSceneEditor } from '@/globals/filters'
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -165,7 +166,8 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
         <Splitter :gutter-size="2" class="dashboard">
             <!-- Available Slides -->
             <SplitterPanel :size="25" class="sub-panel">
-                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlideInSceneEditor" v-model:selectedTags="selectedTagsInSceneEditor"
+                <SlideGallery style="height: 100%;" v-model:selectedSlide="selectedSlideInSceneEditor"
+                    v-model:selectedTags="selectedTagsInSceneEditor" v-model:filters="filtersSceneEditor" v-model:filterLogic="filterLogicSceneEditor"
                     @slide-drag-start="handleDragStart" />
             </SplitterPanel>
             <!-- Scene Builder -->
@@ -189,10 +191,10 @@ const onSendSlideToMultipleMonitors = async (slide: Slide) => {
                                     <i style="font-size: var(--fs-medium)"
                                         class="material-symbols-outlined">desktop_windows</i>
                                 </template>
-                                <template #default>
+<template #default>
                                     {{ settings.number_of_screens }}
                                 </template>
-                             </Message> -->
+</Message> -->
 
                             <Message v-if="duplicates()" severity="warn" size="small">
                                 {{ $t('moderator.duplicate_slides') }}

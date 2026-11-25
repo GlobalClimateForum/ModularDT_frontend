@@ -16,7 +16,7 @@ import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
-import { liveSlidesActive, useWhatYouSeeOnMonitors, liveSlidesOnMonitors, useLivePresentationState, updateLiveSlideById } from '@/globals/live_presentation';
+import { liveSlidesActive, useWhatYouSeeOnMonitors, useLivePresentationState, updateLiveSlideById } from '@/globals/live_presentation';
 import { gotoScene, startPresentation, stopPresentation, removeLiveSlideById } from '@/globals/live_presentation';
 import { putLiveSlide, removeLiveSlide, removeAllLiveSlides } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
@@ -88,6 +88,8 @@ const viewProps = computed(() => {
     default: return {};
   }
 });
+
+const moderator_client_id = Math.random().toString(36).substring(2, 16)
 
 const items = computed(() => [
   {
@@ -204,10 +206,10 @@ const items = computed(() => [
 onMounted(() => {
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
-  liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
+  //liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
   currentDashboard.value = 'slides';
   updateDataForMonitors();
-
+  console.log("moderator id: ", moderator_client_id)
 });
 
 // important: close the socket when the component is unmounted to avoid memory leaks

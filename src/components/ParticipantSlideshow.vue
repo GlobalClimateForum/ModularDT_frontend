@@ -24,6 +24,7 @@ import { participants } from '@/globals/participants';
 import { updateLiveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { selectedTagsInParticipantSlideshow } from '@/globals/tags'
+import { filterLogicParticipantSlideshow, filtersParticipantSlideshow } from '@/globals/filters';
 // components
 import SlideView from '@/components/SlideView.vue';
 import SlideGallery from '@/components/SlideGallery.vue';
@@ -239,6 +240,8 @@ const handleDragStart = (item) => {
             <Splitter layout="horizontal" style="width: 100%; height: 100%">
                 <SplitterPanel class="sub-panel" :size="colLeftSize">
                     <SlideGallery v-model:selectedSlide="selectedSlideInParticipantSlideshow"
+                        v-model:filterLogic="filterLogicParticipantSlideshow"
+                        v-model:filters="filtersParticipantSlideshow"
                         v-model:selectedTags="selectedTagsInParticipantSlideshow" :slide_preview="false"
                         @slide-drag-start="handleDragStart" />
                 </SplitterPanel>

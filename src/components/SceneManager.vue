@@ -10,17 +10,16 @@ import type { Scene } from "@/services/scene_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 // globals and services
 import { scenes, selectedSceneInSceneManager } from '@/globals/scenes';
 import { updateScene, deleteScene } from "@/services/scene_service";
 import { addTagToScene, removeTagFromScene } from "@/services/tag_service";
 import GenericSearch from '@/components/GenericSearch.vue';
-import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { existingTags, collectAllExistingTags, selectedTagsInSceneManager } from '@/globals/tags';
+import { filtersSceneManager, filterLogicSceneManager, useFilteredScenes } from "@/globals/filters"
 import '@/assets/main.css'
 // components
 import SceneView from '@/components/SceneView.vue';
@@ -29,18 +28,8 @@ import TagView from '@/components/TagView.vue';
 
 const { onConfirmDeleteItem } = useItemDeletion();
 const { t } = useI18n();
-//const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
-const filterLogic = ref<'and' | 'or'>('and');
-
-const filters = ref<SearchFilters>({
-    global: {
-        value: null,
-        matchMode: FilterMatchMode.CONTAINS,
-    },
-})
-
-const filteredScenes = useFilteredScenes(filters, selectedTagsInSceneManager, filterLogic)
+const filteredScenes = useFilteredScenes(filtersSceneManager, selectedTagsInSceneManager, filterLogicSceneManager)
 const editingRows = ref<Scene[]>([]);
 
 const toast = useToast();
@@ -169,7 +158,7 @@ function onTagAdded(addedTag: string) {
 
                         <template #header>
                             <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSceneManager"
-                                v-model:filterLogic="filterLogic" v-model:filters="filters"
+                                v-model:filterLogic="filterLogicSceneManager" v-model:filters="filtersSceneManager"
                                 :title="$t('moderator.available_scenes')" />
                         </template>
 

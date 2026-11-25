@@ -16,7 +16,7 @@ import { updateSlide, deleteSlide } from "@/services/slide_service";
 import { addTagToSlide, removeTagFromSlide } from "@/services/tag_service";
 import { ref, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { type SearchFilters, useFilteredSlides } from '@/globals/filters';
+import { filterLogicSlideManager, filtersSlideManager, useFilteredSlides } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import type { Slide } from "@/services/slide_service"
@@ -31,20 +31,11 @@ import GenericSearch from '@/components/GenericSearch.vue';
 const { onConfirmDeleteItem } = useItemDeletion();
 //const confirm = useConfirm();
 const { t } = useI18n();
-const searchComponent = ref<InstanceType<typeof GenericSearch> | null>(null)
 
 const editingRows = ref<Slide[]>([]);
-const filterLogic = ref<'and' | 'or'>('and');
 const toast = useToast();
 
-const filters = ref<SearchFilters>({
-    global: {
-        value: null,
-        matchMode: FilterMatchMode.CONTAINS,
-    },
-})
-
-const filteredSlides = useFilteredSlides(filters, selectedTagsInSlideManager, filterLogic)
+const filteredSlides = useFilteredSlides(filtersSlideManager, selectedTagsInSlideManager, filterLogicSlideManager)
 
 function onRowEditSaveSlide(event: any) {
     const { id, name } = event.newData
@@ -176,7 +167,7 @@ function onTagAdded(addedTag: string) {
 
                 <template #header>
                     <GenericSearch ref="searchComponent" v-model:selectedTags="selectedTagsInSlideManager"
-                        v-model:filterLogic="filterLogic" v-model:filters="filters" />
+                        v-model:filterLogic="filterLogicSlideManager" v-model:filters="filtersSlideManager" />
                 </template>
             </DataTable>
         </SplitterPanel>
