@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, onUnmounted, onBeforeUnmount, ref, computed, Transition, provide, watch } from 'vue';
+import { onMounted, onUnmounted, onBeforeMount, ref, computed, Transition, provide, watch } from 'vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Button from 'primevue/button';
@@ -16,11 +16,13 @@ import { settings } from '@/globals/settings'
 import { updateLiveParticipantsSlideshow, liveParticipantsSlideshow } from '@/globals/live_participant_slideshows';
 import { startSlideshow } from "@/services/slideshow_service";
 import { updateParticipantParameters } from '@/globals/participant_parameters';
-import { liveSlidesActive, useWhatYouSeeOnMonitors, useLivePresentationState, updateLiveSlideById } from '@/globals/live_presentation';
+import { liveSlidesActive, useWhatYouSeeOnMonitors, useLivePresentationState, updateLiveSlideById, currentPresentation } from '@/globals/live_presentation';
 import { gotoScene, startPresentation, stopPresentation, removeLiveSlideById } from '@/globals/live_presentation';
 import { putLiveSlide, removeLiveSlide, removeAllLiveSlides } from '@/globals/live_presentation';
 import { useWebsocketService } from '@/services/websocket_service'
 import { sendMonitorMessage } from "@/services/monitor_service"
+import { sendModeratorMessage } from '@/services/moderator_service'
+import { sendHomeMessage } from '@/services/home_service'
 import { slideshows } from '@/globals/slideshows';
 import { useParameterStore } from '@/services/parameterstore_service';
 import { API_BASE_URL } from '@/config'
@@ -203,13 +205,20 @@ const items = computed(() => [
   },
 ]);
 
-onMounted(() => {
+onBeforeMount(() => {
   wsService.connect(channelId, socketUrl)
   wsService.on(channelId, 'message', handleMessage)
-  //liveSlidesOnMonitors.value = Array(settings.value.number_of_screens).fill(null);
-  currentDashboard.value = 'slides';
+  // request current moderator state from other clients
+  sendModeratorMessage({
+    'event_type': 'request',
+    'command': 'request_from_moderator',
+    'moderator_client_id': moderator_client_id
+  })
   updateDataForMonitors();
-  console.log("moderator id: ", moderator_client_id)
+})
+
+onMounted(() => {
+  currentDashboard.value = 'slides';
 });
 
 // important: close the socket when the component is unmounted to avoid memory leaks
@@ -236,6 +245,9 @@ const handleMessage = async (data) => {
       }
       if (data.command === 'update_participant_parameter') {
         updateParticipantParameters(data.parameter_name, data.participant, data.value)
+      }
+      if (data.command === 'update_moderator_state') {
+        updateState(data)
       }
       if (data.command === 'update_scene') {
         await updateSceneByID(data.sceneid)
@@ -323,6 +335,15 @@ const handleMessage = async (data) => {
       if (data.command === 'request_from_monitor') {
         updateDataForMonitor(data.monitorid)
       }
+      if (data.command === 'request_from_moderator') {
+        if (data.moderator_client_id != moderator_client_id) {
+          console.log("send modertor status from ", moderator_client_id, " to ", data.moderator_client_id)
+          updateDataForModerator()
+        }
+      }
+      if (data.command === 'request_from_home') {
+        updateDataForHome()
+      }
     }
 
     if (data.event_type === 'start' || data.message) {
@@ -391,6 +412,75 @@ function updateDataForParticipant(participantseat: string) {
 function updateDataForMonitors() {
   for (let i = 1; i <= settings.value.number_of_screens; ++i) {
     updateDataForMonitor(i.toString())
+  }
+}
+
+function updateDataForModerator() {
+  sendModeratorMessage({
+    'event_type': 'update',
+    'command': 'update_moderator_state',
+    'settings': {
+      'number_of_screens': settings.value.number_of_screens,
+      'show_screen_id': settings.value.show_screen_id,
+      'palette': settings.value.palette,
+      'background_monitor_slide': settings.value.background_monitor_slide,
+      'background_monitor_slide_on_welcome_screens': settings.value.background_monitor_slide_on_welcome_screens,
+      'background_participant_slide': settings.value.background_participant_slide,
+      'background_participant_slide_on_welcome_screens': settings.value.background_participant_slide_on_welcome_screens,
+      'cs_url': settings.value.cs_url,
+      'language': settings.value.language,
+      'theme': settings.value.theme,
+      'carto_api_key': settings.value.carto_api_key,
+      'event_id': settings.value.event_id,
+      'dev_mode': settings.value.dev_mode,
+      'avatar_style': settings.value.avatar_style,
+      'pin_set': settings.value.pin_set,
+      'pin_length': settings.value.pin_length
+    },
+    'presentation': {
+      'livePresentationActive': livePresentationState.value.active,
+      'liveSlidesActive': liveSlidesActive.value,
+      'livePresentation': livePresentationState.value.presentation,  
+      'current_scene': livePresentationState.value.current_scene  
+    } // and so on
+  })
+}
+
+
+function updateDataForHome() {
+
+  sendHomeMessage({
+    'event_type': 'update',
+    'command': 'update_home',
+    'settings': {
+      'number_of_screens': settings.value.number_of_screens,
+      'palette': settings.value.palette
+    }
+  })
+}
+
+function updateState(data) {
+  settings.value.number_of_screens = data.settings.number_of_screens
+  settings.value.show_screen_id = data.settings.show_screen_id
+  settings.value.palette = data.settings.palette
+  settings.value.background_monitor_slide = data.settings.background_monitor_slide
+  settings.value.background_monitor_slide_on_welcome_screens = data.settings.background_monitor_slide_on_welcome_screens
+  settings.value.background_participant_slide = data.settings.background_participant_slide
+  settings.value.background_participant_slide_on_welcome_screens = data.settings.background_participant_slide_on_welcome_screens
+  settings.value.cs_url = data.settings.cs_url
+  settings.value.language = data.settings.language
+  settings.value.theme = data.settings.theme
+  settings.value.carto_api_key = data.settings.carto_api_key
+  settings.value.event_id = data.settings.event_id
+  settings.value.dev_mode = data.settings.dev_mode
+  settings.value.avatar_style = data.settings.avatar_style
+  settings.value.pin_set = data.settings.pin_set
+  settings.value.pin_length = data.settings.pin_length 
+  // livePresentationState.value.current_scene = data.presentation.current_scene
+  livePresentationState.value.active = data.presentation.livePresentationActive
+  livePresentationState.value.presentation = data.presentation.livePresentation
+  if (livePresentationState.value.active) {
+    startPresentation(data.presentation.livePresentation, data.presentation.current_scene)
   }
 }
 

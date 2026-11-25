@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
 import { onMounted, onBeforeMount, getCurrentInstance, watch, ref, onUnmounted } from 'vue'
-// import { useToast } from 'primevue/usetoast'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import ConfirmDialog from "primevue/confirmdialog";

@@ -4,15 +4,20 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Checkbox from 'primevue/checkbox'
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeMount, onUnmounted } from 'vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n';
 import { settings } from '@/globals/settings'
 import { type Event, getEventById } from '@/services/event_service'
 import { authorizeModerator } from '@/services/settings_service' // adjust path
-import { participants } from '@/globals/participants' 
-import { getParticipants } from '@/services/participant_service'
-import { avatarUri as buildAvatarUri, makeStyle, type StyleName} from '@/services/avatar_service';
+import { participants } from '@/globals/participants'
+import { sendModeratorMessage } from '@/services/moderator_service'
+import { avatarUri as buildAvatarUri, makeStyle, type StyleName } from '@/services/avatar_service';
+import '@/assets/main.css'
+import { useSessionStorage } from '@vueuse/core'
+import { useWebsocketService } from '@/services/websocket_service'
+import { API_BASE_URL } from '@/config'
+
 
 const { t } = useI18n();
 const event = ref<Event | null>(null)
@@ -23,20 +28,25 @@ const pinError = ref(false)
 const seatedParticipants = computed(() => participants.value.filter(p => p.seat !== null));
 const selectedMonitors = ref<number[]>([])
 
-import '@/assets/main.css'
-import { useSessionStorage } from '@vueuse/core'
+const wsService = useWebsocketService()
+const channelId = `home/`
+const wsUrlHome = new URL('/ws/home/', API_BASE_URL)
+const socketUrl = wsUrlHome + ``
 
 const pinOk = useSessionStorage('pin_ok', '0')
 
+onBeforeMount(() => {
+  wsService.connect(channelId, socketUrl)
+  wsService.on(channelId, 'message', handleMessage)
+  // request current moderator state from other clients
+  sendModeratorMessage({
+    'event_type': 'request',
+    'command': 'request_from_home',
+  })
+})
+
 onMounted(() => {
-
   console.log("Mounted Home.vue")
-
-  getParticipants().then(response => {
-    participants.value = response.data.participants;
-  }).catch(error => {
-    console.error("Error fetching participants:", error);
-  });
 
   if (settings.value.event_id) {
     getEventById(settings.value.event_id).then(response => {
@@ -47,6 +57,26 @@ onMounted(() => {
     });
   }
 })
+
+// important: close the socket when the component is unmounted to avoid memory leaks
+onUnmounted(() => {
+  wsService.off(channelId, 'message', handleMessage)
+  wsService.disconnect(channelId)
+})
+
+const handleMessage = async (data) => {
+  console.log("message: ", data)
+  try {
+    if (data.event_type === 'update' || data.message) {
+      if (data.command === 'update_home') {
+        settings.value.number_of_screens = data.settings.number_of_screens
+        settings.value.palette = data.settings.palette
+      }
+    }
+  } catch (e) {
+    console.error('Error processing WebSocket message:', e)
+  }
+}
 
 function avatarUri(seed: string) {
   return buildAvatarUri(makeStyle(settings.value.avatar_style as StyleName), seed);
@@ -208,7 +238,8 @@ function logout() {
 
       </div>
 
-      <div style="display: flex; flex-direction: row; gap: var(--space-medium); justify-content: center; margin-top: var(--space-medium);">
+      <div
+        style="display: flex; flex-direction: row; gap: var(--space-medium); justify-content: center; margin-top: var(--space-medium);">
         <Button label="Open selected in new window" @click="openSelectedMonitorsInWindows()">
           <template #icon>
             <i class="material-symbols-outlined">open_in_new</i>

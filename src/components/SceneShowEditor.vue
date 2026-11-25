@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Vue-stuff
-import { onMounted, ref, nextTick, toRaw } from 'vue';
+import { ref, nextTick, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -10,7 +10,6 @@ import type { Scene } from "@/services/scene_service"
 import SplitterPanel from 'primevue/splitterpanel';
 import Splitter from 'primevue/splitter';
 import Button from 'primevue/button';
-import { FilterMatchMode } from '@primevue/core/api'
 import { formatDate } from '@/utils/date_utils';
 import draggable from 'vuedraggable';
 // globals and services
@@ -21,7 +20,7 @@ import { addTagToScene, removeTagFromScene } from "@/services/tag_service";
 import { updatePresentation, deletePresentation, savePresentation } from "@/services/presentation_service";
 import type { Presentation } from "@/services/presentation_service"
 import GenericSearch from '@/components/GenericSearch.vue';
-import { type SearchFilters, useFilteredScenes } from '@/globals/filters';
+import { useFilteredScenes } from '@/globals/filters';
 import { useItemDeletion } from '@/generics/deleteItem'
 import { sendModeratorMessage } from '@/services/moderator_service'
 import { sendStartLivePresentation } from '@/services/live_presentation_service'

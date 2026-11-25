@@ -125,10 +125,10 @@ export function stopPresentation() {
   currentScene.value = null
 }
 
-export function startPresentation(presentationid: number) {
+export function startPresentation(presentationid: number, start_scene: number = 1) {
   livePresentationState.value.active = true;
   livePresentationState.value.presentation = presentationid;
-  livePresentationState.value.current_scene = 1;
+  livePresentationState.value.current_scene = start_scene;
   currentPresentation.value = presentations.value.find((pres) => pres.id == presentationid) ?? null;
   setCurrentScene()
 }
